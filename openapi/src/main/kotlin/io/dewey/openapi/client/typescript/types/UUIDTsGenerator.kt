@@ -3,7 +3,7 @@ package io.dewey.openapi.client.typescript.types
 import io.dewey.openapi.client.common.GenerateType
 import io.dewey.openapi.client.typescript.TsTypeGenerator
 import io.dewey.openapi.common.ClassType
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 class UUIDTsGenerator : TsTypeGenerator() {
     override fun generateContent(
@@ -22,5 +22,5 @@ class UUIDTsGenerator : TsTypeGenerator() {
 
     override fun getName(classType: ClassType): String = "UUID"
 
-    override fun canGenerate(classType: ClassType): Boolean = classType.isSubclassOf(UUID::class)
+    override fun canGenerate(classType: ClassType): Boolean = classType.isSubclassOf(Uuid::class)
 }

@@ -1,5 +1,5 @@
 import { DetailList } from "@/components/detail/detail-list.tsx"
-import { pluralize } from "@/utils/utils.ts"
+import { parseDate, pluralize } from "@/utils/utils.ts"
 import { cn } from "cn"
 import {
   BarcodeIcon,
@@ -186,7 +186,7 @@ const Meta: FC<MetaProps> = ({ book, libraryId, runtime }) => (
 
     <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
       {runtime ? <MetaItem icon={ClockIcon}>{toRuntime(runtime)}</MetaItem> : null}
-      {book.releaseDate ? <MetaItem icon={CalendarIcon}>{new Date(book.releaseDate).getFullYear()}</MetaItem> : null}
+      {book.releaseDate ? <MetaItem icon={CalendarIcon}>{parseDate(book.releaseDate).getFullYear()}</MetaItem> : null}
       {book.publisher ? <MetaItem icon={BuildingIcon}>{book.publisher}</MetaItem> : null}
       {book.language ? (
         <MetaItem icon={LanguagesIcon}>

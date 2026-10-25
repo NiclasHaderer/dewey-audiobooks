@@ -18,7 +18,7 @@ abstract class `--` {
                     Either.Right(response.error().wrap(ApiErrorType.HTTP))
                 }
             } catch (e: ClientRequestException) {
-                return Either.Right(e.response.body())
+                return Either.Right(e.response.body<InternalApiError>().wrap(ApiErrorType.HTTP))
             } catch (e: RedirectResponseException) {
                 return Either.Right(
                     ApiError(
@@ -29,9 +29,9 @@ abstract class `--` {
                     ),
                 )
             } catch (e: ServerResponseException) {
-                return Either.Right(e.response.body<ApiError>().wrap(ApiErrorType.HTTP))
+                return Either.Right(e.response.body<InternalApiError>().wrap(ApiErrorType.HTTP))
             } catch (e: ResponseException) {
-                return Either.Right(e.response.body<ApiError>().wrap(ApiErrorType.HTTP))
+                return Either.Right(e.response.body<InternalApiError>().wrap(ApiErrorType.HTTP))
             } catch (e: IOException) {
                 return Either.Right(
                     ApiError(

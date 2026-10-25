@@ -16,6 +16,9 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.application
 import io.ktor.server.routing.method
 import io.ktor.server.routing.route
+import io.ktor.util.reflect.typeInfo
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import io.ktor.server.resources.handle as resourceHandle
 
 suspend inline fun <reified BODY : Any> ApplicationCall.parseBody(): BODY =
@@ -31,7 +34,10 @@ suspend inline fun <reified BODY : Any> ApplicationCall.parseBody(): BODY =
                 errors.add(errors.last().cause as Exception)
             }
 
-            throw ErrorResponse.userError(e.message ?: "body could not be parsed", errors.map { it.message })
+            throw ErrorResponse.userError(
+                e.message ?: "body could not be parsed",
+                JsonArray(errors.map { JsonPrimitive(it.message) }),
+            )
         }
     }
 
@@ -49,8 +55,10 @@ suspend inline fun <PARAMS : Any, reified BODY : Any, reified RESPONSE> RoutingC
         response.respond(call)
     } else if (response is Unit) {
         call.respond(status)
+    } else if (response == null) {
+        call.respond(status, "")
     } else {
-        call.respond(status, response ?: "")
+        call.respond(status, response, typeInfo<RESPONSE>())
     }
     if (params is AfterResponse) params.run { afterResponse() }
 }

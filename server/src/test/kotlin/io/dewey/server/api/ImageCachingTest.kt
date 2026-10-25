@@ -22,10 +22,10 @@ import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
 
 class ImageCachingTest : DeweyTest() {
     @Test
@@ -74,7 +74,7 @@ class ImageCachingTest : DeweyTest() {
     // The bytes are written straight to the table, because getOrCreateImage refuses anything that is not an image
     private fun withCover(
         bytes: ByteArray,
-        block: suspend ApplicationTestBuilder.(Headers, UUID) -> Unit,
+        block: suspend ApplicationTestBuilder.(Headers, Uuid) -> Unit,
     ) = deweyServer {
         val libId = newLibrary("lib", folders = listOf("/media/books"))
         val bookId = newBook("Dune", libId)

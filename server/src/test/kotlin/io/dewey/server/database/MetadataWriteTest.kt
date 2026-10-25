@@ -42,14 +42,16 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.dsl.module
 import org.koin.mp.KoinPlatform.getKoin
-import java.time.Instant
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class MetadataWriteTest : DeweyTest() {
     private val bookRepository by lazy { getKoin().get<BookRepository>() }
@@ -57,8 +59,8 @@ class MetadataWriteTest : DeweyTest() {
     private val seriesRepository by lazy { getKoin().get<SeriesRepository>() }
     private val trackManager by lazy { getKoin().get<TrackManager>() }
 
-    private var libId: UUID = UUID.randomUUID()
-    private var userId: UUID = UUID.randomUUID()
+    private var libId: Uuid = Uuid.random()
+    private var userId: Uuid = Uuid.random()
 
     @BeforeTest
     fun createLibrary() {
@@ -82,7 +84,7 @@ class MetadataWriteTest : DeweyTest() {
         seriesIndex = seriesIndex,
         durationMs = 60_000,
         path = path,
-        lastModified = Instant.EPOCH,
+        lastModified = Instant.fromEpochMilliseconds(0),
         description = description,
         narrators = narrators,
     )
@@ -139,9 +141,9 @@ class MetadataWriteTest : DeweyTest() {
 
     // What an agent match leaves behind, without going through one
     private fun matchedBook(
-        libraryId: UUID,
+        libraryId: Uuid,
         path: String,
-    ): UUID {
+    ): Uuid {
         trackManager.insert(scan(description = "From the tags", path = path), libraryId)
         val id = transaction { bookRepository.findByTaggedName("A Book", emptyList(), libraryId)!!.id }
         transaction {
@@ -273,7 +275,7 @@ class MetadataWriteTest : DeweyTest() {
         // The first cleanup only gives the orphan a deadline; the second one deletes it once it passed
         transaction {
             BookTable.update({ BookTable.deferDeletionUntil.isNotNull() }) {
-                it[deferDeletionUntil] = Instant.now().minus(DEFER_DELETION_GRACE).minusSeconds(60)
+                it[deferDeletionUntil] = Clock.System.now() - DEFER_DELETION_GRACE - 60.seconds
             }
         }
         cleanup.removeOrphans(libId)
@@ -566,21 +568,21 @@ class MetadataWriteTest : DeweyTest() {
 
     // Not through the repository: it hides a book whose files the pipeline found missing, and these files never
     // existed
-    private fun seriesTitles(bookId: UUID) =
+    private fun seriesTitles(bookId: Uuid) =
         transaction { bookSeries(listOf(bookId))[bookId].orEmpty().map { it.title } }
 
     private fun bookCount() = transaction { BookTable.selectAll().count() }
 
-    private fun trackCount(bookId: UUID) =
+    private fun trackCount(bookId: Uuid) =
         transaction { TrackTable.selectAll().where { TrackTable.book eq bookId }.count() }
 
-    private fun authorNames(bookId: UUID) = bookRepository.get(userId, bookId, libId).authors.map { it.name }
+    private fun authorNames(bookId: Uuid) = bookRepository.get(userId, bookId, libId).authors.map { it.name }
 
     private fun bookUpdate(
         title: String? = null,
         description: String? = null,
-        authors: List<UUID>? = null,
-        series: List<UUID>? = null,
+        authors: List<Uuid>? = null,
+        series: List<Uuid>? = null,
     ) = BookUpdate(
         title = title.orAbsent(),
         authors = authors.orAbsent(),

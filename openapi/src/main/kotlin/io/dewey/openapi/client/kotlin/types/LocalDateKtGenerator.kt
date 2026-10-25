@@ -3,7 +3,7 @@ package io.dewey.openapi.client.kotlin.types
 import io.dewey.openapi.client.common.GenerateType
 import io.dewey.openapi.client.kotlin.KtTypeGenerator
 import io.dewey.openapi.common.ClassType
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 class LocalDateKtGenerator : KtTypeGenerator() {
     override fun generateContent(
@@ -23,7 +23,7 @@ class LocalDateKtGenerator : KtTypeGenerator() {
     override fun withImports(
         classType: ClassType,
         generateSubType: GenerateType<KtType>,
-    ): List<String> = listOf("import java.time.LocalDate")
+    ): List<String> = listOf("import kotlinx.datetime.LocalDate")
 
     override fun canGenerate(classType: ClassType): Boolean = classType.isSubclassOf(LocalDate::class)
 }

@@ -5,21 +5,22 @@ import io.dewey.models.TitledId
 import io.dewey.models.Track
 import io.dewey.server.database.extensions.json
 import io.dewey.server.database.extensions.timestampMillis
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Transaction
-import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
-object TrackTable : UUIDTable("track") {
+object TrackTable : UuidTable("track") {
     val title = text("title")
     val durationMs = long("duration_ms")
     val fileModifiedAt = timestampMillis("file_modified_at")
@@ -31,19 +32,20 @@ object TrackTable : UUIDTable("track") {
     val chapters = json<List<TrackChapter>>("chapters").default(emptyList())
 }
 
+@Serializable
 data class TrackChapter(
     val title: String?,
     val startMs: Long,
 )
 
 data class TrackRow(
-    val id: UUID,
+    val id: Uuid,
     val title: String,
     val durationMs: Long,
     val fileModifiedAt: Instant,
     val path: String,
-    val book: UUID,
-    val library: UUID,
+    val book: Uuid,
+    val library: Uuid,
     val scanIndex: ULong,
     val trackNr: Int?,
     val chapters: List<TrackChapter> = emptyList(),
@@ -77,7 +79,7 @@ fun ResultRow.toTrackRow(): TrackRow =
     )
 
 context(_: Transaction)
-fun TrackTable.insert(row: TrackRow): UUID {
+fun TrackTable.insert(row: TrackRow): Uuid {
     insert { write(it, row) }
     return row.id
 }

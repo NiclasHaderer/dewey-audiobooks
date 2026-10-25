@@ -6,8 +6,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.Tag
-import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -41,7 +41,7 @@ class AudiobookDbApiLiveTest {
             assertEquals(listOf(andyWeir), book.authors?.map { it.id.itemID })
             assertEquals("https://audiobookdb.org/people/$andyWeir", book.authors?.first()?.link)
             assertEquals(listOf("Ray Porter"), book.narrators)
-            assertEquals(LocalDate.of(2021, 5, 4), book.releaseDate)
+            assertEquals(LocalDate(2021, 5, 4), book.releaseDate)
             assertEquals("Audible Studios", book.publisher)
             assertEquals(MetadataLanguage.English, book.language)
             assertEquals("9781603935470", book.isbn)
@@ -109,7 +109,7 @@ class AudiobookDbApiLiveTest {
             assertEquals(andyWeir, author.id.itemID)
             assertEquals("audiobookdb", author.id.provider)
             assertEquals("https://audiobookdb.org/people/$andyWeir", author.link)
-            assertEquals(LocalDate.of(1972, 6, 16), author.birthDate)
+            assertEquals(LocalDate(1972, 6, 16), author.birthDate)
             assertTrue(author.bornIn?.startsWith("Davis") == true, "bornIn was '${author.bornIn}'")
             assertTrue(!author.biography.isNullOrBlank(), "biography was '${author.biography}'")
         }

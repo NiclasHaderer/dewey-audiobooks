@@ -25,8 +25,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Path
-import java.time.Instant
-import java.util.UUID
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
 import kotlin.test.BeforeTest
@@ -34,11 +32,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class TrackManagerTest : DeweyTest() {
     private val trackManager by lazy { getKoin().get<TrackManager>() }
     private val roots by lazy { getKoin().get<LibraryRoots>() }
-    private var libId: UUID = UUID.randomUUID()
+    private var libId: Uuid = Uuid.random()
 
     private fun imported(block: suspend ApplicationTestBuilder.(Headers) -> Unit) =
         deweyServer { block(bearer(registerWithAccess("reader", libId, LibraryPermissionLevel.READONLY))) }
@@ -154,7 +154,7 @@ class TrackManagerTest : DeweyTest() {
         series = "Robert Langdon",
         durationMs = 60_000,
         path = fileName,
-        lastModified = Instant.EPOCH,
+        lastModified = Instant.fromEpochMilliseconds(0),
         cover = cover,
     )
 
@@ -211,7 +211,7 @@ class TrackManagerTest : DeweyTest() {
             series = series,
             durationMs = 60_000,
             path = bookWithSeries.absolutePathString(),
-            lastModified = Instant.EPOCH,
+            lastModified = Instant.fromEpochMilliseconds(0),
         )
 
     // The test files carry no tags at all, so a scan result is handed to the importer directly
@@ -223,7 +223,7 @@ class TrackManagerTest : DeweyTest() {
             series = "Robert Langdon",
             durationMs = 60_000,
             path = bookWithSeries.absolutePathString(),
-            lastModified = Instant.EPOCH,
+            lastModified = Instant.fromEpochMilliseconds(0),
             genres = genres.toList(),
         )
 

@@ -18,6 +18,16 @@ import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.respond
 import io.ktor.util.cio.ChannelWriteException
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+
+@Serializable
+@PublishedApi
+internal class ErrorBody(
+    val error: String,
+    val status: Int,
+    val details: JsonElement? = null,
+)
 
 @PublishedApi
 internal fun logCommitted(
@@ -43,7 +53,7 @@ internal fun <T : Throwable> formatException(
         } else {
             call.respond(
                 statusCode,
-                hashMapOf("error" to cause.toString(), "status" to statusCode.value, "details" to null),
+                ErrorBody(cause.toString(), statusCode.value),
             )
         }
         cb?.invoke(cause)
@@ -68,7 +78,7 @@ fun Application.configureStatusPages(errorStatuses: ErrorStatuses.() -> Unit = {
             if (call.response.isSent) return@exception logCommitted(logger, call, cause)
             call.respond(
                 cause.status,
-                hashMapOf("error" to cause.error, "status" to cause.status.value, "details" to cause.details),
+                ErrorBody(cause.error, cause.status.value, cause.details),
             )
         }
 
@@ -96,7 +106,7 @@ fun Application.configureStatusPages(errorStatuses: ErrorStatuses.() -> Unit = {
         status(*statuses) { statusCode ->
             call.respond(
                 statusCode,
-                hashMapOf("error" to statusCode.description, "status" to statusCode.value, "details" to null),
+                ErrorBody(statusCode.description, statusCode.value),
             )
         }
     }

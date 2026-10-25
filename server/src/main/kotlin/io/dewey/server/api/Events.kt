@@ -15,7 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.ktor.ext.inject
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 fun Routing.eventRouting() {
     val changeEvents by inject<ChangeEvents>()
@@ -47,7 +47,7 @@ fun Routing.eventRouting() {
     }
 }
 
-private suspend fun readableLibraries(userId: UUID): Set<UUID> =
+private suspend fun readableLibraries(userId: Uuid): Set<Uuid> =
     withContext(Dispatchers.IO) { resolveUserPermissions(userId).libraries.mapTo(mutableSetOf()) { it.id } }
 
 private val ChangeEvent.isNewLibrary get() = entity == ChangedEntity.LIBRARY && type == ChangeType.CREATED

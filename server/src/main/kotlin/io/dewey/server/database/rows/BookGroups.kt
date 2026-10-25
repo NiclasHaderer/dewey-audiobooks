@@ -15,7 +15,7 @@ import org.jetbrains.exposed.v1.core.min
 import org.jetbrains.exposed.v1.core.stringParam
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 data class BookGroup(
     val name: String,
@@ -29,7 +29,7 @@ data class BooksInGroup(
 
 context(_: Transaction)
 fun Column<List<String>?>.bookGroups(
-    libraryId: UUID,
+    libraryId: Uuid,
     order: SortOrder,
     limit: Int,
     offset: Long,
@@ -49,7 +49,7 @@ fun Column<List<String>?>.bookGroups(
 }
 
 context(_: Transaction)
-fun Column<List<String>?>.bookGroupCount(libraryId: UUID): Long {
+fun Column<List<String>?>.bookGroupCount(libraryId: Uuid): Long {
     val eachName = jsonEach()
     val groups = Count(eachName.value.lowerCase(), distinct = true)
     return BookTable
@@ -62,7 +62,7 @@ fun Column<List<String>?>.bookGroupCount(libraryId: UUID): Long {
 context(_: Transaction)
 fun Column<List<String>?>.booksInGroup(
     name: String,
-    libraryId: UUID,
+    libraryId: Uuid,
 ): BooksInGroup? {
     val eachName = jsonEach()
     val nameMatches =

@@ -17,10 +17,10 @@ import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.util.UUID
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.uuid.Uuid
 
 enum class MatchableEntity {
     BOOK,
@@ -30,11 +30,11 @@ enum class MatchableEntity {
 
 data class AutoMatchRequest(
     val entity: MatchableEntity,
-    val id: UUID,
-    val libraryId: UUID,
+    val id: Uuid,
+    val libraryId: Uuid,
 )
 
-private val SYSTEM_USER = UUID(0, 0)
+private val SYSTEM_USER = Uuid.NIL
 
 private const val WORKERS = 2
 

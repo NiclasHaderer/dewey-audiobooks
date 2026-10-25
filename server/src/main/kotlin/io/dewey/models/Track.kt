@@ -1,10 +1,12 @@
 package io.dewey.models
 
-import java.time.Instant
-import java.util.UUID
+import kotlinx.serialization.Serializable
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
+@Serializable
 data class Track(
-    val id: UUID,
+    val id: Uuid,
     val title: String,
     val trackNr: Int,
     val durationMs: Long,

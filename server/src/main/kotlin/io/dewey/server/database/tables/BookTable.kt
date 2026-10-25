@@ -9,9 +9,9 @@ import io.dewey.server.events.recordChange
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.inList
-import org.jetbrains.exposed.v1.javatime.date
+import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.jdbc.select
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 enum class BookField : MetadataField {
     TITLE,
@@ -54,7 +54,7 @@ object BookTable : LibraryEntityTable("book", BookField.TITLE.column, ChangedEnt
     context(_: Transaction)
     override fun record(
         type: ChangeType,
-        ids: Collection<UUID>,
+        ids: Collection<Uuid>,
     ) {
         super.record(type, ids)
         ids.chunked(500).forEach { chunk ->
@@ -71,8 +71,8 @@ object BookTable : LibraryEntityTable("book", BookField.TITLE.column, ChangedEnt
     context(_: Transaction)
     override fun announce(
         type: ChangeType,
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ) {
         super.announce(type, id, libraryId)
         if (type != ChangeType.UPDATED) recordChange(ChangedEntity.LIBRARY, ChangeType.UPDATED, libraryId, libraryId)

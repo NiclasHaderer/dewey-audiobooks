@@ -1,13 +1,47 @@
 package io.dewey.openapi.common
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
 // A request field that may be left out. Absent is a key the client did not send, Set carries what it sent, which is
 // null only where T allows one.
+@Serializable(with = PatchSerializer::class)
 sealed interface Patch<out T> {
     data object Absent : Patch<Nothing>
 
     data class Set<out T>(
         val value: T,
     ) : Patch<T>
+}
+
+class PatchSerializer<T>(
+    private val valueSerializer: KSerializer<T>,
+) : KSerializer<Patch<T>> {
+    override val descriptor: SerialDescriptor = valueSerializer.descriptor
+
+    override fun serialize(
+        encoder: Encoder,
+        value: Patch<T>,
+    ) = when (value) {
+        is Patch.Set -> encoder.encodeSerializableValue(valueSerializer, value.value)
+
+        Patch.Absent -> throw SerializationException(
+            "Patch.Absent cannot be written, annotate the property with @EncodeDefault(EncodeDefault.Mode.NEVER)",
+        )
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    override fun deserialize(decoder: Decoder): Patch<T> {
+        if (!descriptor.isNullable && !decoder.decodeNotNullMark()) {
+            throw SerializationException("null is not allowed here, leave the key out instead")
+        }
+        return Patch.Set(decoder.decodeSerializableValue(valueSerializer))
+    }
 }
 
 // Leaves the key out for null, so it can never send an explicit null: that takes Patch.Set(null)

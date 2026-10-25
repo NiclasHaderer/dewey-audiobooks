@@ -3,10 +3,10 @@ package io.dewey.server.repositories
 import io.dewey.models.ChapterMark
 import io.dewey.server.database.tables.TrackChapter
 import io.dewey.server.database.tables.TrackRow
-import java.time.Instant
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class ChaptersTest {
     private fun track(
@@ -14,13 +14,13 @@ class ChaptersTest {
         durationMs: Long,
         vararg chapters: TrackChapter,
     ) = TrackRow(
-        id = UUID.randomUUID(),
+        id = Uuid.random(),
         title = title,
         durationMs = durationMs,
-        fileModifiedAt = Instant.EPOCH,
+        fileModifiedAt = Instant.fromEpochMilliseconds(0),
         path = "/$title.mp3",
-        book = UUID.randomUUID(),
-        library = UUID.randomUUID(),
+        book = Uuid.random(),
+        library = Uuid.random(),
         scanIndex = 0uL,
         trackNr = null,
         chapters = chapters.toList(),

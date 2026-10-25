@@ -15,9 +15,9 @@ import io.dewey.server.registerWithAccess
 import io.ktor.http.Headers
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.uuid.Uuid
 
 /**
  * Progress routes are marked [io.dewey.server.plugins.auth.UserScoped], which makes
@@ -55,7 +55,7 @@ class ProgressPermissionTest : DeweyTest() {
 
     private fun withLibrary(
         level: LibraryPermissionLevel,
-        block: suspend ApplicationTestBuilder.(Headers, UUID, UUID) -> Unit,
+        block: suspend ApplicationTestBuilder.(Headers, Uuid, Uuid) -> Unit,
     ) = deweyServer {
         val libId = newLibrary("lib", folders = listOf("/media/books"))
         val bookId = newBook("Dune", libId)

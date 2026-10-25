@@ -31,49 +31,51 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.Duration
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /** Once the position is this close to the end, the book counts as listened. */
 private const val FINISHED_THRESHOLD_MS = 30_000L
 
-private val WEEK: Duration = Duration.ofDays(7)
+private val WEEK: Duration = 7.days
 
 interface ProgressRepository {
     fun upsert(
-        userId: UUID,
-        libraryId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
+        bookId: Uuid,
         positionMs: Long,
     )
 
     fun setFinished(
-        userId: UUID,
-        libraryId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
+        bookId: Uuid,
         finished: Boolean,
     )
 
     fun setDismissed(
-        userId: UUID,
-        libraryId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
+        bookId: Uuid,
         dismissed: Boolean,
     )
 
     fun continueListening(
-        userId: UUID,
+        userId: Uuid,
         limit: Int,
     ): List<Book>
 
     fun history(
-        userId: UUID,
+        userId: Uuid,
         limit: Int,
         offset: Long,
     ): List<ListeningHistoryEntry>
 
-    fun historyTotal(userId: UUID): Long
+    fun historyTotal(userId: Uuid): Long
 }
 
 class ProgressRepositoryImpl :
@@ -82,15 +84,15 @@ class ProgressRepositoryImpl :
     private val config by inject<DeweyConfig>()
 
     override fun upsert(
-        userId: UUID,
-        libraryId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
+        bookId: Uuid,
         positionMs: Long,
     ) {
         transaction {
             if (positionMs < 0) throw ErrorResponse.userError("positionMs must not be negative")
             val durationMs = durationOfBookIn(libraryId, bookId)
-            val now = Instant.now()
+            val now = Clock.System.now()
             val existing = row(userId, bookId)
             val finished = durationMs > 0 && positionMs >= durationMs - FINISHED_THRESHOLD_MS
 
@@ -112,14 +114,14 @@ class ProgressRepositoryImpl :
     }
 
     override fun setFinished(
-        userId: UUID,
-        libraryId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
+        bookId: Uuid,
         finished: Boolean,
     ) {
         transaction {
             durationOfBookIn(libraryId, bookId)
-            val now = Instant.now()
+            val now = Clock.System.now()
             val existing = row(userId, bookId)
             val updated =
                 UserBookProgressRow(
@@ -139,14 +141,14 @@ class ProgressRepositoryImpl :
     }
 
     override fun setDismissed(
-        userId: UUID,
-        libraryId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
+        bookId: Uuid,
         dismissed: Boolean,
     ) {
         transaction {
             durationOfBookIn(libraryId, bookId)
-            val now = Instant.now()
+            val now = Clock.System.now()
             val existing = row(userId, bookId) ?: throw ErrorResponse.notFound("Progress", bookId)
             val updated = existing.copy(updatedAt = now, dismissedAt = if (dismissed) now else null)
             write(existing, updated)
@@ -154,11 +156,11 @@ class ProgressRepositoryImpl :
     }
 
     override fun continueListening(
-        userId: UUID,
+        userId: Uuid,
         limit: Int,
     ): List<Book> =
         transaction {
-            val cutoff = Instant.now().minus(WEEK.multipliedBy(config.continueListeningWeeks.toLong()))
+            val cutoff = Clock.System.now() - WEEK * config.continueListeningWeeks
             val readable = readableLibraries(userId)
             val rows =
                 UserBookProgressTable
@@ -179,7 +181,7 @@ class ProgressRepositoryImpl :
         }
 
     override fun history(
-        userId: UUID,
+        userId: Uuid,
         limit: Int,
         offset: Long,
     ): List<ListeningHistoryEntry> =
@@ -208,7 +210,7 @@ class ProgressRepositoryImpl :
             }
         }
 
-    override fun historyTotal(userId: UUID): Long =
+    override fun historyTotal(userId: Uuid): Long =
         transaction {
             ProgressLogTable
                 .selectAll()
@@ -225,7 +227,7 @@ class ProgressRepositoryImpl :
     ) {
         ProgressLogTable.insert(
             ProgressLogRow(
-                id = UUID.randomUUID(),
+                id = Uuid.random(),
                 user = progress.user,
                 book = progress.book,
                 library = progress.library,
@@ -245,10 +247,10 @@ class ProgressRepositoryImpl :
 
     context(_: Transaction)
     private fun booksById(
-        bookIds: List<UUID>,
-        userId: UUID,
-        readable: List<UUID>,
-    ): Map<UUID, Book> {
+        bookIds: List<Uuid>,
+        userId: Uuid,
+        readable: List<Uuid>,
+    ): Map<Uuid, Book> {
         // The progress log holds one row per write, so a page of history is mostly the same few books
         // repeated. Deduplicating keeps the IN list proportional to the books, not to the rows.
         val ids = bookIds.distinct()
@@ -263,8 +265,8 @@ class ProgressRepositoryImpl :
 
     context(_: Transaction)
     private fun row(
-        userId: UUID,
-        bookId: UUID,
+        userId: Uuid,
+        bookId: Uuid,
     ): UserBookProgressRow? =
         UserBookProgressTable
             .selectAll()
@@ -274,8 +276,8 @@ class ProgressRepositoryImpl :
 
     context(_: Transaction)
     private fun durationOfBookIn(
-        libraryId: UUID,
-        bookId: UUID,
+        libraryId: Uuid,
+        bookId: Uuid,
     ): Long {
         val total = TrackTable.durationMs.sum()
         val row =
@@ -288,5 +290,5 @@ class ProgressRepositoryImpl :
         return row[total] ?: 0
     }
 
-    private fun readableLibraries(userId: UUID): List<UUID> = resolveUserPermissions(userId).libraries.map { it.id }
+    private fun readableLibraries(userId: Uuid): List<Uuid> = resolveUserPermissions(userId).libraries.map { it.id }
 }

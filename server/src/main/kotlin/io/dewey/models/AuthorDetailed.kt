@@ -1,37 +1,27 @@
 package io.dewey.models
 
 import io.dewey.server.database.tables.AuthorField
-import java.time.LocalDate
-import java.util.UUID
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 class AuthorDetailed(
-    id: UUID,
-    libraryId: UUID,
-    name: String,
-    provider: String?,
-    providerID: String?,
-    biography: String?,
-    imageID: UUID?,
-    website: String?,
-    bornIn: String?,
-    birthDate: LocalDate?,
-    deathDate: LocalDate?,
+    val id: Uuid,
+    val libraryId: Uuid,
+    val name: String,
+    val provider: String?,
+    val providerID: String?,
+    val biography: String?,
+    val imageID: Uuid?,
+    val website: String?,
+    val bornIn: String?,
+    val birthDate: LocalDate?,
+    val deathDate: LocalDate?,
     val books: List<Book>,
     val series: List<Series>,
     val locked: List<AuthorField>,
-) : Author(
-        id = id,
-        libraryId = libraryId,
-        name = name,
-        provider = provider,
-        providerID = providerID,
-        biography = biography,
-        imageID = imageID,
-        website = website,
-        bornIn = bornIn,
-        birthDate = birthDate,
-        deathDate = deathDate,
-    ) {
+) {
     companion object {
         fun fromModel(
             author: Author,

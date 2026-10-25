@@ -2,18 +2,18 @@ package io.dewey.metadata.audible
 
 import io.dewey.metadata.htmlToText
 import io.dewey.metadata.parseDateOrNull
-import io.dewey.metadata.responses.MetadataAgentIDImpl
-import io.dewey.metadata.responses.MetadataBookImpl
-import io.dewey.metadata.responses.MetadataBookSeriesImpl
+import io.dewey.metadata.responses.MetadataAgentID
+import io.dewey.metadata.responses.MetadataBook
+import io.dewey.metadata.responses.MetadataBookSeries
 import io.dewey.metadata.responses.MetadataChapters
 import io.dewey.metadata.responses.MetadataLanguage
-import io.dewey.metadata.responses.MetadataSearchAuthorImpl
-import io.dewey.metadata.responses.MetadataSearchBookImpl
+import io.dewey.metadata.responses.MetadataSearchAuthor
+import io.dewey.metadata.responses.MetadataSearchBook
 import io.dewey.models.ChapterMark
 import io.dewey.server.common.extensions.replaceAll
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
 
 internal const val AUDIBLE_PROVIDER_NAME = "audible"
 
@@ -83,9 +83,9 @@ internal data class AudibleApiProduct(
     fun toMetadataBook(
         region: AudibleRegions,
         imageSize: Int,
-    ): MetadataBookImpl =
-        MetadataBookImpl(
-            id = MetadataAgentIDImpl(AUDIBLE_PROVIDER_NAME, asin),
+    ): MetadataBook =
+        MetadataBook(
+            id = MetadataAgentID(AUDIBLE_PROVIDER_NAME, asin),
             title = cleanTitle(region),
             link = audibleBookLink(region, asin),
             authors = authors.mapNotNull { it.toMetadataAuthor(region) },
@@ -103,9 +103,9 @@ internal data class AudibleApiProduct(
     fun toMetadataSearchBook(
         region: AudibleRegions,
         imageSize: Int,
-    ): MetadataSearchBookImpl =
-        MetadataSearchBookImpl(
-            id = MetadataAgentIDImpl(AUDIBLE_PROVIDER_NAME, asin),
+    ): MetadataSearchBook =
+        MetadataSearchBook(
+            id = MetadataAgentID(AUDIBLE_PROVIDER_NAME, asin),
             title = cleanTitle(region),
             link = audibleBookLink(region, asin),
             authors = authors.mapNotNull { it.toMetadataAuthor(region) },
@@ -135,11 +135,11 @@ internal data class AudibleApiPerson(
     val asin: String? = null,
     val name: String? = null,
 ) {
-    fun toMetadataAuthor(region: AudibleRegions): MetadataSearchAuthorImpl? {
+    fun toMetadataAuthor(region: AudibleRegions): MetadataSearchAuthor? {
         // Narrators and series placeholder products come without an ASIN, which makes them unusable as a referent
         val authorAsin = asin ?: return null
-        return MetadataSearchAuthorImpl(
-            id = MetadataAgentIDImpl(AUDIBLE_PROVIDER_NAME, authorAsin),
+        return MetadataSearchAuthor(
+            id = MetadataAgentID(AUDIBLE_PROVIDER_NAME, authorAsin),
             name = name,
             link = audibleAuthorLink(region, authorAsin),
         )
@@ -152,10 +152,10 @@ internal data class AudibleApiSeries(
     val title: String? = null,
     val sequence: String? = null,
 ) {
-    fun toMetadataBookSeries(region: AudibleRegions): MetadataBookSeriesImpl? {
+    fun toMetadataBookSeries(region: AudibleRegions): MetadataBookSeries? {
         val seriesAsin = asin ?: return null
-        return MetadataBookSeriesImpl(
-            id = MetadataAgentIDImpl(AUDIBLE_PROVIDER_NAME, seriesAsin),
+        return MetadataBookSeries(
+            id = MetadataAgentID(AUDIBLE_PROVIDER_NAME, seriesAsin),
             title = title,
             link = audibleSeriesLink(region, seriesAsin),
             index = sequence?.toFloatOrNull(),
@@ -196,4 +196,4 @@ internal fun audibleAuthorLink(
     asin: String,
 ) = "https://www.${region.host}/author/$asin"
 
-private fun parseDate(date: String?): LocalDate? = parseDateOrNull("Audible", date, LocalDate::parse)
+private fun parseDate(date: String?): LocalDate? = parseDateOrNull("Audible", date, java.time.LocalDate::parse)

@@ -3,12 +3,12 @@ package io.dewey.server.file.analyzer
 import io.dewey.server.file.tagger.ReadonlyFileTagger
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.time.Instant
 import kotlin.io.path.isDirectory
 import kotlin.io.path.readAttributes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Instant
 
 class AudioFileAnalyzersTest {
     private val testResources: Path =
@@ -53,7 +53,7 @@ class AudioFileAnalyzersTest {
         book = book,
         durationMs = 1,
         path = "/track.mp3",
-        lastModified = Instant.EPOCH,
+        lastModified = Instant.fromEpochMilliseconds(0),
         series = series,
         narrators = narrators,
         description = description,

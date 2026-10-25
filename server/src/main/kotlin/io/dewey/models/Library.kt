@@ -2,10 +2,12 @@ package io.dewey.models
 
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
-import java.util.UUID
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 data class Library(
-    val id: UUID,
+    val id: Uuid,
     val name: String,
     val icon: String?,
     val preferEmbeddedMetadata: Boolean,

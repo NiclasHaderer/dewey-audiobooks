@@ -25,7 +25,7 @@ dependencies {
     implementation(libs.swagger.ui)
 
     implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.serialization.jackson)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     // Tests
     testImplementation(libs.ktor.server.test.host)

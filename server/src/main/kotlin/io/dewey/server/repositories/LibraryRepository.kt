@@ -21,37 +21,41 @@ import io.dewey.server.file.scanner.LibraryRoots
 import io.dewey.server.file.scanner.LibraryWatcher
 import io.dewey.server.file.scanner.ScanRequest
 import io.dewey.server.schedules.DeweySchedules
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.nio.file.Path
-import java.util.UUID
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.uuid.Uuid
 
 // Serializes library create/modify so the folder-overlap check-then-write can't race (two concurrent
 // mutations both passing the overlap check). In-process lock: fine for a single app instance.
 private val libraryMutationLock = ReentrantLock()
 
 interface LibraryRepository {
-    fun raw(id: UUID): Library
+    fun raw(id: Uuid): Library
 
-    fun rescan(id: UUID)
+    fun rescan(id: Uuid)
 
-    fun get(id: UUID): Library
+    fun get(id: Uuid): Library
 
     fun getAll(): List<Library>
 
     fun modify(
-        id: UUID,
+        id: Uuid,
         partial: PartialUpdateLibrary,
     ): Library
 
     fun create(complete: UpdateLibrary): Library
 
-    fun delete(id: UUID)
+    fun delete(id: Uuid)
 }
 
 class LibraryRepositoryImpl :
@@ -63,15 +67,15 @@ class LibraryRepositoryImpl :
     private val roots by inject<LibraryRoots>()
     private val cleanup by inject<LibraryCleanup>()
 
-    override fun raw(id: UUID): Library = transaction { rawRow(id).toModel(bookCount(id)) }
+    override fun raw(id: Uuid): Library = transaction { rawRow(id).toModel(bookCount(id)) }
 
-    private fun bookCount(id: UUID): Long =
+    private fun bookCount(id: Uuid): Long =
         BookTable
             .selectAll()
             .where { (BookTable.library eq id) and BookTable.deferDeletionUntil.isNull() }
             .count()
 
-    private fun rawRow(id: UUID): LibraryRow =
+    private fun rawRow(id: Uuid): LibraryRow =
         transaction {
             LibraryTable
                 .selectAll()
@@ -81,18 +85,18 @@ class LibraryRepositoryImpl :
                 ?: throw ErrorResponse.notFound("Library", id)
         }
 
-    override fun rescan(id: UUID) {
+    override fun rescan(id: Uuid) {
         val library = raw(id)
         scheduler.dispatch(schedules.scanLibrary.build(ScanRequest(library.id)))
     }
 
-    override fun get(id: UUID): Library = raw(id)
+    override fun get(id: Uuid): Library = raw(id)
 
     override fun getAll(): List<Library> =
         transaction { LibraryTable.selectAll().map { it.toLibraryRow() }.map { it.toModel(bookCount(it.id)) } }
 
     override fun modify(
-        id: UUID,
+        id: Uuid,
         partial: PartialUpdateLibrary,
     ): Library =
         libraryMutationLock.withLock {
@@ -141,7 +145,7 @@ class LibraryRepositoryImpl :
                     raiseForOverlaps(null, complete.folders)
                     val row =
                         LibraryRow(
-                            id = UUID.randomUUID(),
+                            id = Uuid.random(),
                             name = complete.name,
                             icon = complete.icon,
                             scanIndex = 0uL,
@@ -163,7 +167,7 @@ class LibraryRepositoryImpl :
             model
         }
 
-    override fun delete(id: UUID) {
+    override fun delete(id: Uuid) {
         libraryMutationLock.withLock {
             transaction {
                 if (!LibraryTable.delete(id)) throw ErrorResponse.notFound("Library", id)
@@ -174,7 +178,7 @@ class LibraryRepositoryImpl :
     }
 
     fun overlappingFolders(
-        id: UUID?,
+        id: Uuid?,
         folders: List<String>,
     ): Pair<Boolean, List<Path>> {
         // Both sides have to be canonicalised the same way for the comparison to mean anything, so the
@@ -192,7 +196,7 @@ class LibraryRepositoryImpl :
     }
 
     private fun raiseForOverlaps(
-        libraryId: UUID?,
+        libraryId: Uuid?,
         folders: List<String>,
     ) {
         val (overlaps, overlapping) = overlappingFolders(libraryId, folders)
@@ -200,7 +204,10 @@ class LibraryRepositoryImpl :
         if (overlaps) {
             throw ErrorResponse.userError(
                 "Folders overlap with existing libraries",
-                mapOf("overlaps" to overlapping, "library" to libraryId),
+                buildJsonObject {
+                    put("overlaps", JsonArray(overlapping.map { JsonPrimitive(it.toString()) }))
+                    put("library", libraryId?.toString())
+                },
             )
         }
     }

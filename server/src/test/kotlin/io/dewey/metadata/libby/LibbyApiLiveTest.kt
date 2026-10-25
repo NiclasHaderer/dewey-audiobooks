@@ -3,8 +3,8 @@ package io.dewey.metadata.libby
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.Tag
-import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -36,7 +36,7 @@ class LibbyApiLiveTest {
                 book.authors?.first()?.link,
             )
             assertEquals(listOf("Stephen Fry"), book.narrators)
-            assertEquals(LocalDate.of(2024, 4, 18), book.releaseDate)
+            assertEquals(LocalDate(2024, 4, 18), book.releaseDate)
             assertEquals("Pottermore Publishing", book.publisher)
             assertEquals(MetadataLanguage.English, book.language)
             assertEquals("9781789392333", book.isbn)

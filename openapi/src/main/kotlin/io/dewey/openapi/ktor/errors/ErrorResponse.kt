@@ -1,55 +1,56 @@
 package io.dewey.openapi.ktor.errors
 
 import io.ktor.http.HttpStatusCode
-import java.util.UUID
+import kotlinx.serialization.json.JsonElement
+import kotlin.uuid.Uuid
 
 class ErrorResponse private constructor(
     val status: HttpStatusCode,
     val error: String,
-    val details: Any? = null,
+    val details: JsonElement? = null,
 ) : Exception(error) {
     companion object {
         fun notFound(
             thing: String,
-            id: UUID,
-            details: Any? = null,
+            id: Uuid,
+            details: JsonElement? = null,
         ): ErrorResponse = notFound(thing, id.toString(), details)
 
         fun notFound(
             type: String,
             actual: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.NotFound, "$type '$actual' not found", details)
 
         fun missing(
             error: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.NotFound, error, details)
 
         fun userError(
             error: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.BadRequest, error, details)
 
         fun unauthorized(
             error: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.Unauthorized, error, details)
 
         fun forbidden(
             action: String,
             resource: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.Forbidden, "Forbidden to $action $resource", details)
 
         fun notImplemented(
             error: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.NotImplemented, error, details)
 
         fun internalError(
             error: String,
-            details: Any? = null,
+            details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.InternalServerError, error, details)
     }
 }

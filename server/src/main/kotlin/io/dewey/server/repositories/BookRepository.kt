@@ -54,29 +54,29 @@ import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.nio.file.Path
-import java.time.Instant
-import java.util.UUID
 import kotlin.math.abs
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 interface BookRepository : Repository<BookRow, Book, BookDetailed, BookUpdate> {
     fun findByTaggedName(
         bookTitle: String,
-        authorIds: List<UUID>,
-        libraryId: UUID,
+        authorIds: List<Uuid>,
+        libraryId: Uuid,
     ): BookRow?
 
     fun getOrCreate(
         bookName: String,
-        libraryId: UUID,
-        authors: List<UUID>,
-        series: List<UUID>,
+        libraryId: Uuid,
+        authors: List<Uuid>,
+        series: List<Uuid>,
     ): BookRow
 
     fun create(
         bookName: String,
-        libraryId: UUID,
-        authors: List<UUID>,
-        series: List<UUID>,
+        libraryId: Uuid,
+        authors: List<Uuid>,
+        series: List<Uuid>,
     ): BookRow
 }
 
@@ -92,7 +92,7 @@ class BookRepositoryImpl :
     private val pipeline by inject<LibraryImportPipeline>()
 
     override fun total(
-        libraryId: UUID,
+        libraryId: Uuid,
         showInvisible: Boolean,
     ) = transaction {
         BookTable
@@ -103,8 +103,8 @@ class BookRepositoryImpl :
     }
 
     override fun getAll(
-        userId: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
         order: SortOrder,
         limit: Int,
         offset: Long,
@@ -124,8 +124,8 @@ class BookRepositoryImpl :
         }
 
     override fun raw(
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ): BookRow =
         transaction {
             BookTable
@@ -138,17 +138,17 @@ class BookRepositoryImpl :
 
     override fun findByTaggedName(
         bookTitle: String,
-        authorIds: List<UUID>,
-        libraryId: UUID,
+        authorIds: List<Uuid>,
+        libraryId: Uuid,
     ): BookRow? =
         transaction {
             idOfTaggedName(escape(bookTitle), authorIds, libraryId)?.let { raw(it, libraryId) }
         }
 
     override fun get(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         showInvisible: Boolean,
     ): BookDetailed =
         transaction {
@@ -167,7 +167,7 @@ class BookRepositoryImpl :
         }
 
     context(_: Transaction)
-    private fun orderedTracks(bookId: UUID): List<Pair<TrackRow, Int>> {
+    private fun orderedTracks(bookId: Uuid): List<Pair<TrackRow, Int>> {
         val tracks =
             TrackTable
                 .selectAll()
@@ -183,9 +183,9 @@ class BookRepositoryImpl :
     }
 
     override fun search(
-        userId: UUID,
+        userId: Uuid,
         query: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): List<Book> =
         transaction {
             val rows =
@@ -201,9 +201,9 @@ class BookRepositoryImpl :
         }
 
     override fun modify(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         partial: BookUpdate,
     ): Book {
         val currentCover = raw(id, libraryId).coverID
@@ -273,8 +273,8 @@ class BookRepositoryImpl :
     // its last analysis. Forgetting when that was makes the pipeline read the book's files again, and the next
     // scan does it should the queued paths get lost.
     context(_: Transaction)
-    private fun forgetAnalysis(bookId: UUID): List<Path> {
-        TrackTable.update({ TrackTable.book eq bookId }) { it[fileModifiedAt] = Instant.EPOCH }
+    private fun forgetAnalysis(bookId: Uuid): List<Path> {
+        TrackTable.update({ TrackTable.book eq bookId }) { it[fileModifiedAt] = Instant.fromEpochMilliseconds(0) }
         return TrackTable
             .select(TrackTable.path)
             .where { TrackTable.book eq bookId }
@@ -283,9 +283,9 @@ class BookRepositoryImpl :
 
     override fun create(
         bookName: String,
-        libraryId: UUID,
-        authors: List<UUID>,
-        series: List<UUID>,
+        libraryId: Uuid,
+        authors: List<Uuid>,
+        series: List<Uuid>,
     ): BookRow =
         transaction {
             val id = BookTable.create(libraryRepository.raw(libraryId).id, bookName, taggedName = bookName)
@@ -297,18 +297,18 @@ class BookRepositoryImpl :
 
     override fun getOrCreate(
         bookName: String,
-        libraryId: UUID,
-        authors: List<UUID>,
-        series: List<UUID>,
+        libraryId: Uuid,
+        authors: List<Uuid>,
+        series: List<Uuid>,
     ): BookRow =
         transaction {
             findByTaggedName(bookName, authors, libraryId) ?: create(bookName, libraryId, authors, series)
         }
 
     override fun autoMatch(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
     ): Book {
         val (metadataWrapper, bookName, region, authorName, language, narrator, preferFile) =
             transaction {
@@ -394,9 +394,9 @@ class BookRepositoryImpl :
 context(_: Transaction)
 private fun idOfTaggedName(
     pattern: String,
-    authorIds: List<UUID>,
-    libraryId: UUID,
-): UUID? =
+    authorIds: List<Uuid>,
+    libraryId: Uuid,
+): Uuid? =
     BookTable
         .select(BookTable.id)
         .where {

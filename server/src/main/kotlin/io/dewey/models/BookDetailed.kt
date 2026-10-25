@@ -2,53 +2,35 @@ package io.dewey.models
 
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.server.database.tables.BookField
-import java.time.LocalDate
-import java.util.UUID
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 class BookDetailed(
-    id: UUID,
-    libraryId: UUID,
-    authors: List<NamedId>,
-    series: List<TitledId>,
-    title: String,
-    provider: String?,
-    providerID: String?,
-    providerRating: Float?,
-    releaseDate: LocalDate?,
-    publisher: String?,
-    language: MetadataLanguage?,
-    description: String?,
-    narrators: List<String>,
-    isbn: String?,
-    coverID: UUID?,
-    genres: List<String>,
-    durationMs: Long,
-    positionMs: Long,
-    status: PlayStatus,
+    val id: Uuid,
+    val libraryId: Uuid,
+    val authors: List<NamedId>,
+    val series: List<TitledId>,
+    val title: String,
+    val provider: String?,
+    val providerID: String?,
+    val providerRating: Float?,
+    val releaseDate: LocalDate?,
+    val publisher: String?,
+    val language: MetadataLanguage?,
+    val description: String?,
+    val narrators: List<String>,
+    val isbn: String?,
+    val coverID: Uuid?,
+    val genres: List<String>,
+    val durationMs: Long,
+    val positionMs: Long,
+    val status: PlayStatus,
     val tracks: List<Track>,
     val chapters: List<Chapter>,
     val locked: List<BookField>,
-) : Book(
-        id = id,
-        libraryId = libraryId,
-        title = title,
-        releaseDate = releaseDate,
-        language = language,
-        description = description,
-        authors = authors,
-        narrators = narrators,
-        series = series,
-        coverID = coverID,
-        isbn = isbn,
-        provider = provider,
-        providerID = providerID,
-        providerRating = providerRating,
-        publisher = publisher,
-        genres = genres,
-        durationMs = durationMs,
-        positionMs = positionMs,
-        status = status,
-    ) {
+) {
     companion object {
         fun fromModel(
             book: Book,

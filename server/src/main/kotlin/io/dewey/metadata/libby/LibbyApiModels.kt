@@ -2,14 +2,14 @@ package io.dewey.metadata.libby
 
 import io.dewey.metadata.htmlToText
 import io.dewey.metadata.parseDateOrNull
-import io.dewey.metadata.responses.MetadataAgentIDImpl
-import io.dewey.metadata.responses.MetadataBookImpl
-import io.dewey.metadata.responses.MetadataBookSeriesImpl
+import io.dewey.metadata.responses.MetadataAgentID
+import io.dewey.metadata.responses.MetadataBook
+import io.dewey.metadata.responses.MetadataBookSeries
 import io.dewey.metadata.responses.MetadataLanguage
-import io.dewey.metadata.responses.MetadataSearchAuthorImpl
-import io.dewey.metadata.responses.MetadataSearchBookImpl
+import io.dewey.metadata.responses.MetadataSearchAuthor
+import io.dewey.metadata.responses.MetadataSearchBook
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
 import java.time.OffsetDateTime
 
 internal const val LIBBY_PROVIDER_NAME = "libby"
@@ -41,9 +41,9 @@ internal data class LibbyApiMedia(
     fun toMetadataBook(
         libraryKey: String,
         imageSize: Int,
-    ): MetadataBookImpl =
-        MetadataBookImpl(
-            id = MetadataAgentIDImpl(LIBBY_PROVIDER_NAME, id),
+    ): MetadataBook =
+        MetadataBook(
+            id = MetadataAgentID(LIBBY_PROVIDER_NAME, id),
             title = title,
             link = libbyBookLink(id),
             authors = creators.filter { it.role == AUTHOR_ROLE }.mapNotNull { it.toMetadataAuthor(libraryKey) },
@@ -61,9 +61,9 @@ internal data class LibbyApiMedia(
     fun toMetadataSearchBook(
         libraryKey: String,
         imageSize: Int,
-    ): MetadataSearchBookImpl =
-        MetadataSearchBookImpl(
-            id = MetadataAgentIDImpl(LIBBY_PROVIDER_NAME, id),
+    ): MetadataSearchBook =
+        MetadataSearchBook(
+            id = MetadataAgentID(LIBBY_PROVIDER_NAME, id),
             title = title,
             link = libbyBookLink(id),
             authors = creators.filter { it.role == AUTHOR_ROLE }.mapNotNull { it.toMetadataAuthor(libraryKey) },
@@ -89,10 +89,10 @@ internal data class LibbyApiCreator(
     val name: String? = null,
     val role: String? = null,
 ) {
-    fun toMetadataAuthor(libraryKey: String): MetadataSearchAuthorImpl? {
+    fun toMetadataAuthor(libraryKey: String): MetadataSearchAuthor? {
         val creatorId = id ?: return null
-        return MetadataSearchAuthorImpl(
-            id = MetadataAgentIDImpl(LIBBY_PROVIDER_NAME, creatorId.toString()),
+        return MetadataSearchAuthor(
+            id = MetadataAgentID(LIBBY_PROVIDER_NAME, creatorId.toString()),
             name = name,
             link = libbyAuthorLink(libraryKey, creatorId.toString()),
         )
@@ -116,10 +116,10 @@ internal data class LibbyApiDetailedSeries(
     val seriesName: String? = null,
     val readingOrder: String? = null,
 ) {
-    fun toMetadataBookSeries(libraryKey: String): MetadataBookSeriesImpl? {
+    fun toMetadataBookSeries(libraryKey: String): MetadataBookSeries? {
         val id = seriesId ?: return null
-        return MetadataBookSeriesImpl(
-            id = MetadataAgentIDImpl(LIBBY_PROVIDER_NAME, id.toString()),
+        return MetadataBookSeries(
+            id = MetadataAgentID(LIBBY_PROVIDER_NAME, id.toString()),
             title = seriesName,
             link = libbySeriesLink(libraryKey, id.toString()),
             index = readingOrder?.toFloatOrNull(),

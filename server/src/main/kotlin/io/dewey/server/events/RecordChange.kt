@@ -8,7 +8,7 @@ import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.statements.StatementInterceptor
 import org.jetbrains.exposed.v1.jdbc.transactions.TransactionManager
 import org.koin.mp.KoinPlatform
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 private val recordedKey = Key<RecordedChanges>()
 
@@ -16,8 +16,8 @@ context(_: Transaction)
 fun recordChange(
     entity: ChangedEntity,
     type: ChangeType,
-    id: UUID,
-    libraryId: UUID,
+    id: Uuid,
+    libraryId: Uuid,
 ) {
     val transaction = TransactionManager.current()
     transaction
@@ -26,7 +26,7 @@ fun recordChange(
 }
 
 private class RecordedChanges : StatementInterceptor {
-    private val changes = LinkedHashMap<Pair<ChangedEntity, UUID>, ChangeEvent>()
+    private val changes = LinkedHashMap<Pair<ChangedEntity, Uuid>, ChangeEvent>()
 
     fun add(event: ChangeEvent) {
         val key = event.entity to event.id

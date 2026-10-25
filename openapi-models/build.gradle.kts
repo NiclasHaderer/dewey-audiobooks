@@ -1,6 +1,12 @@
 plugins {
     kotlin("jvm")
     id("maven-publish")
+    kotlin("plugin.serialization")
+}
+
+dependencies {
+    api(libs.kotlinx.serialization.json)
+    api(libs.kotlinx.datetime)
 }
 
 afterEvaluate {

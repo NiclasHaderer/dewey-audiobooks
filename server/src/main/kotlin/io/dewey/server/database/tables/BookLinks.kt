@@ -11,31 +11,31 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.update
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 context(_: Transaction)
-fun bookIdsLinkedToSeries(seriesId: UUID): List<UUID> =
+fun bookIdsLinkedToSeries(seriesId: Uuid): List<Uuid> =
     SeriesBookTable
         .select(SeriesBookTable.book)
         .where { SeriesBookTable.series eq seriesId }
         .map { it[SeriesBookTable.book].value }
 
 context(_: Transaction)
-fun bookIdsLinkedToAuthor(authorId: UUID): List<UUID> =
+fun bookIdsLinkedToAuthor(authorId: Uuid): List<Uuid> =
     AuthorBookTable
         .select(AuthorBookTable.book)
         .where { AuthorBookTable.author eq authorId }
         .map { it[AuthorBookTable.book].value }
 
 context(_: Transaction)
-fun seriesIdsLinkedToBook(bookId: UUID): List<UUID> =
+fun seriesIdsLinkedToBook(bookId: Uuid): List<Uuid> =
     SeriesBookTable
         .select(SeriesBookTable.series)
         .where { SeriesBookTable.book eq bookId }
         .map { it[SeriesBookTable.series].value }
 
 context(_: Transaction)
-fun authorIdsLinkedToBook(bookId: UUID): List<UUID> =
+fun authorIdsLinkedToBook(bookId: Uuid): List<Uuid> =
     AuthorBookTable
         .select(AuthorBookTable.author)
         .where { AuthorBookTable.book eq bookId }
@@ -43,8 +43,8 @@ fun authorIdsLinkedToBook(bookId: UUID): List<UUID> =
 
 context(_: Transaction)
 fun replaceBookAuthors(
-    bookId: UUID,
-    authorIds: Collection<UUID>,
+    bookId: Uuid,
+    authorIds: Collection<Uuid>,
 ) = with(AuthorBookTable) {
     val wanted = authorIds.toSet()
     val existing = authorIdsLinkedToBook(bookId).toSet()
@@ -65,8 +65,8 @@ fun replaceBookAuthors(
 // about its position, and dropping the position the tags gave it would be a loss nobody asked for.
 context(_: Transaction)
 fun replaceBookSeries(
-    bookId: UUID,
-    targets: Map<UUID, Float?>,
+    bookId: Uuid,
+    targets: Map<Uuid, Float?>,
 ) = with(SeriesBookTable) {
     val existing = seriesIdsLinkedToBook(bookId).toSet()
     deleteWhere { (book eq bookId) and (series notInList targets.keys) }

@@ -4,11 +4,11 @@ import io.dewey.auth.models.DeweyDatabaseUser
 import io.dewey.models.User
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Transaction
-import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.jdbc.insert
-import java.util.UUID
+import kotlin.uuid.Uuid
 
-object UserTable : UUIDTable("user") {
+object UserTable : UuidTable("user") {
     val username = varchar("username", 255).uniqueIndex()
     val passwordHash = varchar("password_hash", 255)
     val admin = bool("admin").default(false)
@@ -16,7 +16,7 @@ object UserTable : UUIDTable("user") {
 }
 
 data class UserRow(
-    val id: UUID,
+    val id: Uuid,
     val username: String,
     val passwordHash: String,
     val admin: Boolean,
@@ -43,7 +43,7 @@ fun ResultRow.toUserRow(): UserRow =
     )
 
 context(_: Transaction)
-fun UserTable.insert(row: UserRow): UUID {
+fun UserTable.insert(row: UserRow): Uuid {
     insert {
         it[id] = row.id
         it[username] = row.username

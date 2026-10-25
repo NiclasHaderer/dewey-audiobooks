@@ -21,12 +21,12 @@ import io.dewey.openapi.ktor.Secured
 import io.dewey.openapi.ktor.Summary
 import io.dewey.openapi.ktor.Tagged
 import io.dewey.openapi.ktor.errors.ErrorResponse
-import io.dewey.openapi.serializion.kotlin.UUID_S
 import io.dewey.server.plugins.auth.Guards
 import io.dewey.server.plugins.auth.UserScoped
 import io.dewey.server.plugins.auth.assertLibraryPermissions
 import io.ktor.resources.Resource
 import io.ktor.server.routing.RoutingContext
+import kotlin.uuid.Uuid
 
 @Resource("api")
 class Api {
@@ -92,7 +92,7 @@ class Api {
             @Summary("Get user", method = "GET")
             @Summary("Delete user", method = "DELETE")
             data class Id(
-                override val id: UUID_S,
+                override val id: Uuid,
                 private val parent: User,
             ) : DeweyDeleteUserParams,
                 DeweyDisplayUserParams {
@@ -101,7 +101,7 @@ class Api {
                 data class Username(
                     private val parent: Id,
                 ) : DeweyRenameUserParams {
-                    override val id: UUID_S
+                    override val id: Uuid
                         get() = parent.id
                 }
 
@@ -110,7 +110,7 @@ class Api {
                 data class Password(
                     private val parent: Id,
                 ) : DeweyChangePasswordParams {
-                    override val id: UUID_S
+                    override val id: Uuid
                         get() = parent.id
                 }
 
@@ -120,7 +120,7 @@ class Api {
                 data class Permissions(
                     private val parent: Id,
                 ) : DeweyModifyPermissionsParams {
-                    override val id: UUID_S
+                    override val id: Uuid
                         get() = parent.id
                 }
             }
@@ -224,7 +224,7 @@ class Api {
         @Summary("Update library", method = "PATCH")
         @Summary("Get library", method = "GET")
         data class Id(
-            val libraryId: UUID_S,
+            val libraryId: Uuid,
             private val parent: Libraries,
         ) : BeforeBodyParsing {
             override suspend fun RoutingContext.beforeBodyParsing() {
@@ -275,7 +275,7 @@ class Api {
                 @Summary("Update book", method = "PATCH")
                 @Resource("{id}")
                 data class Id(
-                    val id: UUID_S,
+                    val id: Uuid,
                     private val parent: Books,
                 ) {
                     val libraryId
@@ -367,7 +367,7 @@ class Api {
                 @Summary("Update author", method = "PATCH")
                 @Resource("{id}")
                 data class Id(
-                    val id: UUID_S,
+                    val id: Uuid,
                     private val parent: Authors,
                 ) {
                     val libraryId
@@ -485,7 +485,7 @@ class Api {
                 @Summary("Update series", method = "PATCH")
                 @Resource("{id}")
                 data class Id(
-                    val id: UUID_S,
+                    val id: Uuid,
                     private val parent: Series,
                 ) {
                     val libraryId
@@ -634,7 +634,7 @@ class Api {
             @Summary("Get audio file", method = "GET")
             @Resource("{id}")
             data class Id(
-                val id: UUID_S,
+                val id: Uuid,
                 private val parent: Audio,
             )
         }
@@ -646,7 +646,7 @@ class Api {
             @Summary("Get image file", method = "GET")
             @Resource("{id}")
             data class Id(
-                val id: UUID_S,
+                val id: Uuid,
                 private val parent: Images,
             )
         }

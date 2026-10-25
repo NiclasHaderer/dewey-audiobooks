@@ -6,11 +6,13 @@ import io.dewey.openapi.ktor.ValidateObject
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.dewey.server.database.tables.SeriesField
 import io.ktor.server.routing.RoutingContext
-import java.util.UUID
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 data class SeriesUpdate(
     val title: Patch<String> = Patch.Absent,
-    val books: Patch<List<UUID>> = Patch.Absent,
+    val books: Patch<List<Uuid>> = Patch.Absent,
     val provider: Patch<String?> = Patch.Absent,
     val providerID: Patch<String?> = Patch.Absent,
     val totalBooks: Patch<Int?> = Patch.Absent,

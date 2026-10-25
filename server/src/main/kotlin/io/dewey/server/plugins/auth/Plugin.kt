@@ -27,7 +27,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.ktor.ext.inject
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 private fun <T> rejectDuplicateUsername(
     username: String,
@@ -43,7 +43,7 @@ private fun <T> rejectDuplicateUsername(
     }
 
 context(_: Transaction)
-internal fun userRow(id: UUID): UserRow? =
+internal fun userRow(id: Uuid): UserRow? =
     UserTable
         .selectAll()
         .where { UserTable.id eq id }
@@ -97,7 +97,7 @@ fun Application.configureAuthentication() {
                 rejectDuplicateUsername(newUser.username) {
                     val row =
                         UserRow(
-                            id = UUID.randomUUID(),
+                            id = Uuid.random(),
                             username = newUser.username,
                             passwordHash = newUser.passwordHash,
                             admin = newUser.admin,

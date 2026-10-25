@@ -61,12 +61,16 @@ class InterfaceKtGenerator : KtTypeGenerator() {
                         isImpl = true,
                         includeBounds = true,
                     )
+                if (classType.hasPatch) append("@OptIn(ExperimentalSerializationApi::class)\n")
+                append("@Serializable\n")
                 append("data class $dataClassName(\n")
                 ktImplProperties.mapIndexed { i, it ->
                     val propClassType = classType.forMember(it.underlyingProperty)
                     val subType = generateSubType(propClassType)
 
-                    append("    override val ${it.name}: ")
+                    append("    ")
+                    if (it.underlyingProperty.isPatch) append("@EncodeDefault(EncodeDefault.Mode.NEVER) ")
+                    append("override val ${it.name}: ")
                     if (it.underlyingProperty.returnType.classifier is KTypeParameter) {
                         append(it.type.name)
                     } else {
@@ -119,6 +123,8 @@ class InterfaceKtGenerator : KtTypeGenerator() {
         return classInterface + "\n\n" + classInterfaceImpl
     }
 
+    private val ClassType.hasPatch: Boolean get() = memberProperties.any { it.isPatch }
+
     override fun getName(classType: ClassType): String = classType.simpleName
 
     override fun getInsertionMode(classType: ClassType): KtDataType = KtDataType.COMPLEX
@@ -126,9 +132,15 @@ class InterfaceKtGenerator : KtTypeGenerator() {
     override fun withImports(
         classType: ClassType,
         generateSubType: GenerateType<KtType>,
-    ): List<String> =
-        classType.memberProperties
-            .flatMap {
+    ): List<String> {
+        val serialization =
+            listOfNotNull(
+                "import kotlinx.serialization.Serializable",
+                "import kotlinx.serialization.EncodeDefault".takeIf { classType.hasPatch },
+                "import kotlinx.serialization.ExperimentalSerializationApi".takeIf { classType.hasPatch },
+            )
+        val members =
+            classType.memberProperties.flatMap {
                 // If the property is a generic type, we can skip it
                 if (classType.isGenericProperty(it)) {
                     emptyList()
@@ -136,7 +148,9 @@ class InterfaceKtGenerator : KtTypeGenerator() {
                     val type = generateSubType(classType.forMember(it))
                     type.imports()
                 }
-            }.distinct()
+            }
+        return (serialization + members).distinct()
+    }
 
     override fun generateReference(
         classType: ClassType,

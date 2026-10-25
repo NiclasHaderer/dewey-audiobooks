@@ -1,3 +1,6 @@
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+
 enum class ApiErrorType {
     HTTP,
     Connection,
@@ -5,10 +8,11 @@ enum class ApiErrorType {
     Unknown,
 }
 
+@Serializable
 open class InternalApiError(
     val status: Int,
     val error: String,
-    val details: String? = null,
+    val details: JsonElement? = null,
     val body: String? = null,
 )
 
@@ -16,7 +20,7 @@ class ApiError(
     val type: ApiErrorType,
     status: Int,
     error: String,
-    details: String? = null,
+    details: JsonElement? = null,
     body: String? = null,
 ) : InternalApiError(status, error, details, body) {
     constructor(type: ApiErrorType, error: InternalApiError) : this(

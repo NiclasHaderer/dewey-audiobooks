@@ -2,18 +2,18 @@ package io.dewey.metadata.audiobookdb
 
 import io.dewey.metadata.htmlToText
 import io.dewey.metadata.parseDateOrNull
-import io.dewey.metadata.responses.MetadataAgentIDImpl
-import io.dewey.metadata.responses.MetadataAuthorImpl
-import io.dewey.metadata.responses.MetadataBookImpl
-import io.dewey.metadata.responses.MetadataBookSeriesImpl
+import io.dewey.metadata.responses.MetadataAgentID
+import io.dewey.metadata.responses.MetadataAuthor
+import io.dewey.metadata.responses.MetadataBook
+import io.dewey.metadata.responses.MetadataBookSeries
 import io.dewey.metadata.responses.MetadataChapters
 import io.dewey.metadata.responses.MetadataLanguage
-import io.dewey.metadata.responses.MetadataSearchAuthorImpl
-import io.dewey.metadata.responses.MetadataSearchBookImpl
-import io.dewey.metadata.responses.MetadataSeriesImpl
+import io.dewey.metadata.responses.MetadataSearchAuthor
+import io.dewey.metadata.responses.MetadataSearchBook
+import io.dewey.metadata.responses.MetadataSeries
 import io.dewey.models.ChapterMark
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import java.time.LocalDate
 import java.time.OffsetDateTime
 
 internal const val AUDIOBOOKDB_PROVIDER_NAME = "audiobookdb"
@@ -26,9 +26,9 @@ internal data class AudiobookDbApiIdName(
     val id: String,
     val name: String? = null,
 ) {
-    fun toMetadataAuthor(): MetadataSearchAuthorImpl =
-        MetadataSearchAuthorImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, id),
+    fun toMetadataAuthor(): MetadataSearchAuthor =
+        MetadataSearchAuthor(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, id),
             name = name,
             link = authorLink(id),
         )
@@ -39,9 +39,9 @@ internal data class AudiobookDbApiIdTitle(
     val id: String,
     val title: String? = null,
 ) {
-    fun toMetadataBookSeries(index: Float?): MetadataBookSeriesImpl =
-        MetadataBookSeriesImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, id),
+    fun toMetadataBookSeries(index: Float?): MetadataBookSeries =
+        MetadataBookSeries(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, id),
             title = title,
             link = seriesLink(id),
             index = index,
@@ -83,9 +83,9 @@ internal data class AudiobookDbApiListRelease(
         get() = MetadataLanguage.fromTag(language?.name)
 
     // The authors and the series live on the book behind the release, which a search hit does not name
-    fun toMetadataSearchBook(): MetadataSearchBookImpl =
-        MetadataSearchBookImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, id),
+    fun toMetadataSearchBook(): MetadataSearchBook =
+        MetadataSearchBook(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, id),
             title = title,
             link = releaseLink(id),
             authors = null,
@@ -115,7 +115,7 @@ internal data class AudiobookDbApiBookSeries(
     val ordinal: String? = null,
     val series: AudiobookDbApiIdTitle? = null,
 ) {
-    fun toMetadataBookSeries(): MetadataBookSeriesImpl? = series?.toMetadataBookSeries(ordinal?.toFloatOrNull())
+    fun toMetadataBookSeries(): MetadataBookSeries? = series?.toMetadataBookSeries(ordinal?.toFloatOrNull())
 }
 
 @Serializable
@@ -142,9 +142,9 @@ internal data class AudiobookDbApiReleaseDetail(
     fun toMetadataBook(
         book: AudiobookDbApiBook?,
         rating: Float?,
-    ): MetadataBookImpl =
-        MetadataBookImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, id),
+    ): MetadataBook =
+        MetadataBook(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, id),
             title = title ?: book?.title,
             link = releaseLink(id),
             authors =
@@ -187,9 +187,9 @@ internal data class AudiobookDbApiPerson(
     val links: List<String> = emptyList(),
     val images: List<AudiobookDbApiImage> = emptyList(),
 ) {
-    fun toMetadataAuthor(): MetadataAuthorImpl =
-        MetadataAuthorImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, id),
+    fun toMetadataAuthor(): MetadataAuthor =
+        MetadataAuthor(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, id),
             name = name,
             link = authorLink(id),
             imageURL = images.firstOrNull()?.fileUrl,
@@ -209,14 +209,14 @@ internal data class AudiobookDbApiSeries(
     val images: List<AudiobookDbApiImage> = emptyList(),
     val books: List<AudiobookDbApiSeriesEntry> = emptyList(),
 ) {
-    fun toMetadataSeries(): MetadataSeriesImpl {
+    fun toMetadataSeries(): MetadataSeries {
         val seriesRef = AudiobookDbApiIdTitle(id, title)
         val books =
             books
                 .sortedBy { it.ordinal?.toFloatOrNull() ?: Float.MAX_VALUE }
                 .mapNotNull { it.toMetadataSearchBook(seriesRef) }
-        return MetadataSeriesImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, id),
+        return MetadataSeries(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, id),
             title = title,
             link = seriesLink(id),
             description = htmlToText(description),
@@ -234,10 +234,10 @@ internal data class AudiobookDbApiSeriesEntry(
     val ordinal: String? = null,
     val book: AudiobookDbApiSeriesBook? = null,
 ) {
-    fun toMetadataSearchBook(series: AudiobookDbApiIdTitle): MetadataSearchBookImpl? {
+    fun toMetadataSearchBook(series: AudiobookDbApiIdTitle): MetadataSearchBook? {
         val book = book ?: return null
-        return MetadataSearchBookImpl(
-            id = MetadataAgentIDImpl(AUDIOBOOKDB_PROVIDER_NAME, book.id),
+        return MetadataSearchBook(
+            id = MetadataAgentID(AUDIOBOOKDB_PROVIDER_NAME, book.id),
             title = book.title,
             link = bookLink(book.id),
             authors = null,

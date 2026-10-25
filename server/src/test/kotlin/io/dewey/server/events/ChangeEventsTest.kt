@@ -37,13 +37,13 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.koin.mp.KoinPlatform.getKoin
-import java.time.Instant
-import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class ChangeEventsTest : DeweyTest() {
     // Unconfined runs the listener on the publishing thread, so a batch is recorded before its commit returns
@@ -63,15 +63,15 @@ class ChangeEventsTest : DeweyTest() {
 
     private fun book(
         type: ChangeType,
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ) = ChangeEvent(ChangedEntity.BOOK, type, id, libraryId)
 
-    private fun recounted(libraryId: UUID) =
+    private fun recounted(libraryId: Uuid) =
         ChangeEvent(ChangedEntity.LIBRARY, ChangeType.UPDATED, libraryId, libraryId)
 
     private fun rename(
-        bookId: UUID,
+        bookId: Uuid,
         title: String,
     ) = transaction {
         val row = BookTable
@@ -86,7 +86,7 @@ class ChangeEventsTest : DeweyTest() {
     fun `a transaction announces a new book once, with the author it was added to`() {
         val libId = newLibrary("lib")
         val authorId = newAuthor("Frank Herbert", libId)
-        lateinit var bookId: UUID
+        lateinit var bookId: Uuid
 
         val batches = batchesOf { bookId = newBook("Dune", libId, authors = listOf(authorId)) }
 
@@ -109,10 +109,10 @@ class ChangeEventsTest : DeweyTest() {
             book = book,
             durationMs = 60_000,
             path = "/media/lib/1.mp3",
-            lastModified = Instant.EPOCH,
+            lastModified = Instant.fromEpochMilliseconds(0),
         )
 
-    private fun bookId(title: String): UUID =
+    private fun bookId(title: String): Uuid =
         transaction {
             BookTable
                 .select(BookTable.id)
@@ -276,7 +276,7 @@ class ChangeEventsTest : DeweyTest() {
 
     @Test
     fun `a library is announced when it is created and deleted, without the books that go with it`() {
-        lateinit var libId: UUID
+        lateinit var libId: Uuid
         val created = batchesOf { libId = newLibrary("lib") }
         newBook("Dune", libId)
 

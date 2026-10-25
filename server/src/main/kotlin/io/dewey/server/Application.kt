@@ -79,10 +79,10 @@ fun Application.plugins() {
     }
     configureRouting()
     configureSecurityHeaders()
-    val mapper = configureSerialization()
+    configureSerialization()
     configureOpenApi()
     configurePartialContent()
-    configureSockets(mapper)
+    configureSockets()
     configureMonitoring()
     configureAuthentication()
 }

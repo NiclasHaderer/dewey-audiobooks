@@ -1,11 +1,9 @@
 package io.dewey.metadata.responses
 
-interface MetadataAgentID {
-    val provider: String
-    val itemID: String
-}
+import kotlinx.serialization.Serializable
 
-data class MetadataAgentIDImpl(
-    override val provider: String,
-    override val itemID: String,
-) : MetadataAgentID
+@Serializable
+data class MetadataAgentID(
+    val provider: String,
+    val itemID: String,
+)

@@ -1,14 +1,11 @@
 package io.dewey.metadata
 
 import io.dewey.metadata.responses.MetadataAuthor
-import io.dewey.metadata.responses.MetadataAuthorImpl
 import io.dewey.metadata.responses.MetadataBook
-import io.dewey.metadata.responses.MetadataBookImpl
 import io.dewey.metadata.responses.MetadataChapters
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
 import io.dewey.metadata.responses.MetadataSeries
-import io.dewey.metadata.responses.MetadataSeriesImpl
 import io.github.oshai.kotlinlogging.KotlinLogging.logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -167,7 +164,7 @@ private fun MetadataBook.isWrittenBy(authorName: String?): Boolean =
         authors.orEmpty().any { FuzzySearch.tokenSetRatio(authorName, it.name ?: "") >= AUTHOR_MATCH_THRESHOLD }
 
 private fun MetadataAuthor.fillFrom(other: MetadataAuthor): MetadataAuthor =
-    MetadataAuthorImpl(
+    MetadataAuthor(
         id = id,
         name = name ?: other.name,
         link = link.ifBlank { other.link },
@@ -180,7 +177,7 @@ private fun MetadataAuthor.fillFrom(other: MetadataAuthor): MetadataAuthor =
     )
 
 private fun MetadataBook.fillFrom(other: MetadataBook): MetadataBook =
-    MetadataBookImpl(
+    MetadataBook(
         id = id,
         title = title ?: other.title,
         link = link ?: other.link,
@@ -197,7 +194,7 @@ private fun MetadataBook.fillFrom(other: MetadataBook): MetadataBook =
     )
 
 private fun MetadataSeries.fillFrom(other: MetadataSeries): MetadataSeries =
-    MetadataSeriesImpl(
+    MetadataSeries(
         id = id,
         title = title ?: other.title,
         authors = authors?.ifEmpty { null } ?: other.authors,

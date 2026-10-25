@@ -7,15 +7,15 @@ import io.dewey.metadata.appendOptional
 import io.dewey.metadata.fetchChunked
 import io.dewey.metadata.htmlToText
 import io.dewey.metadata.httpsApiUrl
-import io.dewey.metadata.responses.MetadataAgentIDImpl
-import io.dewey.metadata.responses.MetadataAuthorImpl
-import io.dewey.metadata.responses.MetadataBookImpl
+import io.dewey.metadata.responses.MetadataAgentID
+import io.dewey.metadata.responses.MetadataAuthor
+import io.dewey.metadata.responses.MetadataBook
 import io.dewey.metadata.responses.MetadataChapters
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
-import io.dewey.metadata.responses.MetadataSearchBookImpl
+import io.dewey.metadata.responses.MetadataSearchBook
 import io.dewey.metadata.responses.MetadataSearchCount
-import io.dewey.metadata.responses.MetadataSeriesImpl
+import io.dewey.metadata.responses.MetadataSeries
 import io.dewey.metadata.toResultCount
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -47,7 +47,7 @@ class AudibleMetadataAgent(
         narrator: String?,
         language: MetadataLanguage?,
         pageSize: MetadataSearchCount?,
-    ): List<MetadataSearchBookImpl> {
+    ): List<MetadataSearchBook> {
         val audibleRegion = AudibleRegions.from(region)
         val languageName = language?.name?.lowercase()
         val resultCount = pageSize?.toResultCount(AUDIBLE_API_MAX_RESULTS)
@@ -87,13 +87,13 @@ class AudibleMetadataAgent(
         providerId: String,
         authorId: String,
         region: MetadataRegion,
-    ): MetadataAuthorImpl? = scrapeAuthor(AudibleRegions.from(region), authorId)
+    ): MetadataAuthor? = scrapeAuthor(AudibleRegions.from(region), authorId)
 
     override suspend fun getBookByID(
         providerId: String,
         bookId: String,
         region: MetadataRegion,
-    ): MetadataBookImpl? {
+    ): MetadataBook? {
         val audibleRegion = AudibleRegions.from(region)
         val product = getProduct(audibleRegion, bookId) ?: return null
         // The ASIN of a series resolves to a placeholder product, which is not a book
@@ -124,7 +124,7 @@ class AudibleMetadataAgent(
         providerId: String,
         seriesId: String,
         region: MetadataRegion,
-    ): MetadataSeriesImpl? {
+    ): MetadataSeries? {
         val audibleRegion = AudibleRegions.from(region)
         val series = getProduct(audibleRegion, seriesId, listOf("relationships")) ?: return null
         // Audible returns a regular product for every ASIN, so make sure this one actually is a series
@@ -137,8 +137,8 @@ class AudibleMetadataAgent(
         val seriesBooks =
             bookAsins.mapNotNull { booksByAsin[it] }.map { it.toMetadataSearchBook(audibleRegion, imageSize) }
 
-        return MetadataSeriesImpl(
-            id = MetadataAgentIDImpl(AUDIBLE_PROVIDER_NAME, series.asin),
+        return MetadataSeries(
+            id = MetadataAgentID(AUDIBLE_PROVIDER_NAME, series.asin),
             title = series.title,
             link = audibleSeriesLink(audibleRegion, series.asin),
             description =
@@ -198,13 +198,13 @@ class AudibleMetadataAgent(
     internal suspend fun scrapeAuthor(
         region: AudibleRegions,
         authorAsin: String,
-    ): MetadataAuthorImpl? {
+    ): MetadataAuthor? {
         val document = scrapePage(region, listOf("author", authorAsin)) ?: return null
         // Audible answers unknown authors with a page which does not contain a product list
         document.getElementById("product-list-a11y-skiplink-target") ?: return null
-        return MetadataAuthorImpl(
+        return MetadataAuthor(
             link = audibleAuthorLink(region, authorAsin),
-            id = MetadataAgentIDImpl(AUDIBLE_PROVIDER_NAME, authorAsin),
+            id = MetadataAgentID(AUDIBLE_PROVIDER_NAME, authorAsin),
             name = document.selectFirst("h1.bc-heading")?.text(),
             imageURL = getAuthorImage(document),
             biography = document.selectFirst(".bc-expander span.bc-text")?.text(),

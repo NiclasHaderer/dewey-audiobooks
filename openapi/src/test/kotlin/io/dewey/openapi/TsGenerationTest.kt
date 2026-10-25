@@ -105,7 +105,7 @@ class TsGenerationTest {
                 v4: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<GenericRoute<UUID>>> => {
                   return _request(_createUrl(`/${path}/V4`, {name, someParam}), "GET", "json", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
                 },
-                v5: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, body: GenericRoute2<number, UUID>, headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<GenericRoute3<number>>> => {
+                v5: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, body: GenericRoute2<string, UUID>, headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<GenericRoute3<string>>> => {
                   return _request(_createUrl(`/${path}/V5`, {name, someParam}), "POST", "json", _mergeHeaders(defaultHeadersImpl, headers), body, [...defaultInterceptors, ...interceptors], executor, false);
                 },
                 listen: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, interceptors: ApiSocketInterceptor[] = []): Promise<ApiSocket<never, ListRoute>> => {

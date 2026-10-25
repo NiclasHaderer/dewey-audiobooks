@@ -1,4 +1,4 @@
-import { fromFormDate, toFormDate, unique } from "@/utils/utils.ts"
+import { fromFormDate, unique } from "@/utils/utils.ts"
 import {
   BookMarkedIcon,
   CalendarIcon,
@@ -75,7 +75,6 @@ export const BookEdit: FC<{ book: Book; isOpen: boolean; onOpenChange: (open: bo
       initial={bookToUpdate(book)}
       options={{
         toForm: {
-          releaseDate: value => value && toFormDate(value),
           narrators: value => value?.join(", "),
         },
         fromForm: {

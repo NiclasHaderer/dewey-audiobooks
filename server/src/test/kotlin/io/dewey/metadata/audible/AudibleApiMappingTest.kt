@@ -1,8 +1,8 @@
 package io.dewey.metadata.audible
 
 import io.dewey.metadata.responses.MetadataLanguage
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
-import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -36,7 +36,7 @@ class AudibleApiMappingTest {
         assertEquals(listOf("B000AP9A6K"), book.authors?.map { it.id.itemID })
         assertEquals("https://www.audible.com/author/B000AP9A6K", book.authors?.first()?.link)
         assertEquals(listOf("Jim Dale"), book.narrators)
-        assertEquals(LocalDate.of(2015, 11, 20), book.releaseDate)
+        assertEquals(LocalDate(2015, 11, 20), book.releaseDate)
         assertEquals("https://m.media-amazon.com/images/I/51xJbFMRsxL._SL500_.jpg", book.coverURL)
         assertEquals("Pottermore Publishing", book.publisher)
         assertEquals(MetadataLanguage.English, book.language)

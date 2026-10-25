@@ -52,28 +52,29 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 interface SeriesRepository : Repository<SeriesRow, Series, SeriesDetailed, SeriesUpdate> {
     fun findByTaggedName(
         seriesTitle: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow?
 
     fun getOrCreate(
         seriesName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow
 
     fun create(
         seriesName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow
 
     fun createManual(
         seriesName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow
 }
 
@@ -93,15 +94,15 @@ class SeriesRepositoryImpl :
 
     override fun findByTaggedName(
         seriesTitle: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow? =
         transaction {
             idOfTaggedName(escape(seriesTitle), libraryId)?.let { raw(it, libraryId) }
         }
 
     override fun raw(
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ): SeriesRow =
         transaction {
             SeriesTable
@@ -113,9 +114,9 @@ class SeriesRepositoryImpl :
         }
 
     override fun get(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         showInvisible: Boolean,
     ): SeriesDetailed =
         transaction {
@@ -130,8 +131,8 @@ class SeriesRepositoryImpl :
         }
 
     override fun getAll(
-        userId: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
         order: SortOrder,
         limit: Int,
         offset: Long,
@@ -151,9 +152,9 @@ class SeriesRepositoryImpl :
         }
 
     override fun search(
-        userId: UUID,
+        userId: Uuid,
         query: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): List<Series> =
         transaction {
             val rows =
@@ -170,12 +171,12 @@ class SeriesRepositoryImpl :
 
     override fun getOrCreate(
         seriesName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow = transaction { findByTaggedName(seriesName, libraryId) ?: create(seriesName, libraryId) }
 
     override fun create(
         seriesName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow =
         transaction {
             log.info { "Created series: $seriesName" }
@@ -186,7 +187,7 @@ class SeriesRepositoryImpl :
 
     override fun createManual(
         seriesName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): SeriesRow =
         transaction {
             // Born an orphan: hidden and on the clock until the caller attaches books. The user named it, so a
@@ -195,16 +196,16 @@ class SeriesRepositoryImpl :
                 SeriesTable.create(
                     libraryRepository.raw(libraryId).id,
                     seriesName,
-                    deferDeletionUntil = Instant.now().plus(DEFER_DELETION_GRACE),
+                    deferDeletionUntil = Clock.System.now().plus(DEFER_DELETION_GRACE),
                 )
             SeriesTable.update({ SeriesTable.id eq id }) { it[locked] = setOf(SeriesField.TITLE) }
             raw(id, libraryId)
         }
 
     override fun modify(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         partial: SeriesUpdate,
     ): Series {
         val currentCover = raw(id, libraryId).coverID
@@ -239,8 +240,8 @@ class SeriesRepositoryImpl :
 
     context(_: Transaction)
     private fun setBooks(
-        seriesId: UUID,
-        wanted: Set<UUID>,
+        seriesId: Uuid,
+        wanted: Set<Uuid>,
     ) {
         val current = bookIdsLinkedToSeries(seriesId).toSet()
         val removed = current - wanted
@@ -259,7 +260,7 @@ class SeriesRepositoryImpl :
     }
 
     context(_: Transaction)
-    private fun linkedBooks(seriesId: UUID): List<BookRow> =
+    private fun linkedBooks(seriesId: Uuid): List<BookRow> =
         seriesLinksWithBooks
             .selectAll()
             .where { (SeriesBookTable.series eq seriesId) and BookTable.visible }
@@ -267,9 +268,9 @@ class SeriesRepositoryImpl :
             .map { it.toBookRow() }
 
     override fun autoMatch(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
     ): Series {
         val (metadataWrapper, title, region, authorName, language, preferFile) =
             transaction {
@@ -313,7 +314,7 @@ class SeriesRepositoryImpl :
         }
     }
 
-    private fun seriesAuthorNames(seriesId: UUID): List<String> =
+    private fun seriesAuthorNames(seriesId: Uuid): List<String> =
         SeriesBookTable
             .join(AuthorBookTable, JoinType.INNER, SeriesBookTable.book, AuthorBookTable.book)
             .join(AuthorTable, JoinType.INNER, AuthorBookTable.author, AuthorTable.id)
@@ -332,7 +333,7 @@ class SeriesRepositoryImpl :
     )
 
     override fun total(
-        libraryId: UUID,
+        libraryId: Uuid,
         showInvisible: Boolean,
     ): Long =
         transaction {
@@ -347,8 +348,8 @@ class SeriesRepositoryImpl :
 context(_: Transaction)
 private fun idOfTaggedName(
     pattern: String,
-    libraryId: UUID,
-): UUID? =
+    libraryId: Uuid,
+): Uuid? =
     SeriesTable
         .select(SeriesTable.id)
         .where {

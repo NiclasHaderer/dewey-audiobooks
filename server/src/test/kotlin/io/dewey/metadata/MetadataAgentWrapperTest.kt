@@ -1,7 +1,7 @@
 package io.dewey.metadata
 
 import io.dewey.metadata.responses.MetadataRegion
-import io.dewey.metadata.responses.MetadataSearchAuthorImpl
+import io.dewey.metadata.responses.MetadataSearchAuthor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -76,7 +76,7 @@ class MetadataAgentWrapperTest {
         resolveBook = { id ->
             val author = authorsByBook.getValue(id)
             testBook(id, name).copy(
-                authors = listOf(MetadataSearchAuthorImpl(TestId(author, name), author, "link/$author")),
+                authors = listOf(MetadataSearchAuthor(testId(author, name), author, "link/$author")),
             )
         },
     )
@@ -104,7 +104,7 @@ class MetadataAgentWrapperTest {
                 MetadataAgentWrapper(listOf(preferred, other))
                     .bestBookMatch("Playing with Fire", MetadataRegion.US, authorName = "Derek Landy")
 
-            assertEquals(TestId("landy", "audible"), match?.id)
+            assertEquals(testId("landy", "audible"), match?.id)
         }
 
     @Test
@@ -145,7 +145,7 @@ class MetadataAgentWrapperTest {
                 MetadataAgentWrapper(listOf(preferred, other), combineFields = true)
                     .bestBookMatch("a", MetadataRegion.US)
 
-            assertEquals(TestId("a", "audible"), match?.id, "the merged record stays attributable to its matcher")
+            assertEquals(testId("a", "audible"), match?.id, "the merged record stays attributable to its matcher")
             assertEquals("Audible Studios", match?.publisher, "a field the preferred agent filled must survive")
             assertEquals("9780000000000", match?.isbn)
             assertEquals(listOf("Ada"), match?.narrators)

@@ -24,8 +24,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 // Cover art is only stored if it sniffs as a real image, so test art needs a valid header
 fun pngBytes(vararg payload: Byte): ByteArray =
@@ -42,11 +42,11 @@ fun newLibrary(
     language: MetadataLanguage = MetadataLanguage.English,
     metadataAgents: List<NamedMetadataAgent> = listOf(NamedMetadataAgent("audible")),
     combineMetadataAgentFields: Boolean = true,
-): UUID =
+): Uuid =
     transaction {
         LibraryTable.insert(
             LibraryRow(
-                id = UUID.randomUUID(),
+                id = Uuid.random(),
                 name = name,
                 icon = null,
                 scanIndex = scanIndex,
@@ -64,23 +64,23 @@ fun newLibrary(
 
 fun newAuthor(
     name: String,
-    libraryId: UUID,
+    libraryId: Uuid,
     renamedTo: String? = null,
-): UUID = transaction { AuthorTable.create(libraryId, renamedTo ?: name, taggedName = name) }
+): Uuid = transaction { AuthorTable.create(libraryId, renamedTo ?: name, taggedName = name) }
 
 fun newSeries(
     title: String,
-    libraryId: UUID,
-): UUID = transaction { SeriesTable.create(libraryId, title, taggedName = title) }
+    libraryId: Uuid,
+): Uuid = transaction { SeriesTable.create(libraryId, title, taggedName = title) }
 
 fun newBook(
     title: String,
-    libraryId: UUID,
-    authors: List<UUID> = emptyList(),
-    series: List<UUID> = emptyList(),
+    libraryId: Uuid,
+    authors: List<Uuid> = emptyList(),
+    series: List<Uuid> = emptyList(),
     narrators: List<String>? = null,
     genres: List<String>? = null,
-): UUID =
+): Uuid =
     transaction {
         val id = BookTable.create(libraryId, title, taggedName = title)
         BookTable.update({ BookTable.id eq id }) {
@@ -95,18 +95,18 @@ fun newBook(
 fun newTrack(
     title: String,
     path: String,
-    bookId: UUID,
-    libraryId: UUID,
-    fileModifiedAt: Instant = Instant.EPOCH,
+    bookId: Uuid,
+    libraryId: Uuid,
+    fileModifiedAt: Instant = Instant.fromEpochMilliseconds(0),
     scanIndex: ULong = 0uL,
     trackNr: Int? = null,
     durationMs: Long = 60_000,
     chapters: List<TrackChapter> = emptyList(),
-): UUID =
+): Uuid =
     transaction {
         TrackTable.insert(
             TrackRow(
-                id = UUID.randomUUID(),
+                id = Uuid.random(),
                 title = title,
                 durationMs = durationMs,
                 fileModifiedAt = fileModifiedAt,
@@ -123,13 +123,13 @@ fun newTrack(
 fun newUser(
     username: String,
     admin: Boolean = false,
-    libraries: Map<UUID, LibraryPermissionLevel> = emptyMap(),
-): UUID =
+    libraries: Map<Uuid, LibraryPermissionLevel> = emptyMap(),
+): Uuid =
     transaction {
         val id =
             UserTable.insert(
                 UserRow(
-                    id = UUID.randomUUID(),
+                    id = Uuid.random(),
                     username = username,
                     passwordHash = "hash",
                     admin = admin,
