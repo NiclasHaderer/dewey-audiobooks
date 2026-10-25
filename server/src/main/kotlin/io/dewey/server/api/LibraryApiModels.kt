@@ -10,10 +10,14 @@ import io.dewey.openapi.common.ifSet
 import io.dewey.openapi.common.orElse
 import io.dewey.openapi.ktor.ValidateObject
 import io.dewey.openapi.ktor.errors.ErrorResponse
+import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.dewey.server.file.analyzer.AudioFileAnalyzers
 import io.ktor.server.routing.RoutingContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.encodeToJsonElement
 import org.koin.ktor.ext.get
 
+@Serializable
 data class UpdateLibrary(
     val name: String,
     val icon: String?,
@@ -33,6 +37,7 @@ data class UpdateLibrary(
     }
 }
 
+@Serializable
 data class PartialUpdateLibrary(
     val name: Patch<String> = Patch.Absent,
     val icon: Patch<String?> = Patch.Absent,
@@ -84,7 +89,7 @@ private fun requireKnownNames(
     if (unknown.isNotEmpty()) {
         throw ErrorResponse.userError(
             "Unknown $kind: ${unknown.joinToString()}",
-            mapOf("unknown" to unknown, "available" to available),
+            OpenApiJson.encodeToJsonElement(mapOf("unknown" to unknown, "available" to available)),
         )
     }
 }

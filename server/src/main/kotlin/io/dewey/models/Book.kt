@@ -1,12 +1,14 @@
 package io.dewey.models
 
 import io.dewey.metadata.responses.MetadataLanguage
-import java.time.LocalDate
-import java.util.UUID
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 open class Book(
-    val id: UUID,
-    val libraryId: UUID,
+    val id: Uuid,
+    val libraryId: Uuid,
     val authors: List<NamedId>,
     val series: List<TitledId>,
     val title: String,
@@ -19,7 +21,7 @@ open class Book(
     val description: String?,
     val narrators: List<String>,
     val isbn: String?,
-    val coverID: UUID?,
+    val coverID: Uuid?,
     val genres: List<String>,
     val durationMs: Long,
     val positionMs: Long,

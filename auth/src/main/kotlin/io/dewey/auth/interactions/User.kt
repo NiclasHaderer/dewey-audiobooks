@@ -8,10 +8,10 @@ import io.dewey.auth.utils.deweyPrincipal
 import io.dewey.auth.utils.wrap
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 interface DeweyDisplayUserParams {
-    val id: UUID
+    val id: Uuid
 }
 
 fun RoutingContext.displayUser(params: DeweyDisplayUserParams): DeweyUser {

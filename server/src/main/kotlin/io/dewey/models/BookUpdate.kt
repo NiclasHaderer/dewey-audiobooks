@@ -7,14 +7,16 @@ import io.dewey.openapi.ktor.ValidateObject
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.dewey.server.database.tables.BookField
 import io.ktor.server.routing.RoutingContext
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.Op
-import java.time.LocalDate
-import java.util.UUID
+import kotlin.uuid.Uuid
 
+@Serializable
 data class BookUpdate(
     val title: Patch<String> = Patch.Absent,
-    val authors: Patch<List<UUID>> = Patch.Absent,
-    val series: Patch<List<UUID>?> = Patch.Absent,
+    val authors: Patch<List<Uuid>> = Patch.Absent,
+    val series: Patch<List<Uuid>?> = Patch.Absent,
     val provider: Patch<String?> = Patch.Absent,
     val providerID: Patch<String?> = Patch.Absent,
     val providerRating: Patch<Float?> = Patch.Absent,

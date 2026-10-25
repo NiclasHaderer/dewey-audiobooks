@@ -17,6 +17,7 @@ import io.dewey.server.database.tables.TrackTable
 import io.dewey.server.database.tables.UserBookProgressRow
 import io.dewey.server.database.tables.UserBookProgressTable
 import io.dewey.server.database.tables.toUserBookProgressRow
+import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -28,12 +29,11 @@ import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.LocalDate
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 data class BookRow(
-    val id: UUID,
-    val library: UUID,
+    val id: Uuid,
+    val library: Uuid,
     val title: String,
     val taggedName: String?,
     val releaseDate: LocalDate?,
@@ -45,7 +45,7 @@ data class BookRow(
     val provider: String?,
     val providerID: String?,
     val providerRating: Float?,
-    val coverID: UUID?,
+    val coverID: Uuid?,
     val genres: List<String>?,
     val chapters: List<ChapterMark>?,
     val locked: Set<BookField>,
@@ -100,7 +100,7 @@ fun BookTable.update(
 
 context(_: Transaction)
 fun lockBookField(
-    bookId: UUID,
+    bookId: Uuid,
     field: BookField,
 ) {
     val locked = BookTable.select(BookTable.locked).where { BookTable.id eq bookId }.single()[BookTable.locked]
@@ -110,7 +110,7 @@ fun lockBookField(
 
 context(_: Transaction)
 fun BookRow.toModel(
-    userId: UUID,
+    userId: Uuid,
     authorOrder: SortOrder = SortOrder.ASC,
     seriesOrder: SortOrder = SortOrder.ASC,
 ): Book = booksToModels(listOf(this), userId, authorOrder, seriesOrder).single()
@@ -118,7 +118,7 @@ fun BookRow.toModel(
 context(_: Transaction)
 fun booksToModels(
     rows: List<BookRow>,
-    userId: UUID,
+    userId: Uuid,
     authorOrder: SortOrder = SortOrder.ASC,
     seriesOrder: SortOrder = SortOrder.ASC,
 ): List<Book> {
@@ -161,7 +161,7 @@ fun booksToModels(
 }
 
 context(_: Transaction)
-fun bookDurations(bookIds: List<UUID>): Map<UUID, Long> {
+fun bookDurations(bookIds: List<Uuid>): Map<Uuid, Long> {
     val total = TrackTable.durationMs.sum()
     return TrackTable
         .select(TrackTable.book, total)
@@ -172,16 +172,16 @@ fun bookDurations(bookIds: List<UUID>): Map<UUID, Long> {
 
 context(_: Transaction)
 fun bookProgress(
-    userId: UUID,
-    bookIds: List<UUID>,
-): Map<UUID, UserBookProgressRow> =
+    userId: Uuid,
+    bookIds: List<Uuid>,
+): Map<Uuid, UserBookProgressRow> =
     UserBookProgressTable
         .selectAll()
         .where { (UserBookProgressTable.user eq userId) and (UserBookProgressTable.book inList bookIds) }
         .associate { it[UserBookProgressTable.book].value to it.toUserBookProgressRow() }
 
 context(_: Transaction)
-fun bookAuthors(bookIds: List<UUID>): Map<UUID, List<NamedId>> =
+fun bookAuthors(bookIds: List<Uuid>): Map<Uuid, List<NamedId>> =
     AuthorBookTable
         .join(AuthorTable, JoinType.INNER, AuthorBookTable.author, AuthorTable.id)
         .select(AuthorBookTable.book, AuthorTable.id, AuthorTable.name)
@@ -191,7 +191,7 @@ fun bookAuthors(bookIds: List<UUID>): Map<UUID, List<NamedId>> =
         }
 
 context(_: Transaction)
-fun bookSeries(bookIds: List<UUID>): Map<UUID, List<TitledId>> =
+fun bookSeries(bookIds: List<Uuid>): Map<Uuid, List<TitledId>> =
     SeriesBookTable
         .join(SeriesTable, JoinType.INNER, SeriesBookTable.series, SeriesTable.id)
         .select(SeriesBookTable.book, SeriesTable.id, SeriesTable.title)

@@ -1,7 +1,7 @@
 package io.dewey.server
 
 import io.dewey.client.gen.DeweyClientImpl
-import io.dewey.server.di.serialization.JacksonSerialization
+import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -13,29 +13,29 @@ import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.setCookie
 import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.util.reflect.reifiedType
-import org.koin.mp.KoinPlatform.getKoin
+import kotlinx.serialization.serializer
 import kotlin.test.assertNotNull
 
 class TestDeweyClient(
     private val http: HttpClient,
 ) : DeweyClientImpl(Url("http://localhost")) {
-    private val mapper get() = getKoin().get<JacksonSerialization>().objectMapper
-
     override fun createClient() = http
 
     init {
-        serialize<Any> { builder, body, _ ->
+        serialize<Any> { builder, body, typeInfo ->
             builder.contentType(ContentType.Application.Json)
-            builder.setBody(mapper.writeValueAsString(body))
+            builder.setBody(
+                OpenApiJson.encodeToString(OpenApiJson.serializersModule.serializer(typeInfo.kotlinType!!), body),
+            )
         }
         deserialize<Any> { response, typeInfo ->
-            // The type argument is explicit because inference would otherwise unify it with the Unit
-            // branch and throw the parsed value away
             if (typeInfo.type == Unit::class) {
                 Unit
             } else {
-                mapper.readValue<Any>(response.bodyAsText(), mapper.constructType(typeInfo.reifiedType))
+                OpenApiJson.decodeFromString(
+                    OpenApiJson.serializersModule.serializer(typeInfo.kotlinType!!),
+                    response.bodyAsText(),
+                ) as Any
             }
         }
     }

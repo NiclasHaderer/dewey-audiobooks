@@ -21,16 +21,17 @@ import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.Instant
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
 class LibraryScannerCleanupTest : DeweyTest() {
     private val cleanup = LibraryCleanup()
 
     private fun newBookWithTrack(
-        libraryId: UUID,
+        libraryId: Uuid,
         prefix: String,
         trackScanIndex: ULong,
     ) {
@@ -47,11 +48,11 @@ class LibraryScannerCleanupTest : DeweyTest() {
     }
 
     private fun setScanIndex(
-        libraryId: UUID,
+        libraryId: Uuid,
         index: ULong,
     ) = transaction { LibraryTable.update({ LibraryTable.id eq libraryId }) { it[scanIndex] = index } }
 
-    private fun cleanup(libraryId: UUID) {
+    private fun cleanup(libraryId: Uuid) {
         cleanup.removeStaleTracks(libraryId)
         cleanup.removeOrphans(libraryId)
     }
@@ -59,13 +60,13 @@ class LibraryScannerCleanupTest : DeweyTest() {
     // The window only elapses in wall clock time, so backdate the deadline the previous cleanup wrote
     private fun expireDeadlines() =
         transaction {
-            val past = Instant.now().minus(DEFER_DELETION_GRACE).minusSeconds(60)
+            val past = Clock.System.now() - DEFER_DELETION_GRACE - 60.seconds
             BookTable.update({ BookTable.deferDeletionUntil.isNotNull() }) { it[deferDeletionUntil] = past }
             AuthorTable.update({ AuthorTable.deferDeletionUntil.isNotNull() }) { it[deferDeletionUntil] = past }
             SeriesTable.update({ SeriesTable.deferDeletionUntil.isNotNull() }) { it[deferDeletionUntil] = past }
         }
 
-    private fun counts(libraryId: UUID) =
+    private fun counts(libraryId: Uuid) =
         transaction {
             listOf(
                 TrackTable.selectAll().where { TrackTable.library eq libraryId }.count(),
@@ -75,7 +76,7 @@ class LibraryScannerCleanupTest : DeweyTest() {
             )
         }
 
-    private fun deferred(libraryId: UUID) =
+    private fun deferred(libraryId: Uuid) =
         transaction {
             listOf(
                 BookTable

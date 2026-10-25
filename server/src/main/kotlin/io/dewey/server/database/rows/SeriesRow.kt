@@ -19,11 +19,11 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.update
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 data class SeriesRow(
-    val id: UUID,
-    val library: UUID,
+    val id: Uuid,
+    val library: Uuid,
     val title: String,
     val taggedName: String?,
     val totalBooks: Int?,
@@ -31,7 +31,7 @@ data class SeriesRow(
     val description: String?,
     val provider: String?,
     val providerID: String?,
-    val coverID: UUID?,
+    val coverID: Uuid?,
     val locked: Set<SeriesField>,
 )
 
@@ -106,7 +106,7 @@ fun seriesToModels(
 }
 
 context(_: Transaction)
-fun seriesAuthors(seriesIds: List<UUID>): Map<UUID, List<NamedId>> =
+fun seriesAuthors(seriesIds: List<Uuid>): Map<Uuid, List<NamedId>> =
     SeriesBookTable
         .join(AuthorBookTable, JoinType.INNER, SeriesBookTable.book, AuthorBookTable.book)
         .join(AuthorTable, JoinType.INNER, AuthorBookTable.author, AuthorTable.id)
@@ -117,12 +117,12 @@ fun seriesAuthors(seriesIds: List<UUID>): Map<UUID, List<NamedId>> =
         }.mapValues { (_, authors) -> authors.distinctBy { it.id } }
 
 data class SeriesBook(
-    val coverID: UUID?,
+    val coverID: Uuid?,
     val genres: List<String>,
 )
 
 context(_: Transaction)
-fun seriesBooks(seriesIds: List<UUID>): Map<UUID, List<SeriesBook>> =
+fun seriesBooks(seriesIds: List<Uuid>): Map<Uuid, List<SeriesBook>> =
     seriesLinksWithBooks
         .select(SeriesBookTable.series, SeriesBookTable.seriesIndex, BookTable.coverId, BookTable.genres)
         .where { (SeriesBookTable.series inList seriesIds) and BookTable.visible }

@@ -49,9 +49,9 @@ import org.koin.core.component.inject
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.UUID
 import kotlin.io.path.absolute
 import kotlin.io.path.readAttributes
+import kotlin.uuid.Uuid
 
 class TrackManager : KoinComponent {
     private val bookRepository by inject<BookRepository>()
@@ -98,7 +98,7 @@ class TrackManager : KoinComponent {
 
     fun insert(
         scan: AudioFileAnalysisResult,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) = transaction {
         val library = libraryRow(libraryId)
         val track = TrackTable
@@ -125,7 +125,7 @@ class TrackManager : KoinComponent {
         } else {
             TrackTable.insert(
                 TrackRow(
-                    id = UUID.randomUUID(),
+                    id = Uuid.random(),
                     title = scan.title,
                     durationMs = scan.durationMs,
                     fileModifiedAt = scan.lastModified,
@@ -142,7 +142,7 @@ class TrackManager : KoinComponent {
 
     fun touch(
         paths: List<Path>,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) = transaction {
         val scanIndex = libraryRow(libraryId).scanIndex
         TrackTable.update({
@@ -156,7 +156,7 @@ class TrackManager : KoinComponent {
     // file is still there must not read as knowing that it is gone
     fun touchFolder(
         path: Path,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) = transaction {
         val scanIndex = libraryRow(libraryId).scanIndex
         val target = path.canonicalString()
@@ -171,14 +171,14 @@ class TrackManager : KoinComponent {
 
     fun removeFile(
         path: Path,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) = transaction {
         TrackTable.remove((TrackTable.path eq path.canonicalString()) and (TrackTable.library eq libraryId))
     }
 
     fun removeFolder(
         path: Path,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) = transaction {
         // Rows hold normalised paths, and the separator keeps "/books/Dune" from also matching "/books/Dune 2"
         val target = path.canonicalString()
@@ -189,7 +189,7 @@ class TrackManager : KoinComponent {
     }
 
     context(_: Transaction)
-    private fun libraryRow(libraryId: UUID): LibraryRow =
+    private fun libraryRow(libraryId: Uuid): LibraryRow =
         LibraryTable
             .selectAll()
             .where { LibraryTable.id eq libraryId }
@@ -199,9 +199,9 @@ class TrackManager : KoinComponent {
     context(_: Transaction)
     private fun getOrCreateBook(
         scan: AudioFileAnalysisResult,
-        authorIds: List<UUID>,
+        authorIds: List<Uuid>,
         library: LibraryRow,
-    ): UUID =
+    ): Uuid =
         bookRepository.findByTaggedName(bookTitle = scan.book, authorIds = authorIds, libraryId = library.id)?.id
             ?: run {
                 log.info { "Created new book: ${scan.book}" }
@@ -213,9 +213,9 @@ class TrackManager : KoinComponent {
     // Tracks of one book that disagree about their tags leave it up to whichever is imported last
     context(_: Transaction)
     private fun writeFileMetadata(
-        bookId: UUID,
+        bookId: Uuid,
         scan: AudioFileAnalysisResult,
-        authorIds: List<UUID>,
+        authorIds: List<Uuid>,
         library: LibraryRow,
     ) {
         val book = BookTable
@@ -264,7 +264,7 @@ class TrackManager : KoinComponent {
     private fun getOrCreateAuthors(
         scan: AudioFileAnalysisResult,
         library: LibraryRow,
-    ): List<UUID> =
+    ): List<Uuid> =
         scan.authors.map { author ->
             authorRepository.findByTaggedName(author, library.id)?.id ?: run {
                 log.info { "Creating author: $author" }

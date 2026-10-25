@@ -2,13 +2,12 @@ package io.dewey.server.common.extensions
 
 import io.dewey.server.common.AUDIO_TYPES
 import java.nio.file.Path
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlin.io.path.absolute
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.name
+import kotlin.time.Instant
 
 private fun Path.hasParent() = this.parent != null && this.parent.name.isNotEmpty()
 
@@ -45,4 +44,4 @@ fun Path.grandGrandParentName() = this.parent.parent.parent.name
 
 fun Path.hasAudioExtension(): Boolean = this.extension.lowercase() in AUDIO_TYPES
 
-fun Path.lastModifiedInstant(): Instant = getLastModifiedTime().toInstant().truncatedTo(ChronoUnit.MILLIS)
+fun Path.lastModifiedInstant(): Instant = Instant.fromEpochMilliseconds(getLastModifiedTime().toMillis())

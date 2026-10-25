@@ -12,7 +12,6 @@ import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
 import io.dewey.openapi.ktor.plugins.OpenAPIRouting
 import io.dewey.openapi.ktor.plugins.generateOpenApiSpec
 import io.dewey.openapi.ktor.post
-import io.dewey.openapi.serializion.kotlin.UUID_S
 import io.ktor.resources.Resource
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -25,7 +24,6 @@ import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.swagger.v3.oas.models.OpenAPI
-import java.util.UUID
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
 import kotlin.test.Test
@@ -36,6 +34,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
 import io.ktor.client.request.get as httpGet
 
 enum class SortDirection(
@@ -55,7 +54,7 @@ interface SpecNamed {
 }
 
 data class SpecItem(
-    val id: UUID,
+    val id: Uuid,
     val kind: SpecItemKind,
     val total: Long,
     val ratio: Double,
@@ -90,7 +89,7 @@ class SpecApi {
     @Summary("Patch an item", method = "PATCH")
     @Resource("items/{id}")
     class Item(
-        val id: UUID_S,
+        val id: Uuid,
         private val parent: SpecApi,
     )
 

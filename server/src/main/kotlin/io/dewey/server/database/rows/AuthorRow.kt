@@ -4,16 +4,16 @@ import io.dewey.models.Author
 import io.dewey.models.ChangeType
 import io.dewey.server.database.tables.AuthorField
 import io.dewey.server.database.tables.AuthorTable
+import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.LocalDate
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 data class AuthorRow(
-    val id: UUID,
-    val library: UUID,
+    val id: Uuid,
+    val library: Uuid,
     val name: String,
     val taggedName: String?,
     val biography: String?,
@@ -23,7 +23,7 @@ data class AuthorRow(
     val deathDate: LocalDate?,
     val provider: String?,
     val providerID: String?,
-    val imageID: UUID?,
+    val imageID: Uuid?,
     val locked: Set<AuthorField>,
 ) {
     fun toModel(): Author =

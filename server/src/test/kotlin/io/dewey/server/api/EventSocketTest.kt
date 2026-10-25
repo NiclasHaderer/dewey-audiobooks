@@ -8,6 +8,7 @@ import io.dewey.client.gen.models.ChangeType
 import io.dewey.client.gen.models.ChangedEntity
 import io.dewey.client.gen.models.LibraryPermissionLevel
 import io.dewey.models.FileScanner
+import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.dewey.server.DeweyTest
 import io.dewey.server.TestDeweyClient
 import io.dewey.server.api
@@ -15,7 +16,6 @@ import io.dewey.server.bearer
 import io.dewey.server.common.extensions.canonical
 import io.dewey.server.config.DeweyConfig
 import io.dewey.server.deweyServer
-import io.dewey.server.di.serialization.JacksonSerialization
 import io.dewey.server.file.scanner.LibraryImportPipeline
 import io.dewey.server.grant
 import io.dewey.server.login
@@ -28,14 +28,13 @@ import io.dewey.server.revoke
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.http.Headers
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.jackson.JacksonWebsocketContentConverter
+import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.server.testing.ApplicationTestBuilder
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
@@ -47,6 +46,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
 class EventSocketTest : DeweyTest() {
     override fun configure(dataDir: Path) = DeweyConfig(dataDir = dataDir, settleMillis = 50)
@@ -55,8 +55,12 @@ class EventSocketTest : DeweyTest() {
         token: String?,
         block: suspend ApiSocket<Nothing, ChangeEventBatch>.() -> Unit,
     ) {
-        val mapper = getKoin().get<JacksonSerialization>().objectMapper
-        val http = createClient { install(WebSockets) { contentConverter = JacksonWebsocketContentConverter(mapper) } }
+        val http =
+            createClient {
+                install(
+                    WebSockets,
+                ) { contentConverter = KotlinxWebsocketSerializationConverter(OpenApiJson) }
+            }
         val socket = TestDeweyClient(http).listenToEvents(headers = token?.let(::bearer) ?: Headers.Empty)
         try {
             socket.block()
@@ -71,8 +75,8 @@ class EventSocketTest : DeweyTest() {
     private fun changeEvent(
         entity: ChangedEntity,
         type: ChangeType,
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ): ChangeEvent = ChangeEventImpl(entity = entity, id = id, libraryId = libraryId, type = type)
 
     @Test
@@ -90,8 +94,8 @@ class EventSocketTest : DeweyTest() {
         }
 
     private fun newBookIn(
-        libraryId: UUID,
-        bookId: UUID,
+        libraryId: Uuid,
+        bookId: Uuid,
     ) = listOf(
         changeEvent(ChangedEntity.BOOK, ChangeType.CREATED, bookId, libraryId),
         changeEvent(ChangedEntity.LIBRARY, ChangeType.UPDATED, libraryId, libraryId),

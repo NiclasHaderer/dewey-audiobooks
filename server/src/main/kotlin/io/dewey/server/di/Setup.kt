@@ -7,8 +7,6 @@ import io.dewey.metadata.libby.LibbyMetadataAgent
 import io.dewey.server.common.ImageDownloader
 import io.dewey.server.common.scheduling.Scheduler
 import io.dewey.server.config.DeweyConfig
-import io.dewey.server.di.serialization.JacksonSerialization
-import io.dewey.server.di.serialization.Serialization
 import io.dewey.server.events.ChangeEvents
 import io.dewey.server.file.TrackManager
 import io.dewey.server.file.analyzer.AudioFileAnalyzers
@@ -52,8 +50,6 @@ fun deweyModule(config: DeweyConfig) =
         single { TrackManager() }
         single<LibraryImportPipeline> { LibraryImportPipeline() }
         single<LibraryWatcher> { LibraryWatcherImpl() }
-        single { JacksonSerialization() }
-        single<Serialization> { get<JacksonSerialization>() }
         single<BookRepository> { BookRepositoryImpl() }
         single<AuthorRepository> { AuthorServiceImpl() }
         single<SeriesRepository> { SeriesRepositoryImpl() }

@@ -12,7 +12,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
@@ -22,12 +21,13 @@ import kotlin.io.path.isDirectory
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.uuid.Uuid
 
 class LibraryScannerIgnoreTest : DeweyTest() {
     private val pipeline by lazy { getKoin().get<LibraryImportPipeline>() }
 
     private lateinit var libraryRoot: Path
-    private var libId: UUID = UUID.randomUUID()
+    private var libId: Uuid = Uuid.random()
 
     private val sourceMp3: Path =
         generateSequence(Path.of("").toAbsolutePath()) { it.parent }

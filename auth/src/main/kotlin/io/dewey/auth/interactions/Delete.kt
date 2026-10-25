@@ -6,10 +6,10 @@ import io.dewey.auth.utils.deweyPrincipal
 import io.dewey.auth.withUserMutation
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 interface DeweyDeleteUserParams {
-    val id: UUID
+    val id: Uuid
 }
 
 fun RoutingContext.deleteUser(

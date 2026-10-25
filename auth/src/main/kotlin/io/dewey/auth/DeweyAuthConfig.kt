@@ -21,8 +21,8 @@ import io.ktor.server.routing.RoutingContext
 import io.ktor.util.AttributeKey
 import java.security.KeyPair
 import java.security.interfaces.RSAPublicKey
-import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlin.uuid.Uuid
 
 internal typealias KeyId = String
 
@@ -70,7 +70,7 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
     val guardAuthHeaders: Map<String, AuthHeaderProvider>,
     val getUserByUsername: (username: String) -> DeweyDatabaseUser?,
     val allowNewSignups: () -> Boolean,
-    val getUserById: (id: UUID) -> DeweyDatabaseUser?,
+    val getUserById: (id: Uuid) -> DeweyDatabaseUser?,
     val isFirstUser: () -> Boolean,
     val createUser: (registeredUser: DeweyRegisteredUser) -> DeweyDatabaseUser,
     val listAllUsers: () -> List<DeweyDatabaseUser>,
@@ -160,7 +160,7 @@ class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS> {
     // Functionality
     private lateinit var getUserByUsername: (username: String) -> DeweyDatabaseUser?
     private lateinit var allowNewSignups: () -> Boolean
-    private lateinit var getUserById: (id: UUID) -> DeweyDatabaseUser?
+    private lateinit var getUserById: (id: Uuid) -> DeweyDatabaseUser?
     private lateinit var isFirstUser: () -> Boolean
     private lateinit var createUser: (registeredUser: DeweyRegisteredUser) -> DeweyDatabaseUser
     private lateinit var listAllUsers: () -> List<DeweyDatabaseUser>
@@ -250,7 +250,7 @@ class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS> {
         this.isAdminUser = isAdminUser
     }
 
-    fun getUserById(getUserById: (id: UUID) -> DeweyDatabaseUser?) {
+    fun getUserById(getUserById: (id: Uuid) -> DeweyDatabaseUser?) {
         this.getUserById = getUserById
     }
 

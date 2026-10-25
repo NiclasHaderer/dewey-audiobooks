@@ -2,8 +2,8 @@ package io.dewey.server.file.analyzer
 
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.server.database.tables.TrackChapter
-import java.time.Instant
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 
 class AudioFileAnalysisResultImpl(
     override val title: String,

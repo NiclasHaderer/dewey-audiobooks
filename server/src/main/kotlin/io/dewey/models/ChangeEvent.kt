@@ -1,6 +1,7 @@
 package io.dewey.models
 
-import java.util.UUID
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
 enum class ChangedEntity {
     LIBRARY,
@@ -15,13 +16,15 @@ enum class ChangeType {
     DELETED,
 }
 
+@Serializable
 data class ChangeEvent(
     val entity: ChangedEntity,
     val type: ChangeType,
-    val id: UUID,
-    val libraryId: UUID,
+    val id: Uuid,
+    val libraryId: Uuid,
 )
 
+@Serializable
 data class ChangeEventBatch(
     val events: List<ChangeEvent>,
     val missedPreviousEvents: Boolean = false,

@@ -50,28 +50,29 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 interface AuthorRepository : Repository<AuthorRow, Author, AuthorDetailed, AuthorUpdate> {
     fun findByTaggedName(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow?
 
     fun getOrCreate(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow
 
     fun create(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow
 
     fun createManual(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow
 }
 
@@ -86,15 +87,15 @@ class AuthorServiceImpl :
 
     override fun findByTaggedName(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow? =
         transaction {
             idOfTaggedName(escape(authorName), libraryId)?.let { raw(it, libraryId) }
         }
 
     override fun raw(
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ): AuthorRow =
         transaction {
             AuthorTable
@@ -106,9 +107,9 @@ class AuthorServiceImpl :
         }
 
     override fun search(
-        userId: UUID,
+        userId: Uuid,
         query: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): List<Author> =
         transaction {
             AuthorTable
@@ -124,12 +125,12 @@ class AuthorServiceImpl :
 
     override fun getOrCreate(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow = transaction { findByTaggedName(authorName, libraryId) ?: create(authorName, libraryId) }
 
     override fun create(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow =
         transaction {
             val id = AuthorTable.create(libraryRepository.raw(libraryId).id, authorName, taggedName = authorName)
@@ -139,7 +140,7 @@ class AuthorServiceImpl :
 
     override fun createManual(
         authorName: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): AuthorRow =
         transaction {
             // Born an orphan: hidden and on the clock until the caller attaches books. The user named it, so a
@@ -148,16 +149,16 @@ class AuthorServiceImpl :
                 AuthorTable.create(
                     libraryRepository.raw(libraryId).id,
                     authorName,
-                    deferDeletionUntil = Instant.now().plus(DEFER_DELETION_GRACE),
+                    deferDeletionUntil = Clock.System.now().plus(DEFER_DELETION_GRACE),
                 )
             AuthorTable.update({ AuthorTable.id eq id }) { it[locked] = setOf(AuthorField.NAME) }
             raw(id, libraryId)
         }
 
     override fun autoMatch(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
     ): Author {
         val (metadataAgent, authorName, region, language, preferFile) =
             transaction {
@@ -206,8 +207,8 @@ class AuthorServiceImpl :
     )
 
     override fun getAll(
-        userId: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
         order: SortOrder,
         limit: Int,
         offset: Long,
@@ -225,9 +226,9 @@ class AuthorServiceImpl :
         }
 
     override fun get(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         showInvisible: Boolean,
     ): AuthorDetailed =
         transaction {
@@ -262,9 +263,9 @@ class AuthorServiceImpl :
         }
 
     override fun modify(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         partial: AuthorUpdate,
     ): Author {
         val currentImage = raw(id, libraryId).imageID
@@ -301,8 +302,8 @@ class AuthorServiceImpl :
 
     context(_: Transaction)
     private fun setBooks(
-        authorId: UUID,
-        wanted: Set<UUID>,
+        authorId: Uuid,
+        wanted: Set<Uuid>,
     ) {
         val current = bookIdsLinkedToAuthor(authorId).toSet()
         val removed = current - wanted
@@ -325,7 +326,7 @@ class AuthorServiceImpl :
     }
 
     override fun total(
-        libraryId: UUID,
+        libraryId: Uuid,
         showInvisible: Boolean,
     ): Long =
         transaction {
@@ -340,8 +341,8 @@ class AuthorServiceImpl :
 context(_: Transaction)
 private fun idOfTaggedName(
     pattern: String,
-    libraryId: UUID,
-): UUID? =
+    libraryId: Uuid,
+): Uuid? =
     AuthorTable
         .select(AuthorTable.id)
         .where {

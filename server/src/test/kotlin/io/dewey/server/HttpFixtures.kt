@@ -9,8 +9,8 @@ import io.dewey.client.gen.models.UpdateUserPermissionsImpl
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.uuid.Uuid
 
 const val TEST_PASSWORD = "hunter22"
 
@@ -37,7 +37,7 @@ suspend fun ApplicationTestBuilder.login(username: String): String {
 
 suspend fun ApplicationTestBuilder.registerWithAccess(
     username: String,
-    libraryId: UUID,
+    libraryId: Uuid,
     level: LibraryPermissionLevel,
 ): String {
     register(username)
@@ -62,19 +62,19 @@ suspend fun ApplicationTestBuilder.setLibraries(
 
 suspend fun ApplicationTestBuilder.grant(
     username: String,
-    libraryId: UUID,
+    libraryId: Uuid,
     level: LibraryPermissionLevel,
 ) = setLibraries(username, currentLibraries(username) + UpdateLibraryPermissionsImpl(libraryId, level))
 
 suspend fun ApplicationTestBuilder.revoke(
     username: String,
-    libraryId: UUID,
+    libraryId: Uuid,
 ) = setLibraries(username, currentLibraries(username).filterNot { it.id == libraryId })
 
 private suspend fun ApplicationTestBuilder.currentLibraries(username: String) =
     user(username).permissions.libraries.map { UpdateLibraryPermissionsImpl(it.id, it.permissions) }
 
-suspend fun ApplicationTestBuilder.userId(username: String): UUID = user(username).id
+suspend fun ApplicationTestBuilder.userId(username: String): Uuid = user(username).id
 
 private suspend fun ApplicationTestBuilder.user(username: String) =
     api.listUsers(bearer(login("admin"))).body().single { it.username == username }

@@ -21,14 +21,14 @@ import io.dewey.server.database.tables.SeriesTable
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 // TODO we can improve the performance of this by a lot...
 object SearchRepository {
     fun everywhere(
         query: String,
-        libsToSearch: List<UUID>,
-        userId: UUID,
+        libsToSearch: List<Uuid>,
+        userId: Uuid,
         limit: Int = 5,
     ): LibrarySearchResult =
         transaction {
@@ -68,8 +68,8 @@ object SearchRepository {
         val books: List<BookRow>,
         val authors: List<AuthorRow>,
         val series: List<SeriesRow>,
-        val authorsByBook: Map<UUID, List<AuthorRow>>,
-        val seriesByBook: Map<UUID, List<SeriesRow>>,
+        val authorsByBook: Map<Uuid, List<AuthorRow>>,
+        val seriesByBook: Map<Uuid, List<SeriesRow>>,
     )
 
     private fun everywhereAuthor(
@@ -119,7 +119,7 @@ object SearchRepository {
     private fun everywhereBook(
         query: String,
         index: SearchIndex,
-        userId: UUID,
+        userId: Uuid,
         limit: Int,
     ): List<Book> {
         val books =

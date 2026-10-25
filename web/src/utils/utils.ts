@@ -13,8 +13,14 @@ export const isUUID = (uuidString: string): uuidString is UUID => {
   return /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(uuidString)
 }
 
-export const formatDate = (date: Date | number | string) => {
-  return new Date(date).toLocaleDateString(undefined, {
+// A "YYYY-MM-DD" date has no time zone. new Date() would read it as UTC midnight, which is the day before west of UTC.
+export const parseDate = (date: string): Date => {
+  const [year, month, day] = date.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+export const formatDate = (date: string) => {
+  return parseDate(date).toLocaleDateString(undefined, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -29,23 +35,11 @@ export const apiErrorMessage = (error: string | object): string => {
 
 export const notNullIsh = <T>(p: T | null | undefined): p is T => p !== null && p !== undefined
 
-export const toFormDate = (date: Date | number | string): string | null => {
-  if (!date) return null
-  const parsed = new Date(date)
-  const month = `${parsed.getMonth() + 1}`.padStart(2, "0")
-  const day = `${parsed.getDate()}`.padStart(2, "0")
-  return `${parsed.getFullYear()}-${month}-${day}`
-}
-
 export const fromFormNumber = (value?: string | null): number | null => {
   return value ? Number(value) : null
 }
 
-export const fromFormDate = (date?: string | null): number | null => {
-  if (!date) return null
-  const [year, month, day] = date.split("-").map(Number)
-  return new Date(year, month - 1, day).getTime()
-}
+export const fromFormDate = (date?: string | null): string | null => date || null
 
 export const toRealURL = (baseUrl: string): string => {
   if (baseUrl.startsWith("/")) {

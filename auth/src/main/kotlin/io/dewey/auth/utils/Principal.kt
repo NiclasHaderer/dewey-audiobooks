@@ -4,10 +4,10 @@ import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.auth.Principal
 import io.ktor.server.auth.principal
 import io.ktor.server.routing.RoutingContext
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 interface DeweyPrincipal : Principal {
-    val userId: UUID
+    val userId: Uuid
 }
 
 inline fun <reified TYPE : DeweyPrincipal> RoutingContext.deweyPrincipal(): TYPE =

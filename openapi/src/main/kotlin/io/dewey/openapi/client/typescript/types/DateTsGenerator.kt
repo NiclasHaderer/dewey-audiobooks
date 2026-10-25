@@ -3,16 +3,14 @@ package io.dewey.openapi.client.typescript.types
 import io.dewey.openapi.client.common.GenerateType
 import io.dewey.openapi.client.typescript.TsTypeGenerator
 import io.dewey.openapi.common.ClassType
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.util.Date
+import kotlinx.datetime.LocalDate
+import kotlin.time.Instant
 
 class DateTsGenerator : TsTypeGenerator() {
     override fun generateContent(
         classType: ClassType,
         generateSubType: GenerateType<TsType>,
-    ): String = "number"
+    ): String = "string"
 
     override fun getName(classType: ClassType): String? = null
 
@@ -25,6 +23,5 @@ class DateTsGenerator : TsTypeGenerator() {
         generateSubType: GenerateType<TsType>,
     ): String? = null
 
-    override fun canGenerate(classType: ClassType): Boolean =
-        classType.isSubclassOf(Date::class, LocalDate::class, LocalDateTime::class, Instant::class)
+    override fun canGenerate(classType: ClassType): Boolean = classType.isSubclassOf(LocalDate::class, Instant::class)
 }

@@ -21,14 +21,16 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class ProgressRepositoryTest : DeweyTest() {
     private val progressRepository by lazy { getKoin().get<ProgressRepository>() }
@@ -39,9 +41,9 @@ class ProgressRepositoryTest : DeweyTest() {
 
     override fun configure(dataDir: Path) = DeweyConfig(dataDir = dataDir, continueListeningWeeks = 2)
 
-    private lateinit var libId: UUID
-    private lateinit var userId: UUID
-    private lateinit var bookId: UUID
+    private lateinit var libId: Uuid
+    private lateinit var userId: Uuid
+    private lateinit var bookId: Uuid
 
     /** newTrack seeds 60_000 ms per track, so three tracks make a three minute book. */
     private val durationMs = 180_000L
@@ -151,7 +153,7 @@ class ProgressRepositoryTest : DeweyTest() {
     @Test
     fun `progress older than the configured window drops out of continue listening`() {
         progressRepository.upsert(userId, libId, bookId, 42_000)
-        backdate(bookId, Instant.now().minus(WEEK.multipliedBy(3)))
+        backdate(bookId, Clock.System.now() - WEEK * 3)
 
         assertTrue(progressRepository.continueListening(userId, 10).isEmpty())
         assertEquals(42_000, progressOf().positionMs)
@@ -191,7 +193,7 @@ class ProgressRepositoryTest : DeweyTest() {
                     book = otherBook,
                     library = libId,
                     positionMs = 42_000,
-                    updatedAt = Instant.now(),
+                    updatedAt = Clock.System.now(),
                     finishedAt = null,
                     dismissedAt = null,
                 ),
@@ -243,7 +245,7 @@ class ProgressRepositoryTest : DeweyTest() {
     }
 
     /** Progress has no read endpoint of its own; it is read off the book. */
-    private fun progressOf(book: UUID = bookId) = bookRepository.get(userId, book, libId)
+    private fun progressOf(book: Uuid = bookId) = bookRepository.get(userId, book, libId)
 
     private fun logRows() =
         transaction {
@@ -255,13 +257,13 @@ class ProgressRepositoryTest : DeweyTest() {
         }
 
     private fun backdate(
-        book: UUID,
+        book: Uuid,
         to: Instant,
     ) = transaction {
         UserBookProgressTable.update({ UserBookProgressTable.book eq book }) { it[updatedAt] = to }
     }
 
     private companion object {
-        val WEEK: Duration = Duration.ofDays(7)
+        val WEEK: Duration = 7.days
     }
 }

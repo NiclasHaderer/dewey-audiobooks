@@ -8,15 +8,15 @@ import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.and
-import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 interface MetadataField {
     val name: String
@@ -28,7 +28,7 @@ sealed class LibraryEntityTable(
     table: String,
     nameColumn: String,
     val entity: ChangedEntity,
-) : UUIDTable(table) {
+) : UuidTable(table) {
     val library = reference("library_id", LibraryTable, onDelete = ReferenceOption.CASCADE).index()
     val deferDeletionUntil = timestampMillis("defer_deletion_until").nullable()
     val name = text(nameColumn, collate = "NOCASE")
@@ -43,7 +43,7 @@ sealed class LibraryEntityTable(
     context(_: Transaction)
     open fun record(
         type: ChangeType,
-        ids: Collection<UUID>,
+        ids: Collection<Uuid>,
     ) = ids.chunked(500).forEach { chunk ->
         // Sqlite has a max nr of parameters
         val listed = id inList chunk
@@ -55,8 +55,8 @@ sealed class LibraryEntityTable(
     context(_: Transaction)
     protected open fun announce(
         type: ChangeType,
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ) = recordChange(entity, type, id, libraryId)
 
     init {
@@ -69,11 +69,11 @@ sealed class LibraryEntityTable(
 
 context(_: Transaction)
 fun LibraryEntityTable.create(
-    libraryId: UUID,
+    libraryId: Uuid,
     name: String,
     taggedName: String? = null,
     deferDeletionUntil: Instant? = null,
-): UUID =
+): Uuid =
     insertAndGetId {
         it[library] = libraryId
         it[this.name] = name
@@ -103,5 +103,5 @@ fun LibraryEntityTable.unhide(where: Op<Boolean>) {
 }
 
 context(_: Transaction)
-private fun LibraryEntityTable.idsWhere(where: Op<Boolean>): List<UUID> =
+private fun LibraryEntityTable.idsWhere(where: Op<Boolean>): List<Uuid> =
     select(id).where { where }.map { it[id].value }

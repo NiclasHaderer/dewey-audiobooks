@@ -1,5 +1,8 @@
 package io.dewey.auth.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 open class JWK(
     open val kty: String,
     open val use: String,

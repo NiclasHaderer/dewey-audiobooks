@@ -141,9 +141,9 @@ export interface PartialUpdateLibrary {
 
 export interface Author {
   biography: string | null
-  birthDate: number | null
+  birthDate: string | null
   bornIn: string | null
-  deathDate: number | null
+  deathDate: string | null
   id: UUID
   imageID: UUID | null
   libraryId: UUID
@@ -181,7 +181,7 @@ export interface Book {
   providerID: string | null
   providerRating: number | null
   publisher: string | null
-  releaseDate: number | null
+  releaseDate: string | null
   series: Array<TitledId>
   status: PlayStatus
   title: string
@@ -249,15 +249,34 @@ export type BookField =
 export interface Track {
   book: TitledId
   durationMs: number
-  fileModifiedAt: number
+  fileModifiedAt: string
   id: UUID
   title: string
   trackNr: number
 }
 
-export interface BookDetailed extends Book {
+export interface BookDetailed {
+  authors: Array<NamedId>
   chapters: Array<Chapter>
+  coverID: UUID | null
+  description: string | null
+  durationMs: number
+  genres: Array<string>
+  id: UUID
+  isbn: string | null
+  language: MetadataLanguage | null
+  libraryId: UUID
   locked: Array<BookField>
+  narrators: Array<string>
+  positionMs: number
+  provider: string | null
+  providerID: string | null
+  providerRating: number | null
+  publisher: string | null
+  releaseDate: string | null
+  series: Array<TitledId>
+  status: PlayStatus
+  title: string
   tracks: Array<Track>
 }
 
@@ -279,7 +298,7 @@ export interface BookUpdate {
   providerID?: string | null
   providerRating?: number | null
   publisher?: string | null
-  releaseDate?: number | null
+  releaseDate?: string | null
   series?: Array<UUID> | null
   title?: string
   unlock?: Array<BookField>
@@ -293,10 +312,22 @@ export interface YearRange {
   start: number
 }
 
-export interface SeriesDetailed extends Series {
+export interface SeriesDetailed {
+  authors: Array<NamedId>
+  bookCoverIDs: Array<UUID>
   books: Array<Book>
+  coverID: UUID | null
+  description: string | null
+  genres: Array<string>
+  id: UUID
+  libraryId: UUID
   locked: Array<SeriesField>
   narrators: Array<string>
+  primaryWorks: number | null
+  provider: string | null
+  providerID: string | null
+  title: string
+  totalBooks: number | null
   yearRange: YearRange | null
 }
 
@@ -319,10 +350,21 @@ export interface SeriesUpdate {
 export type AuthorField =
   "NAME" | "PROVIDER" | "PROVIDER_ID" | "BIOGRAPHY" | "IMAGE_ID" | "WEBSITE" | "BORN_IN" | "BIRTH_DATE" | "DEATH_DATE"
 
-export interface AuthorDetailed extends Author {
+export interface AuthorDetailed {
+  biography: string | null
+  birthDate: string | null
   books: Array<Book>
+  bornIn: string | null
+  deathDate: string | null
+  id: UUID
+  imageID: UUID | null
+  libraryId: UUID
   locked: Array<AuthorField>
+  name: string
+  provider: string | null
+  providerID: string | null
   series: Array<Series>
+  website: string | null
 }
 
 export interface AuthorCreate {
@@ -331,10 +373,10 @@ export interface AuthorCreate {
 
 export interface AuthorUpdate {
   biography?: string | null
-  birthDate?: number | null
+  birthDate?: string | null
   books?: Array<UUID>
   bornIn?: string | null
-  deathDate?: number | null
+  deathDate?: string | null
   image?: string | null
   name?: string
   provider?: string | null
@@ -368,19 +410,22 @@ export interface MetadataAgentID {
   provider: string
 }
 
+export interface MetadataAuthor {
+  biography: string | null
+  birthDate: string | null
+  bornIn: string | null
+  deathDate: string | null
+  id: MetadataAgentID
+  imageURL: string | null
+  link: string
+  name: string | null
+  website: string | null
+}
+
 export interface MetadataSearchAuthor {
   id: MetadataAgentID
   link: string
   name: string | null
-}
-
-export interface MetadataAuthor extends MetadataSearchAuthor {
-  biography: string | null
-  birthDate: number | null
-  bornIn: string | null
-  deathDate: number | null
-  imageURL: string | null
-  website: string | null
 }
 
 export interface MetadataBookSeries {
@@ -390,23 +435,20 @@ export interface MetadataBookSeries {
   title: string | null
 }
 
-export interface MetadataSearchBook {
+export interface MetadataBook {
   authors: Array<MetadataSearchAuthor> | null
   coverURL: string | null
+  description: string | null
   id: MetadataAgentID
+  isbn: string | null
   language: MetadataLanguage | null
   link: string | null
   narrators: Array<string>
-  releaseDate: number | null
-  series: Array<MetadataBookSeries>
-  title: string | null
-}
-
-export interface MetadataBook extends MetadataSearchBook {
-  description: string | null
-  isbn: string | null
   providerRating: number | null
   publisher: string | null
+  releaseDate: string | null
+  series: Array<MetadataBookSeries>
+  title: string | null
 }
 
 export interface MetadataChapters {
@@ -415,6 +457,18 @@ export interface MetadataChapters {
 }
 
 export type MetadataSearchCount = "Small" | "Medium" | "Large" | "ExtraLarge"
+
+export interface MetadataSearchBook {
+  authors: Array<MetadataSearchAuthor> | null
+  coverURL: string | null
+  id: MetadataAgentID
+  language: MetadataLanguage | null
+  link: string | null
+  narrators: Array<string>
+  releaseDate: string | null
+  series: Array<MetadataBookSeries>
+  title: string | null
+}
 
 export interface MetadataSeries {
   authors: Array<string> | null
@@ -441,7 +495,7 @@ export interface SetDismissed {
 }
 
 export interface ListeningHistoryEntry {
-  at: number
+  at: string
   book: Book
   id: UUID
   positionMs: number

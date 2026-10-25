@@ -4,6 +4,7 @@ import io.dewey.openapi.ktor.Summary
 import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
 import io.dewey.openapi.ktor.plugins.OpenAPIRouting
 import io.dewey.openapi.ktor.post
+import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.ktor.client.request.accept
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -12,7 +13,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.resources.Resource
-import io.ktor.serialization.jackson.jackson
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -38,7 +39,7 @@ class CreateRoute
 private fun Application.statusRoutes() {
     install(Resources)
     install(DataConversion)
-    install(ContentNegotiation) { jackson {} }
+    install(ContentNegotiation) { json(OpenApiJson) }
     install(OpenAPIRouting)
 
     routing {

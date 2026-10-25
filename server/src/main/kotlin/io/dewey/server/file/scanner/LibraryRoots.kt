@@ -7,12 +7,12 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import java.nio.file.Path
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 // An immutable view of one library's folders. Handed to a scan so that editing the library while it walks
 // cannot change the tree underneath it, and so worker threads never hold a thread-affine DAO entity.
 data class LibraryEntityModel(
-    val id: UUID,
+    val id: Uuid,
     val name: String,
     val folders: List<Path>,
     val fileScanners: List<String>,
@@ -22,7 +22,7 @@ data class LibraryEntityModel(
 class LibraryRoots {
     fun all(): List<LibraryEntityModel> = transaction { LibraryTable.selectAll().map { it.toRoot() } }
 
-    fun of(id: UUID): LibraryEntityModel? =
+    fun of(id: Uuid): LibraryEntityModel? =
         transaction {
             LibraryTable
                 .selectAll()

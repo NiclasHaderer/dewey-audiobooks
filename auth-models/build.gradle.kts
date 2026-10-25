@@ -1,6 +1,11 @@
 plugins {
     kotlin("jvm")
     id("maven-publish")
+    kotlin("plugin.serialization")
+}
+
+dependencies {
+    api(project(":openapi-models"))
 }
 
 afterEvaluate {

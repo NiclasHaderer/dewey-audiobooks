@@ -2,26 +2,22 @@ package io.dewey.metadata
 
 import io.dewey.metadata.responses.MetadataAgentID
 import io.dewey.metadata.responses.MetadataAuthor
-import io.dewey.metadata.responses.MetadataAuthorImpl
 import io.dewey.metadata.responses.MetadataBook
-import io.dewey.metadata.responses.MetadataBookImpl
-import io.dewey.metadata.responses.MetadataBookSeriesImpl
+import io.dewey.metadata.responses.MetadataBookSeries
 import io.dewey.metadata.responses.MetadataChapters
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
-import io.dewey.metadata.responses.MetadataSearchAuthorImpl
+import io.dewey.metadata.responses.MetadataSearchAuthor
 import io.dewey.metadata.responses.MetadataSearchBook
-import io.dewey.metadata.responses.MetadataSearchBookImpl
 import io.dewey.metadata.responses.MetadataSearchCount
 import io.dewey.metadata.responses.MetadataSeries
-import io.dewey.metadata.responses.MetadataSeriesImpl
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
-internal data class TestId(
-    override val itemID: String,
-    override val provider: String = "fake",
-) : MetadataAgentID
+internal fun testId(
+    itemID: String,
+    provider: String = "fake",
+) = MetadataAgentID(provider = provider, itemID = itemID)
 
 internal fun searchHit(
     id: String,
@@ -30,17 +26,17 @@ internal fun searchHit(
     series: List<String> = emptyList(),
     narrators: List<String> = emptyList(),
     provider: String = "fake",
-) = MetadataSearchBookImpl(
-    id = TestId(id, provider),
+) = MetadataSearchBook(
+    id = testId(id, provider),
     title = title,
     link = null,
     authors =
         authors.map {
-            MetadataSearchAuthorImpl(id = TestId(it, provider), name = it, link = "link/$it")
+            MetadataSearchAuthor(id = testId(it, provider), name = it, link = "link/$it")
         },
     series =
         series.map {
-            MetadataBookSeriesImpl(id = TestId(it, provider), title = it, link = "link/$it", index = null)
+            MetadataBookSeries(id = testId(it, provider), title = it, link = "link/$it", index = null)
         },
     language = null,
     releaseDate = null,
@@ -51,8 +47,8 @@ internal fun searchHit(
 internal fun testBook(
     id: String,
     provider: String = "fake",
-) = MetadataBookImpl(
-    id = TestId(id, provider),
+) = MetadataBook(
+    id = testId(id, provider),
     title = id,
     link = null,
     authors = null,
@@ -70,8 +66,8 @@ internal fun testBook(
 internal fun testAuthor(
     id: String,
     provider: String = "fake",
-) = MetadataAuthorImpl(
-    id = TestId(id, provider),
+) = MetadataAuthor(
+    id = testId(id, provider),
     name = id,
     link = "link/$id",
     imageURL = null,
@@ -85,8 +81,8 @@ internal fun testAuthor(
 internal fun testSeries(
     id: String,
     provider: String = "fake",
-) = MetadataSeriesImpl(
-    id = TestId(id, provider),
+) = MetadataSeries(
+    id = testId(id, provider),
     title = id,
     authors = null,
     link = "link/$id",

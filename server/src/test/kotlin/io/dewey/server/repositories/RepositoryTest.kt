@@ -28,7 +28,6 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.mp.KoinPlatform.getKoin
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,6 +37,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
 
 class RepositoryTest : DeweyTest() {
     @Test
@@ -172,8 +172,8 @@ class RepositoryTest : DeweyTest() {
     private val narratorRepository by lazy { getKoin().get<NarratorRepository>() }
     private val genreRepository by lazy { getKoin().get<GenreRepository>() }
 
-    private var libId: UUID = UUID.randomUUID()
-    private var userId: UUID = UUID.randomUUID()
+    private var libId: Uuid = Uuid.random()
+    private var userId: Uuid = Uuid.random()
 
     @BeforeTest
     fun createLibrary() {
@@ -288,8 +288,8 @@ class RepositoryTest : DeweyTest() {
     private fun seriesRenamedTo(newTitle: String) = SeriesUpdate(title = Patch.Set(newTitle))
 
     private fun bookAssignedTo(
-        authors: List<UUID>? = null,
-        series: List<UUID>? = null,
+        authors: List<Uuid>? = null,
+        series: List<Uuid>? = null,
     ) = bookRenamedTo("Mort").copy(authors = authors.orAbsent(), series = series.orAbsent())
 
     private fun bookRenamedTo(newTitle: String) = BookUpdate(title = Patch.Set(newTitle))
@@ -370,7 +370,7 @@ class RepositoryTest : DeweyTest() {
     private fun bookWithTracks(
         bookTitle: String,
         vararg tracks: Pair<String, Int?>,
-    ): UUID {
+    ): Uuid {
         val book = bookRepository.create(bookTitle, libId, emptyList(), emptyList())
         tracks.forEach { (fileName, number) ->
             newTrack(

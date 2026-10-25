@@ -11,8 +11,8 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.update
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 object UserBookProgressTable : CompositeIdTable("user_book_progress") {
     val user = reference("user_id", UserTable, onDelete = ReferenceOption.CASCADE)
@@ -33,9 +33,9 @@ object UserBookProgressTable : CompositeIdTable("user_book_progress") {
 }
 
 data class UserBookProgressRow(
-    val user: UUID,
-    val book: UUID,
-    val library: UUID,
+    val user: Uuid,
+    val book: Uuid,
+    val library: Uuid,
     val positionMs: Long,
     val updatedAt: Instant,
     val finishedAt: Instant?,

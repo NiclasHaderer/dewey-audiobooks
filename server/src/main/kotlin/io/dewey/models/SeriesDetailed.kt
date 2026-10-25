@@ -1,39 +1,28 @@
 package io.dewey.models
 
 import io.dewey.server.database.tables.SeriesField
-import java.util.UUID
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 class SeriesDetailed(
-    id: UUID,
-    libraryId: UUID,
-    authors: List<NamedId>,
-    title: String,
-    provider: String?,
-    providerID: String?,
-    totalBooks: Int?,
-    primaryWorks: Int?,
-    coverID: UUID?,
-    description: String?,
-    genres: List<String>,
-    bookCoverIDs: List<UUID>,
+    val id: Uuid,
+    val libraryId: Uuid,
+    val authors: List<NamedId>,
+    val title: String,
+    val provider: String?,
+    val providerID: String?,
+    val totalBooks: Int?,
+    val primaryWorks: Int?,
+    val coverID: Uuid?,
+    val description: String?,
+    val genres: List<String>,
+    val bookCoverIDs: List<Uuid>,
     val yearRange: YearRange?,
     val narrators: List<String>,
     val books: List<Book>,
     val locked: List<SeriesField>,
-) : Series(
-        id = id,
-        libraryId = libraryId,
-        title = title,
-        authors = authors,
-        provider = provider,
-        providerID = providerID,
-        totalBooks = totalBooks,
-        primaryWorks = primaryWorks,
-        coverID = coverID,
-        description = description,
-        genres = genres,
-        bookCoverIDs = bookCoverIDs,
-    ) {
+) {
     companion object {
         fun fromModel(
             series: Series,
@@ -41,7 +30,6 @@ class SeriesDetailed(
             locked: List<SeriesField>,
         ): SeriesDetailed {
             val years = books.mapNotNull { it.releaseDate }
-
             return SeriesDetailed(
                 id = series.id,
                 libraryId = series.libraryId,

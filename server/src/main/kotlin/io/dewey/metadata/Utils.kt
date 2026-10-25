@@ -13,9 +13,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import org.jsoup.parser.Parser
-import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 private val log = logger {}
@@ -43,11 +44,11 @@ internal fun fullTextQuery(vararg terms: String?): String? =
 internal fun parseDateOrNull(
     providerName: String,
     date: String?,
-    parse: (String) -> LocalDate,
+    parse: (String) -> java.time.LocalDate,
 ): LocalDate? =
     date?.let {
         try {
-            parse(it)
+            parse(it).toKotlinLocalDate()
         } catch (e: DateTimeParseException) {
             log.warn(e) { "$providerName answered with the unparsable date '$it'" }
             null
@@ -108,7 +109,7 @@ internal fun <T> resolveInWindows(
         }
     }
 
-internal fun <T : MetadataSearchBook> List<T>.narratorFirst(narrator: String?): List<T> {
+internal fun List<MetadataSearchBook>.narratorFirst(narrator: String?): List<MetadataSearchBook> {
     if (narrator.isNullOrBlank()) return this
     return sortedByDescending { hit -> hit.narrators.maxOfOrNull { FuzzySearch.tokenSetRatio(narrator, it) } ?: 0 }
 }

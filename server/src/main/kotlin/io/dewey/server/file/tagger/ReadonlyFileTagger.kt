@@ -5,10 +5,10 @@ import io.dewey.server.common.extensions.canonicalString
 import io.dewey.server.common.extensions.lastModifiedInstant
 import io.dewey.server.database.tables.TrackChapter
 import io.dewey.taglib.TagLibFile
+import kotlinx.datetime.LocalDate
 import java.nio.file.Path
-import java.time.Instant
-import java.time.LocalDate
 import kotlin.io.path.nameWithoutExtension
+import kotlin.time.Instant
 
 class ReadonlyFileTagger(
     filePath: Path,
@@ -78,7 +78,7 @@ class ReadonlyFileTagger(
         fun parseDate(value: String?): LocalDate? {
             val date = value?.trim()?.ifEmpty { null } ?: return null
             runCatching { return LocalDate.parse(date.take(10)) }
-            return date.take(4).toIntOrNull()?.let { LocalDate.of(it, 1, 1) }
+            return date.take(4).toIntOrNull()?.let { LocalDate(it, 1, 1) }
         }
     }
 }

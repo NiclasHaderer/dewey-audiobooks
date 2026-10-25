@@ -8,19 +8,19 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.select
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 private val log = logger {}
 
 context(_: Transaction)
-private fun createImage(imageBytes: ByteArray): UUID =
+private fun createImage(imageBytes: ByteArray): Uuid =
     ImageTable.insertAndGetId { it[image] = ExposedBlob(imageBytes) }.value
 
 context(_: Transaction)
 fun getOrCreateImage(
     newImage: ByteArray?,
-    currentImageID: UUID?,
-): UUID? {
+    currentImageID: Uuid?,
+): Uuid? {
     if (newImage == null) return currentImageID
     // Cover art embedded in a track can be anything at all. Dropping it keeps a single odd file from failing
     // the whole import, which throwing here would do.

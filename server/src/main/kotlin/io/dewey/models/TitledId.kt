@@ -1,8 +1,10 @@
 package io.dewey.models
 
-import java.util.UUID
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 data class TitledId(
-    val id: UUID,
+    val id: Uuid,
     val title: String,
 )

@@ -1,22 +1,21 @@
 package io.dewey.server.database.extensions
 
-import io.dewey.server.di.serialization.Serialization
-import io.dewey.server.di.serialization.deserializeValue
+import io.dewey.openapi.serializion.kotlin.OpenApiJson
+import kotlinx.serialization.serializer
 import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.json.json
-import org.koin.mp.KoinPlatform
 
 inline fun <reified T : Any> Table.json(
     columnName: String,
     crossinline validation: (T) -> Unit = {},
 ): Column<T> {
-    val serializer = KoinPlatform.getKoin().get<Serialization>()
+    val serializer = OpenApiJson.serializersModule.serializer<T>()
 
     return json(columnName, serialize = {
         validation(it)
-        serializer.serializeValue(it)
+        OpenApiJson.encodeToString(serializer, it)
     }, deserialize = {
-        serializer.deserializeValue<T>(it)
+        OpenApiJson.decodeFromString(serializer, it)
     })
 }

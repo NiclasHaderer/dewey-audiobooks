@@ -8,16 +8,13 @@ import io.dewey.metadata.httpsApiUrl
 import io.dewey.metadata.narratorFirst
 import io.dewey.metadata.resolveInWindows
 import io.dewey.metadata.responses.MetadataAuthor
-import io.dewey.metadata.responses.MetadataAuthorImpl
 import io.dewey.metadata.responses.MetadataBook
-import io.dewey.metadata.responses.MetadataBookImpl
 import io.dewey.metadata.responses.MetadataChapters
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
-import io.dewey.metadata.responses.MetadataSearchBookImpl
+import io.dewey.metadata.responses.MetadataSearchBook
 import io.dewey.metadata.responses.MetadataSearchCount
 import io.dewey.metadata.responses.MetadataSeries
-import io.dewey.metadata.responses.MetadataSeriesImpl
 import io.dewey.metadata.toResultCount
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
@@ -96,7 +93,7 @@ class AudiobookDbMetadataAgent(
         narrator: String? = null,
         language: MetadataLanguage? = null,
         pageSize: MetadataSearchCount? = null,
-    ): List<MetadataSearchBookImpl> {
+    ): List<MetadataSearchBook> {
         val query = title ?: keywords ?: narrator ?: return emptyList()
 
         val url = apiUrl(listOf("releases"), searchParameters(query, pageSize))
@@ -119,14 +116,14 @@ class AudiobookDbMetadataAgent(
         providerId: String,
         authorId: String,
         region: MetadataRegion,
-    ): MetadataAuthorImpl? = http.getJson<AudiobookDbApiPerson>(apiUrl(listOf("people", authorId)))?.toMetadataAuthor()
+    ): MetadataAuthor? = http.getJson<AudiobookDbApiPerson>(apiUrl(listOf("people", authorId)))?.toMetadataAuthor()
 
     /** The ID is a release, not a book: a book is the work, and its releases are the audiobooks of it. */
     override suspend fun getBookByID(
         providerId: String,
         bookId: String,
         region: MetadataRegion,
-    ): MetadataBookImpl? {
+    ): MetadataBook? {
         val release = release(bookId) ?: return null
         return coroutineScope {
             val book = async { release.book?.let { http.getJson<AudiobookDbApiBook>(apiUrl(listOf("books", it.id))) } }
@@ -154,7 +151,7 @@ class AudiobookDbMetadataAgent(
         providerId: String,
         seriesId: String,
         region: MetadataRegion,
-    ): MetadataSeriesImpl? = http.getJson<AudiobookDbApiSeries>(apiUrl(listOf("series", seriesId)))?.toMetadataSeries()
+    ): MetadataSeries? = http.getJson<AudiobookDbApiSeries>(apiUrl(listOf("series", seriesId)))?.toMetadataSeries()
 
     private fun searchParameters(
         query: String,

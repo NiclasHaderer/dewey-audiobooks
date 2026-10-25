@@ -3,7 +3,7 @@ package io.dewey.server.database.tables
 import io.dewey.models.ChangedEntity
 import io.dewey.server.database.extensions.json
 import org.jetbrains.exposed.v1.core.ReferenceOption
-import org.jetbrains.exposed.v1.javatime.date
+import org.jetbrains.exposed.v1.datetime.date
 
 enum class AuthorField : MetadataField {
     NAME,

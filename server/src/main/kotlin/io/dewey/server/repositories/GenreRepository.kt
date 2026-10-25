@@ -10,28 +10,28 @@ import io.dewey.server.database.rows.booksToModels
 import io.dewey.server.database.tables.BookTable
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 interface GenreRepository {
     fun getAll(
-        libraryId: UUID,
+        libraryId: Uuid,
         order: SortOrder,
         limit: Int = 20,
         offset: Long = 0L,
     ): List<Genre>
 
     fun get(
-        userId: UUID,
+        userId: Uuid,
         name: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): GenreDetailed
 
-    fun total(libraryId: UUID): Long
+    fun total(libraryId: Uuid): Long
 }
 
 class GenreRepositoryImpl : GenreRepository {
     override fun getAll(
-        libraryId: UUID,
+        libraryId: Uuid,
         order: SortOrder,
         limit: Int,
         offset: Long,
@@ -43,9 +43,9 @@ class GenreRepositoryImpl : GenreRepository {
         }
 
     override fun get(
-        userId: UUID,
+        userId: Uuid,
         name: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): GenreDetailed =
         transaction {
             val match =
@@ -54,5 +54,5 @@ class GenreRepositoryImpl : GenreRepository {
             GenreDetailed(name = match.name, books = booksToModels(match.books, userId))
         }
 
-    override fun total(libraryId: UUID): Long = transaction { BookTable.genres.bookGroupCount(libraryId) }
+    override fun total(libraryId: Uuid): Long = transaction { BookTable.genres.bookGroupCount(libraryId) }
 }

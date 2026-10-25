@@ -29,8 +29,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import java.sql.DriverManager
-import java.time.Instant
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.appendBytes
@@ -49,6 +47,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class LibraryImportPipelineTest : DeweyTest() {
     private val pipeline by lazy { getKoin().get<LibraryImportPipeline>() }
@@ -74,7 +74,7 @@ class LibraryImportPipelineTest : DeweyTest() {
         root: Path,
         scanners: List<FileScanner> =
             listOf(FileScanner("AudioTagScanner"), FileScanner("AudioFolderScanner")),
-    ): UUID =
+    ): Uuid =
         newLibrary(
             "lib-${root.fileName}",
             folders = listOf(root.absolutePathString()),
@@ -92,7 +92,7 @@ class LibraryImportPipelineTest : DeweyTest() {
         return folder
     }
 
-    private fun scan(id: UUID) = pipeline.scanLibrary(id)
+    private fun scan(id: Uuid) = pipeline.scanLibrary(id)
 
     private fun titles() =
         transaction {
@@ -401,7 +401,7 @@ class LibraryImportPipelineTest : DeweyTest() {
         assertEquals(2L, tracks(), "sanity: both books import first")
 
         // Every file now looks changed, so the scan has to re-analyze and write
-        transaction { TrackTable.update { it[fileModifiedAt] = Instant.EPOCH } }
+        transaction { TrackTable.update { it[fileModifiedAt] = Instant.fromEpochMilliseconds(0) } }
         val snapshot = getKoin().get<LibraryRoots>().of(libId)!!
 
         // A competing connection holding the write lock for the whole scan, which is the real shape of the
@@ -467,7 +467,7 @@ class LibraryImportPipelineTest : DeweyTest() {
         val track = folder.resolve("A Book 0.mp3")
         restorePermissions = track
         Files.setPosixFilePermissions(track, emptySet())
-        transaction { TrackTable.update { it[fileModifiedAt] = Instant.EPOCH } }
+        transaction { TrackTable.update { it[fileModifiedAt] = Instant.fromEpochMilliseconds(0) } }
         scan(libId)
 
         assertEquals(2L, tracks(), "a file that could not be read must not be mistaken for a deleted one")
@@ -487,7 +487,7 @@ class LibraryImportPipelineTest : DeweyTest() {
                 it[fileScanners] = listOf(FileScanner("NoSuchScanner"))
             }
         }
-        transaction { TrackTable.update { it[fileModifiedAt] = Instant.EPOCH } }
+        transaction { TrackTable.update { it[fileModifiedAt] = Instant.fromEpochMilliseconds(0) } }
         scan(libId)
 
         assertEquals(1L, tracks(), "a library that analyzed nothing must not have everything reaped")

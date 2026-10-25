@@ -29,13 +29,14 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.union
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class LibraryCleanup {
     // Only ever correct straight after a completed scan: anything the walk did not stamp is treated as gone,
     // so calling this outside that window deletes tracks that were simply not visited yet.
-    fun removeStaleTracks(libraryId: UUID): Unit =
+    fun removeStaleTracks(libraryId: Uuid): Unit =
         transaction {
             val scanIndex =
                 LibraryTable
@@ -45,9 +46,9 @@ class LibraryCleanup {
             TrackTable.remove((TrackTable.library eq libraryId) and (TrackTable.scanIndex less scanIndex))
         }
 
-    fun removeOrphans(libraryId: UUID): Unit =
+    fun removeOrphans(libraryId: Uuid): Unit =
         transaction {
-            val now = Instant.now()
+            val now = Clock.System.now()
             // Books first: deleting them cascades the link rows away, which is what leaves the authors
             // and series below without books.
             val bookHasNoTrack = BookTable.id notInSubQuery TrackTable.select(TrackTable.book)
@@ -80,7 +81,7 @@ class LibraryCleanup {
     context(_: Transaction)
     private fun reap(
         table: LibraryEntityTable,
-        libraryId: UUID,
+        libraryId: Uuid,
         hidden: Op<Boolean>,
         deletable: Op<Boolean>,
         now: Instant,
@@ -101,5 +102,5 @@ class LibraryCleanup {
             }
         }
 
-    private fun Table.referenced(column: Column<EntityID<UUID>?>) = select(column).where { column.isNotNull() }
+    private fun Table.referenced(column: Column<EntityID<Uuid>?>) = select(column).where { column.isNotNull() }
 }

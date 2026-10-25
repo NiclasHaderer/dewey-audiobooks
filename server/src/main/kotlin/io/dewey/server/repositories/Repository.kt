@@ -24,18 +24,20 @@ import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.core.not
 import org.jetbrains.exposed.v1.core.notInSubQuery
 import org.jetbrains.exposed.v1.jdbc.select
-import java.time.Duration
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 // How long a book/author/series should be kept around before being properly deleted
-val DEFER_DELETION_GRACE: Duration = Duration.ofHours(24)
+val DEFER_DELETION_GRACE: Duration = 24.hours
 
 // Hidden books do not count: an author or series whose every book is on its way out hides them
 context(_: Transaction)
 fun visiblyLinked(
     linksWithBooks: ColumnSet,
-    owner: Column<EntityID<UUID>>,
+    owner: Column<EntityID<Uuid>>,
 ) = linksWithBooks
     .select(owner)
     .where { BookTable.deferDeletionUntil.isNull() }
@@ -44,7 +46,7 @@ context(_: Transaction)
 fun requireVisible(
     owner: LibraryEntityTable,
     thing: String,
-    id: UUID,
+    id: Uuid,
 ) {
     val hidden =
         owner
@@ -69,21 +71,21 @@ fun stampDeferral(
 
 // For anything that changes which books hang off an author or series, instead of waiting for the next scan
 context(_: Transaction)
-fun refreshAuthorDeferral(authorIds: Collection<UUID>) =
+fun refreshAuthorDeferral(authorIds: Collection<Uuid>) =
     stampDeferral(
         table = AuthorTable,
         scope = AuthorTable.id inList authorIds,
         orphaned = AuthorTable.id notInSubQuery visiblyLinked(authorLinksWithBooks, AuthorBookTable.author),
-        now = Instant.now(),
+        now = Clock.System.now(),
     )
 
 context(_: Transaction)
-fun refreshSeriesDeferral(seriesIds: Collection<UUID>) =
+fun refreshSeriesDeferral(seriesIds: Collection<Uuid>) =
     stampDeferral(
         table = SeriesTable,
         scope = SeriesTable.id inList seriesIds,
         orphaned = SeriesTable.id notInSubQuery visiblyLinked(seriesLinksWithBooks, SeriesBookTable.series),
-        now = Instant.now(),
+        now = Clock.System.now(),
     )
 
 fun noMatch(searchedFor: String): ErrorResponse =
@@ -94,20 +96,20 @@ interface Repository<RAW, NORMAL, DETAILED, PARTIAL_API> {
         get() = 30
 
     fun raw(
-        id: UUID,
-        libraryId: UUID,
+        id: Uuid,
+        libraryId: Uuid,
     ): RAW
 
     fun get(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         showInvisible: Boolean = false,
     ): DETAILED
 
     fun getAll(
-        userId: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        libraryId: Uuid,
         order: SortOrder,
         limit: Int = 20,
         offset: Long = 0L,
@@ -115,26 +117,26 @@ interface Repository<RAW, NORMAL, DETAILED, PARTIAL_API> {
     ): List<NORMAL>
 
     fun search(
-        userId: UUID,
+        userId: Uuid,
         query: String,
-        libraryId: UUID,
+        libraryId: Uuid,
     ): List<NORMAL>
 
     fun modify(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
         partial: PARTIAL_API,
     ): NORMAL
 
     fun autoMatch(
-        userId: UUID,
-        id: UUID,
-        libraryId: UUID,
+        userId: Uuid,
+        id: Uuid,
+        libraryId: Uuid,
     ): NORMAL
 
     fun total(
-        libraryId: UUID,
+        libraryId: Uuid,
         showInvisible: Boolean = false,
     ): Long
 }

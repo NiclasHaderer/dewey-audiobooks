@@ -13,6 +13,7 @@ import io.dewey.server.repositories.LibraryRepository
 import io.dewey.server.repositories.SearchRepository
 import io.dewey.server.schedules.DeweySchedules
 import io.ktor.server.routing.Routing
+import kotlinx.serialization.json.JsonPrimitive
 import org.koin.ktor.ext.inject
 
 fun Routing.libraryRouting() {
@@ -40,7 +41,7 @@ fun Routing.libraryRouting() {
             throw ErrorResponse.forbidden(
                 "Create",
                 "library",
-                "Only admins can create libraries",
+                JsonPrimitive("Only admins can create libraries"),
             )
         }
         libraryRepository.create(postLibrary)
@@ -52,7 +53,7 @@ fun Routing.libraryRouting() {
             throw ErrorResponse.forbidden(
                 "Delete",
                 "library",
-                "Only admins can delete libraries",
+                JsonPrimitive("Only admins can delete libraries"),
             )
         }
         libraryRepository.delete(id)

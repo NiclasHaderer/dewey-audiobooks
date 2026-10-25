@@ -1,36 +1,24 @@
 package io.dewey.metadata.responses
 
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
-interface MetadataSearchAuthor {
-    val id: MetadataAgentID
-    val name: String?
-    val link: String
-}
+@Serializable
+data class MetadataSearchAuthor(
+    val id: MetadataAgentID,
+    val name: String?,
+    val link: String,
+)
 
-data class MetadataSearchAuthorImpl(
-    override val id: MetadataAgentID,
-    override val name: String?,
-    override val link: String,
-) : MetadataSearchAuthor
-
-interface MetadataAuthor : MetadataSearchAuthor {
-    val imageURL: String?
-    val biography: String?
-    val website: String?
-    val bornIn: String?
-    val birthDate: LocalDate?
-    val deathDate: LocalDate?
-}
-
-data class MetadataAuthorImpl(
-    override val id: MetadataAgentID,
-    override val name: String?,
-    override val link: String,
-    override val imageURL: String?,
-    override val biography: String?,
-    override val website: String?,
-    override val bornIn: String?,
-    override val birthDate: LocalDate?,
-    override val deathDate: LocalDate?,
-) : MetadataAuthor
+@Serializable
+data class MetadataAuthor(
+    val id: MetadataAgentID,
+    val name: String?,
+    val link: String,
+    val imageURL: String?,
+    val biography: String?,
+    val website: String?,
+    val bornIn: String?,
+    val birthDate: LocalDate?,
+    val deathDate: LocalDate?,
+)

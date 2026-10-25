@@ -22,6 +22,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.server.response.header
 import io.ktor.server.routing.Routing
+import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.jdbc.Query
@@ -29,10 +30,10 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.unionAll
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+import kotlin.uuid.Uuid
 
 fun Routing.audioRouting() {
     get<Api.Files.Audio.Id, FileResponse> { (id) ->
@@ -49,7 +50,11 @@ fun Routing.audioRouting() {
         assertLibraryPermissions(libraryId)
         val path = Path.of(track)
         if (!path.exists() || !path.isRegularFile()) {
-            throw ErrorResponse.notFound("File", path.name, "Database out of sync. Please start a rescan.")
+            throw ErrorResponse.notFound(
+                "File",
+                path.name,
+                JsonPrimitive("Database out of sync. Please start a rescan."),
+            )
         }
         call.response.header(
             HttpHeaders.ContentDisposition,
@@ -93,9 +98,9 @@ private const val IMAGE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60
 
 private fun cover(
     owner: LibraryEntityTable,
-    image: Column<EntityID<UUID>?>,
-    imageId: UUID,
-    allowed: Set<UUID>,
+    image: Column<EntityID<Uuid>?>,
+    imageId: Uuid,
+    allowed: Set<Uuid>,
 ): Query =
     owner
         .join(ImageTable, JoinType.INNER, image, ImageTable.id)

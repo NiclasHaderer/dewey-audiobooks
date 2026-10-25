@@ -2,7 +2,7 @@ import { FC } from "react"
 import { Author, AuthorUpdate, MetadataAuthor } from "@dewey/client"
 import { GenericEdit } from "@dewey/components/generic/generic-edit.tsx"
 import { useUpdateAuthor } from "@dewey/queries/resource-queries"
-import { fromFormDate, toFormDate } from "../../utils/utils"
+import { fromFormDate } from "../../utils/utils"
 import { AuthorForm } from "./author-form"
 import { AuthorSearch } from "./author-search"
 
@@ -45,10 +45,6 @@ export const AuthorEdit: FC<{ author: Author; isOpen: boolean; onOpenChange: (op
       title="Edit Author"
       initial={authorToUpdateModel(author)}
       options={{
-        toForm: {
-          birthDate: value => value && toFormDate(value),
-          deathDate: value => value && toFormDate(value),
-        },
         fromForm: {
           birthDate: fromFormDate,
           deathDate: fromFormDate,

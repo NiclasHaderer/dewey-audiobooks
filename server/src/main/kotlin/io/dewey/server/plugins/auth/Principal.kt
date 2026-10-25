@@ -16,15 +16,15 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 class DeweyPrincipalImpl(
-    override val userId: UUID,
+    override val userId: Uuid,
 ) : DeweyPrincipal {
     val permissions: UserPermissions = resolveUserPermissions(userId)
 }
 
-fun resolveUserPermissions(userId: UUID): UserPermissions =
+fun resolveUserPermissions(userId: Uuid): UserPermissions =
     transaction {
         val user = userRow(userId) ?: throw ErrorResponse.notFound("User", userId)
         val permissions: List<LibraryPermissions> =
@@ -64,7 +64,7 @@ fun RoutingContext.deweyPrincipalOrNull(): DeweyPrincipalImpl? = call.principal(
  */
 interface UserScoped
 
-fun RoutingContext.assertLibraryPermissions(vararg libraryIds: UUID) {
+fun RoutingContext.assertLibraryPermissions(vararg libraryIds: Uuid) {
     val principal = deweyPrincipal()
 
     val readonlyMethods = listOf(HttpMethod.Head, HttpMethod.Get, HttpMethod.Options)

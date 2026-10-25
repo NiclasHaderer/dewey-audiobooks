@@ -12,15 +12,15 @@ import io.dewey.server.database.extensions.json
 import io.dewey.server.events.recordChange
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Transaction
-import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.update
-import java.util.UUID
+import kotlin.uuid.Uuid
 
-object LibraryTable : UUIDTable("library") {
+object LibraryTable : UuidTable("library") {
     val name = varchar("name", 255)
     val icon = text("icon").nullable()
     val scanIndex = ulong("scan_index").default(0uL)
@@ -50,7 +50,7 @@ object LibraryTable : UUIDTable("library") {
 }
 
 data class LibraryRow(
-    val id: UUID,
+    val id: Uuid,
     val name: String,
     val icon: String?,
     val scanIndex: ULong,
@@ -97,7 +97,7 @@ fun ResultRow.toLibraryRow(): LibraryRow =
     )
 
 context(_: Transaction)
-fun LibraryTable.insert(row: LibraryRow): UUID {
+fun LibraryTable.insert(row: LibraryRow): Uuid {
     insert { write(it, row) }
     record(ChangeType.CREATED, row.id)
     return row.id
@@ -110,7 +110,7 @@ fun LibraryTable.update(row: LibraryRow) {
 }
 
 context(_: Transaction)
-fun LibraryTable.delete(libraryId: UUID): Boolean =
+fun LibraryTable.delete(libraryId: Uuid): Boolean =
     (deleteWhere { LibraryTable.id eq libraryId } > 0).also { deleted ->
         if (deleted) record(ChangeType.DELETED, libraryId)
     }
@@ -118,7 +118,7 @@ fun LibraryTable.delete(libraryId: UUID): Boolean =
 context(_: Transaction)
 private fun record(
     type: ChangeType,
-    libraryId: UUID,
+    libraryId: Uuid,
 ) = recordChange(ChangedEntity.LIBRARY, type, libraryId, libraryId)
 
 private fun write(

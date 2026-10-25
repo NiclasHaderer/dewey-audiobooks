@@ -3,7 +3,7 @@ package io.dewey.openapi.client.kotlin.types
 import io.dewey.openapi.client.common.GenerateType
 import io.dewey.openapi.client.kotlin.KtTypeGenerator
 import io.dewey.openapi.common.ClassType
-import java.time.Instant
+import kotlin.time.Instant
 
 class InstantKtGenerator : KtTypeGenerator() {
     override fun generateContent(
@@ -23,7 +23,7 @@ class InstantKtGenerator : KtTypeGenerator() {
     override fun withImports(
         classType: ClassType,
         generateSubType: GenerateType<KtType>,
-    ): List<String> = listOf("import java.time.Instant")
+    ): List<String> = listOf("import kotlin.time.Instant")
 
     override fun canGenerate(classType: ClassType): Boolean = classType.isSubclassOf(Instant::class)
 }

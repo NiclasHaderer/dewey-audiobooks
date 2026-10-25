@@ -25,7 +25,6 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
@@ -39,6 +38,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
 class LibraryWatcherTest : DeweyTest() {
     private val watcher by lazy { getKoin().get<LibraryWatcher>() as LibraryWatcherImpl }
@@ -48,7 +48,7 @@ class LibraryWatcherTest : DeweyTest() {
     private val schedulerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private lateinit var libraryRoot: Path
-    private var libId: UUID = UUID.randomUUID()
+    private var libId: Uuid = Uuid.random()
 
     // Settling costs one extra round trip per file, so keep it short or every assertion waits on it
     override fun configure(dataDir: Path) = DeweyConfig(dataDir = dataDir, settleMillis = 50)

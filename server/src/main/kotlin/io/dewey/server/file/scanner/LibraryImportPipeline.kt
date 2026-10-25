@@ -19,7 +19,6 @@ import java.nio.file.LinkOption
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.UUID
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -28,44 +27,45 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.withLock
 import kotlin.io.path.name
 import kotlin.io.path.readAttributes
+import kotlin.uuid.Uuid
 
 private sealed interface WriteCommand {
     data class UpsertTrack(
         val result: AudioFileAnalysisResult,
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 
     data class TouchTracks(
         val paths: List<Path>,
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 
     data class TouchFolder(
         val path: Path,
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 
     data class RemoveFile(
         val path: Path,
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 
     data class RemoveSubtree(
         val path: Path,
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 
     data class ReapStaleTracks(
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 
     data class PruneOrphans(
-        val libraryId: UUID,
+        val libraryId: Uuid,
     ) : WriteCommand
 }
 
 data class ScanRequest(
-    val libraryId: UUID,
+    val libraryId: Uuid,
     val reanalyze: Boolean = false,
 )
 
@@ -130,7 +130,7 @@ class LibraryImportPipeline : KoinComponent {
     fun enqueue(path: Path) = watchQueue.add(path)
 
     fun scanLibrary(
-        libraryId: UUID,
+        libraryId: Uuid,
         reanalyze: Boolean = false,
     ): Boolean {
         val library = roots.of(libraryId)
@@ -208,7 +208,7 @@ class LibraryImportPipeline : KoinComponent {
 
     private fun keepSubtree(
         path: Path,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) = dbWriterQueue.put(WriteCommand.TouchFolder(path, libraryId))
 
     private fun startWorkers(
@@ -346,7 +346,7 @@ class LibraryImportPipeline : KoinComponent {
 
     private fun removeSubtree(
         folder: Path,
-        libraryId: UUID,
+        libraryId: Uuid,
     ) {
         watchQueue.removeAll { it.startsWith(folder) }
         dbWriterQueue.put(WriteCommand.RemoveSubtree(folder, libraryId))

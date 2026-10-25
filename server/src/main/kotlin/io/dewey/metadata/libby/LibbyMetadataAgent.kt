@@ -7,14 +7,14 @@ import io.dewey.metadata.appendOptional
 import io.dewey.metadata.fetchChunked
 import io.dewey.metadata.fullTextQuery
 import io.dewey.metadata.httpsApiUrl
-import io.dewey.metadata.responses.MetadataAgentIDImpl
-import io.dewey.metadata.responses.MetadataAuthorImpl
-import io.dewey.metadata.responses.MetadataBookImpl
+import io.dewey.metadata.responses.MetadataAgentID
+import io.dewey.metadata.responses.MetadataAuthor
+import io.dewey.metadata.responses.MetadataBook
 import io.dewey.metadata.responses.MetadataLanguage
 import io.dewey.metadata.responses.MetadataRegion
-import io.dewey.metadata.responses.MetadataSearchBookImpl
+import io.dewey.metadata.responses.MetadataSearchBook
 import io.dewey.metadata.responses.MetadataSearchCount
-import io.dewey.metadata.responses.MetadataSeriesImpl
+import io.dewey.metadata.responses.MetadataSeries
 import io.dewey.metadata.toResultCount
 import io.ktor.http.Parameters
 import io.ktor.http.Url
@@ -40,7 +40,7 @@ class LibbyMetadataAgent(
         narrator: String?,
         language: MetadataLanguage?,
         pageSize: MetadataSearchCount?,
-    ): List<MetadataSearchBookImpl> {
+    ): List<MetadataSearchBook> {
         val query = fullTextQuery(keywords, title, author, narrator) ?: return emptyList()
 
         val parameters =
@@ -60,7 +60,7 @@ class LibbyMetadataAgent(
         providerId: String,
         authorId: String,
         region: MetadataRegion,
-    ): MetadataAuthorImpl? {
+    ): MetadataAuthor? {
         val parameters =
             Parameters.build {
                 append("creatorId", authorId)
@@ -73,8 +73,8 @@ class LibbyMetadataAgent(
                 ?.items
                 ?.firstNotNullOfOrNull { item -> item.creators.firstOrNull { it.id?.toString() == authorId } }
                 ?: return null
-        return MetadataAuthorImpl(
-            id = MetadataAgentIDImpl(LIBBY_PROVIDER_NAME, authorId),
+        return MetadataAuthor(
+            id = MetadataAgentID(LIBBY_PROVIDER_NAME, authorId),
             name = creator.name,
             link = libbyAuthorLink(libraryKey, authorId),
             imageURL = null,
@@ -90,14 +90,14 @@ class LibbyMetadataAgent(
         providerId: String,
         bookId: String,
         region: MetadataRegion,
-    ): MetadataBookImpl? =
+    ): MetadataBook? =
         http.getJson<LibbyApiMedia>(apiUrl(listOf("media", bookId)))?.toMetadataBook(libraryKey, imageSize)
 
     override suspend fun getSeriesByID(
         providerId: String,
         seriesId: String,
         region: MetadataRegion,
-    ): MetadataSeriesImpl? {
+    ): MetadataSeries? {
         val series =
             http.getJson<LibbyApiSeriesResponse>(apiUrl(listOf("libraries", libraryKey, "series", seriesId)))
                 ?: return null
@@ -115,8 +115,8 @@ class LibbyMetadataAgent(
                 }.distinctBy { (item, _) -> item.readingOrder ?: item.id }
                 .map { (_, media) -> media.toMetadataSearchBook(libraryKey, imageSize) }
 
-        return MetadataSeriesImpl(
-            id = MetadataAgentIDImpl(LIBBY_PROVIDER_NAME, seriesId),
+        return MetadataSeries(
+            id = MetadataAgentID(LIBBY_PROVIDER_NAME, seriesId),
             title = series.name,
             link = libbySeriesLink(libraryKey, seriesId),
             description = null,

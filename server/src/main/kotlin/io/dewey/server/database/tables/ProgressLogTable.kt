@@ -4,15 +4,15 @@ import io.dewey.server.database.extensions.timestampMillis
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Transaction
-import org.jetbrains.exposed.v1.core.dao.id.java.UUIDTable
+import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.jdbc.insert
-import java.time.Instant
-import java.util.UUID
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 /**
  * Append-only: one row per progress write, never updated
  */
-object ProgressLogTable : UUIDTable("progress_log") {
+object ProgressLogTable : UuidTable("progress_log") {
     val user = reference("user_id", UserTable, onDelete = ReferenceOption.CASCADE)
     val book = reference("book_id", BookTable, onDelete = ReferenceOption.CASCADE)
     val library = reference("library_id", LibraryTable, onDelete = ReferenceOption.CASCADE).index()
@@ -26,10 +26,10 @@ object ProgressLogTable : UUIDTable("progress_log") {
 }
 
 data class ProgressLogRow(
-    val id: UUID,
-    val user: UUID,
-    val book: UUID,
-    val library: UUID,
+    val id: Uuid,
+    val user: Uuid,
+    val book: Uuid,
+    val library: Uuid,
     val positionMs: Long,
     val at: Instant,
 )
@@ -45,7 +45,7 @@ fun ResultRow.toProgressLogRow(): ProgressLogRow =
     )
 
 context(_: Transaction)
-fun ProgressLogTable.insert(row: ProgressLogRow): UUID {
+fun ProgressLogTable.insert(row: ProgressLogRow): Uuid {
     insert {
         it[id] = row.id
         it[user] = row.user

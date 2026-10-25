@@ -10,13 +10,13 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.UUID
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.isDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.uuid.Uuid
 
 class LibraryScannerSymlinkTest : DeweyTest() {
     private val pipeline by lazy { getKoin().get<LibraryImportPipeline>() }
@@ -37,14 +37,14 @@ class LibraryScannerSymlinkTest : DeweyTest() {
         return folder
     }
 
-    private fun createLibrary(root: Path): UUID =
+    private fun createLibrary(root: Path): Uuid =
         newLibrary(
             "lib",
             folders = listOf(root.absolutePathString()),
             fileScanners = listOf(FileScanner("AudioTagScanner"), FileScanner("AudioFolderScanner")),
         )
 
-    private fun scan(id: UUID) = pipeline.scanLibrary(id)
+    private fun scan(id: Uuid) = pipeline.scanLibrary(id)
 
     private fun titles() = transaction { BookTable.selectAll().mapNotNull { it[BookTable.title] }.sorted() }
 

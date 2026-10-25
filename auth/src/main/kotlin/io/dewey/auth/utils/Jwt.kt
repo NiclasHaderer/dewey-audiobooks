@@ -11,7 +11,7 @@ import io.dewey.openapi.ktor.errors.ErrorResponse
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.util.Date
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 fun generateJwtPairForUser(
     user: DeweyDatabaseUser,
@@ -86,7 +86,7 @@ internal fun DeweyAuthConfig<*, *>.userForToken(
 ): DeweyDatabaseUser? {
     if (payload.getClaim("type").asString() != type.type) return null
     val userId =
-        payload.getClaim("sub").asString()?.let { runCatching { UUID.fromString(it) }.getOrNull() } ?: return null
+        payload.getClaim("sub").asString()?.let { runCatching { Uuid.parse(it) }.getOrNull() } ?: return null
     val user = getUserById(userId) ?: return null
     return user.takeIf { payload.getClaim("ver").asInt() == it.tokenVersion }
 }

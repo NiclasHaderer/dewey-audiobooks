@@ -6,9 +6,11 @@ import io.dewey.openapi.ktor.ValidateObject
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.dewey.server.database.tables.AuthorField
 import io.ktor.server.routing.RoutingContext
-import java.time.LocalDate
-import java.util.UUID
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 data class AuthorUpdate(
     val name: Patch<String> = Patch.Absent,
     val provider: Patch<String?> = Patch.Absent,
@@ -19,7 +21,7 @@ data class AuthorUpdate(
     val bornIn: Patch<String?> = Patch.Absent,
     val birthDate: Patch<LocalDate?> = Patch.Absent,
     val deathDate: Patch<LocalDate?> = Patch.Absent,
-    val books: Patch<List<UUID>> = Patch.Absent,
+    val books: Patch<List<Uuid>> = Patch.Absent,
     val unlock: Patch<List<AuthorField>> = Patch.Absent,
 ) : ValidateObject {
     override suspend fun RoutingContext.validateBody() {

@@ -1,16 +1,18 @@
 package io.dewey.models
 
-import java.time.LocalDate
-import java.util.UUID
+import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
+@Serializable
 open class Author(
-    val id: UUID,
-    val libraryId: UUID,
+    val id: Uuid,
+    val libraryId: Uuid,
     val name: String,
     val provider: String?,
     val providerID: String?,
     val biography: String?,
-    val imageID: UUID?,
+    val imageID: Uuid?,
     val website: String?,
     val bornIn: String?,
     val birthDate: LocalDate?,

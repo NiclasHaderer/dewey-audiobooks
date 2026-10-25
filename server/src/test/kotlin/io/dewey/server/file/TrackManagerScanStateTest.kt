@@ -13,29 +13,29 @@ import org.koin.mp.KoinPlatform.getKoin
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
-import java.time.Instant
-import java.util.UUID
 import kotlin.io.path.createFile
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 class TrackManagerScanStateTest : DeweyTest() {
     private val trackManager by lazy { getKoin().get<TrackManager>() }
 
     private fun fileWithMtime(mtimeMillis: Long): Path {
-        val file = dataDir.resolve("track-${UUID.randomUUID()}.mp3").createFile()
+        val file = dataDir.resolve("track-${Uuid.random()}.mp3").createFile()
         Files.setLastModifiedTime(file, FileTime.fromMillis(mtimeMillis))
         return file
     }
 
     private fun trackAt(
         path: Path,
-        trackLibrary: UUID,
-        bookLibrary: UUID = trackLibrary,
-        fileModifiedAt: Instant = Instant.ofEpochMilli(1000),
-    ): UUID {
+        trackLibrary: Uuid,
+        bookLibrary: Uuid = trackLibrary,
+        fileModifiedAt: Instant = Instant.fromEpochMilliseconds(1000),
+    ): Uuid {
         val book = newBook("A Book", bookLibrary)
         return newTrack(
             title = "A Track",
@@ -49,7 +49,7 @@ class TrackManagerScanStateTest : DeweyTest() {
     @Test
     fun `an unchanged file needs no analysis`() {
         val path = fileWithMtime(1000)
-        trackAt(path, newLibrary("lib"), fileModifiedAt = Instant.ofEpochMilli(1000))
+        trackAt(path, newLibrary("lib"), fileModifiedAt = Instant.fromEpochMilliseconds(1000))
 
         assertFalse(trackManager.needsAnalysis(path))
     }
@@ -57,7 +57,7 @@ class TrackManagerScanStateTest : DeweyTest() {
     @Test
     fun `a file with a newer mtime needs analysis`() {
         val path = fileWithMtime(2000)
-        trackAt(path, newLibrary("lib"), fileModifiedAt = Instant.ofEpochMilli(1000))
+        trackAt(path, newLibrary("lib"), fileModifiedAt = Instant.fromEpochMilliseconds(1000))
 
         assertTrue(trackManager.needsAnalysis(path))
     }
