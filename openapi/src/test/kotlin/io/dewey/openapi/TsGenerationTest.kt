@@ -25,7 +25,7 @@ class TsGenerationTest {
                 testRoutes()
                 generateTsClient(
                     dist = "",
-                    fileWriter = { file, content -> generatedStuff[file.name] = content },
+                    fileWriter = { file, content -> generatedStuff[file.path] = content },
                     apiFactoryName = "createTestApi",
                     // The writer above keeps everything in memory, so there is no dist to clean.
                     cleanDistPackage = false,
@@ -33,66 +33,104 @@ class TsGenerationTest {
             }
         }
         val models =
-            """
-            /* eslint-disable */
-            // @ts-nocheck
+            mapOf(
+                "models/index.ts" to
+                    listOf(
+                        "GenericRoute",
+                        "GenericRoute2",
+                        "GenericRoute3",
+                        "ListRoute",
+                        "MapRoute",
+                        "Pair",
+                        "SetRoute",
+                        "UUID",
+                    ).joinToString("") { "export * from \"./$it\";\n" },
+                "models/GenericRoute.ts" to
+                    """
+                    import type {Pair} from "./Pair";
+                    import type {UUID} from "./UUID";
 
-            export interface GenericRoute<T extends NonNullable<any>> {
-              name: Pair<string, UUID>;
-              someParam: T;
-            }
+                    export interface GenericRoute<T extends NonNullable<unknown>> {
+                      name: Pair<string, UUID>;
+                      someParam: T;
+                    }
 
-            export interface GenericRoute2<T, U> {
-              name: string;
-              someParam: T;
-              someParam2: U;
-            }
+                    """.trimIndent(),
+                "models/GenericRoute2.ts" to
+                    """
+                    export interface GenericRoute2<T, U> {
+                      name: string;
+                      someParam: T;
+                      someParam2: U;
+                    }
 
-            export interface GenericRoute3<T> {
-              name: string;
-              someParam: Record<string, T>;
-              someParam2: GenericRoute2<T, string>;
-            }
+                    """.trimIndent(),
+                "models/GenericRoute3.ts" to
+                    """
+                    import type {GenericRoute2} from "./GenericRoute2";
 
-            export interface ListRoute {
-              name: string;
-              someParam: Array<UUID>;
-            }
+                    export interface GenericRoute3<T> {
+                      name: string;
+                      someParam: Record<string, T>;
+                      someParam2: GenericRoute2<T, string>;
+                    }
 
-            export interface MapRoute {
-              hint: string | null;
-              label?: string;
-              lookup?: Record<string, UUID> | null;
-              name: boolean;
-              note?: string | null;
-              someParam: Record<string, UUID>;
-            }
+                    """.trimIndent(),
+                "models/ListRoute.ts" to
+                    """
+                    import type {UUID} from "./UUID";
 
-            export interface Pair<A, B> {
-              first: A;
-              second: B;
-            }
+                    export interface ListRoute {
+                      name: string;
+                      someParam: Array<UUID>;
+                    }
 
-            export interface SetRoute {
-              name: number;
-              someParam: Array<UUID>;
-            }
+                    """.trimIndent(),
+                "models/MapRoute.ts" to
+                    """
+                    import type {UUID} from "./UUID";
 
-            export type UUID = `$\{string}-$\{string}-$\{string}-$\{string}-$\{string}`
-            """.trimIndent()
-                .replace("\\{", "{")
+                    export interface MapRoute {
+                      hint: string | null;
+                      label?: string;
+                      lookup?: Record<string, UUID> | null;
+                      name: boolean;
+                      note?: string | null;
+                      someParam: Record<string, UUID>;
+                    }
 
-        val generatedModels = generatedStuff["models.ts"]
-        assertEquals(models, generatedModels)
+                    """.trimIndent(),
+                "models/Pair.ts" to
+                    """
+                    export interface Pair<A, B> {
+                      first: A;
+                      second: B;
+                    }
+
+                    """.trimIndent(),
+                "models/SetRoute.ts" to
+                    """
+                    import type {UUID} from "./UUID";
+
+                    export interface SetRoute {
+                      name: number;
+                      someParam: Array<UUID>;
+                    }
+
+                    """.trimIndent(),
+                "models/UUID.ts" to
+                    $$"""
+                    export type UUID = `${string}-${string}-${string}-${string}-${string}`
+
+                    """.trimIndent(),
+            )
+
+        assertEquals(models, generatedStuff.filterKeys { it.startsWith("models/") })
 
         val apiClient =
             $$"""
-            /* eslint-disable */
-            // noinspection JSUnusedGlobalSymbols,ES6UnusedImports
-            // noinspection ES6UnusedImports
-            // @ts-nocheck
             import {ApiCallData, ApiInterceptor, ApiResponse, ApiSocket, ApiSocketData, ApiSocketInterceptor, _request, _createUrl, _mergeHeaders, _socket} from "./client";
-            import type {GenericRoute, GenericRoute2, GenericRoute3, ListRoute, MapRoute, Pair, SetRoute, UUID} from "./models";
+            import type {GenericRoute, GenericRoute2, GenericRoute3, ListRoute, MapRoute, SetRoute, UUID} from "./models";
 
             export const createTestApi = (
               defaultHeaders: HeadersInit = {},

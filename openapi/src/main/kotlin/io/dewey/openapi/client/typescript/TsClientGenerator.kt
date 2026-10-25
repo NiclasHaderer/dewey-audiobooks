@@ -35,19 +35,23 @@ class TsClientGenerator(
     private val model = WireModel()
     private val aliases = linkedMapOf<String, String>()
     private val clientFunctions = mutableListOf<Pair<String, String>>()
+    private val clientUses = sortedSetOf<String>()
     private val requestRunner: String by lazy { getResourceContent("/typescript/client.ts") }
 
     init {
         generateApiClient()
     }
 
-    private fun reference(type: WireType): String =
+    private fun reference(
+        type: WireType,
+        uses: MutableSet<String>,
+    ): String =
         when (type) {
             is WireType.Scalar -> {
                 when (type.kind) {
                     ScalarKind.STRING, ScalarKind.CHAR, ScalarKind.DATE, ScalarKind.DATE_TIME -> "string"
 
-                    ScalarKind.UUID -> alias("UUID", UUID_ALIAS)
+                    ScalarKind.UUID -> alias("UUID", UUID_ALIAS, uses)
 
                     ScalarKind.BOOLEAN -> "boolean"
 
@@ -58,16 +62,17 @@ class TsClientGenerator(
             }
 
             is WireType.ListOf -> {
-                "Array<${nullableReference(type.element)}>"
+                "Array<${nullableReference(type.element, uses)}>"
             }
 
             is WireType.MapOf -> {
-                val key = reference(type.key) + if (type.key.nullable) " | undefined" else ""
-                "Record<$key, ${nullableReference(type.value)}>"
+                val key = reference(type.key, uses) + if (type.key.nullable) " | undefined" else ""
+                "Record<$key, ${nullableReference(type.value, uses)}>"
             }
 
             is WireType.Named -> {
-                type.name + typeArguments(type.arguments.map(::nullableReference))
+                uses += type.name
+                type.name + typeArguments(type.arguments.map { nullableReference(it, uses) })
             }
 
             is WireType.TypeParameter -> {
@@ -76,19 +81,22 @@ class TsClientGenerator(
         }
 
     private fun typeParameter(parameter: TypeParameterDeclaration): String =
-        if (parameter.nonNull) "${parameter.name} extends NonNullable<any>" else parameter.name
+        if (parameter.nonNull) "${parameter.name} extends NonNullable<unknown>" else parameter.name
 
     private fun typeArguments(arguments: List<String>): String =
         if (arguments.isEmpty()) "" else arguments.joinToString(", ", "<", ">")
 
-    private fun nullableReference(type: WireType): String = reference(type) + if (type.nullable) " | null" else ""
+    private fun nullableReference(
+        type: WireType,
+        uses: MutableSet<String>,
+    ): String = reference(type, uses) + if (type.nullable) " | null" else ""
 
     private fun reference(body: Body): String =
         when (body) {
-            Body.None -> alias("Empty", EMPTY_ALIAS)
+            Body.None -> alias("Empty", EMPTY_ALIAS, clientUses)
             Body.Text, Body.Redirect -> "string"
             Body.Binary -> "Blob"
-            is Body.Json -> nullableReference(body.type)
+            is Body.Json -> nullableReference(body.type, clientUses)
         }
 
     private fun parser(body: Body): String =
@@ -101,8 +109,10 @@ class TsClientGenerator(
     private fun alias(
         name: String,
         declaration: String,
+        uses: MutableSet<String>,
     ): String {
         aliases.getOrPut(name) { declaration }
+        uses += name
         return name
     }
 
@@ -110,7 +120,9 @@ class TsClientGenerator(
         val urlParams = model.parameters(route.paramsType)
         if (urlParams.isEmpty()) return null
         val types =
-            urlParams.joinToString(",") { "${it.name}${if (it.optional) "?" else ""}: ${nullableReference(it.type)}" }
+            urlParams.joinToString(
+                ",",
+            ) { "${it.name}${if (it.optional) "?" else ""}: ${nullableReference(it.type, clientUses)}" }
         return "{${urlParams.joinToString(", ") { it.name }}}: {$types}"
     }
 
@@ -190,30 +202,40 @@ class TsClientGenerator(
         }
     }
 
+    private class TypeDefinition(
+        val code: String,
+        val uses: Set<String> = emptySet(),
+    )
+
     // Built after the client functions, which is what fills the model and the aliases
-    private val typeDefinitions: Map<String, String> by lazy {
+    private val typeDefinitions: Map<String, TypeDefinition> by lazy {
         val declarations =
             model.declarations.associate { declaration ->
                 declaration.name to
                     when (declaration) {
                         is EnumDeclaration -> {
-                            "type ${declaration.name} = ${declaration.values.joinToString(" | ") { "'$it'" }}"
+                            TypeDefinition(
+                                "type ${declaration.name} = ${declaration.values.joinToString(" | ") { "'$it'" }}",
+                            )
                         }
 
                         is ObjectDeclaration -> {
-                            buildString {
-                                append(
-                                    "interface ${declaration.name}${typeArguments(
-                                        declaration.typeParameters.map(::typeParameter),
-                                    )} {\n",
-                                )
-                                declaration.properties.sortedBy { it.name }.forEach { property ->
-                                    append("  ${property.name}")
-                                    if (property.optional) append("?")
-                                    append(": ${nullableReference(property.type)};\n")
+                            val uses = sortedSetOf<String>()
+                            val code =
+                                buildString {
+                                    append(
+                                        "interface ${declaration.name}${typeArguments(
+                                            declaration.typeParameters.map(::typeParameter),
+                                        )} {\n",
+                                    )
+                                    declaration.properties.sortedBy { it.name }.forEach { property ->
+                                        append("  ${property.name}")
+                                        if (property.optional) append("?")
+                                        append(": ${nullableReference(property.type, uses)};\n")
+                                    }
+                                    append("}")
                                 }
-                                append("}")
-                            }
+                            TypeDefinition(code, uses - declaration.name)
                         }
                     }
             }
@@ -221,7 +243,7 @@ class TsClientGenerator(
         check(
             clashes.isEmpty(),
         ) { "${clashes.joinToString()} would replace the alias the TS client defines, rename it" }
-        (aliases + declarations).toSortedMap()
+        (aliases.mapValues { TypeDefinition(it.value) } + declarations).toSortedMap()
     }
 
     private fun createTypeImports(): String =
@@ -230,17 +252,12 @@ class TsClientGenerator(
                 "import {ApiCallData, ApiInterceptor, ApiResponse, ApiSocket, ApiSocketData, ApiSocketInterceptor, _request, _createUrl, _mergeHeaders, _socket} from \"./client\";\n",
             )
             append("import type {")
-            append(typeDefinitions.keys.sorted().joinToString(", "))
+            append(clientUses.joinToString(", "))
             append("} from \"./models\";\n")
         }
 
     private fun getClientRequests(): String =
         buildString {
-            append("/* eslint-disable */\n")
-            append("// noinspection JSUnusedGlobalSymbols,ES6UnusedImports\n")
-            append("// noinspection ES6UnusedImports\n")
-            append("// @ts-nocheck\n")
-
             append(createTypeImports())
             append("\n")
             append("export const $apiFactoryName = (\n")
@@ -261,21 +278,22 @@ class TsClientGenerator(
             append("}")
         }
 
-    private fun getClientTypes(): String =
+    private fun modelFile(definition: TypeDefinition): String =
         buildString {
-            append("/* eslint-disable */\n")
-            append("// @ts-nocheck\n\n")
-            append(typeDefinitions.values.joinToString("\n\n") { "export $it" })
+            definition.uses.forEach { append("import type {$it} from \"./$it\";\n") }
+            if (definition.uses.isNotEmpty()) append("\n")
+            append("export ${definition.code}\n")
         }
 
+    private fun modelIndex(): String = typeDefinitions.keys.joinToString("") { "export * from \"./$it\";\n" }
+
     override fun generateClient(): List<ClientPart> {
-        val clientTypes = getClientTypes()
         val clientRequests = getClientRequests()
         return listOf(
             ClientPart("client.ts", requestRunner),
-            ClientPart("models.ts", clientTypes),
             ClientPart("api-client.ts", clientRequests),
-        )
+            ClientPart("models/index.ts", modelIndex()),
+        ) + typeDefinitions.map { (name, definition) -> ClientPart("models/$name.ts", modelFile(definition)) }
     }
 }
 

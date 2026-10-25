@@ -99,7 +99,6 @@ dependencies {
     testImplementation(project(":client"))
 }
 
-// The client module compiles the output of this, so it has to run before anything consumes :client.
 tasks.register<JavaExec>("generateClients") {
     group = "build"
     description = "Regenerates the Kotlin and TypeScript API clients from the current routes"
