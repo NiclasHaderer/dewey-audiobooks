@@ -1,8 +1,8 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.BookUpdateImpl
+import io.dewey.client.gen.models.BookUpdate
 import io.dewey.client.gen.models.LibraryPermissionLevel
-import io.dewey.client.gen.models.ProgressUpdateImpl
+import io.dewey.client.gen.models.ProgressUpdate
 import io.dewey.openapi.common.Patch
 import io.dewey.server.DeweyTest
 import io.dewey.server.api
@@ -30,12 +30,12 @@ class ProgressPermissionTest : DeweyTest() {
         withLibrary(LibraryPermissionLevel.READONLY) { token, libId, bookId ->
             assertEquals(
                 HttpStatusCode.NoContent,
-                api.setBookProgress(bookId, libId, ProgressUpdateImpl(positionMs = 42000), token).status,
+                api.setBookProgress(bookId, libId, ProgressUpdate(positionMs = 42000), token).status,
                 "a readonly member owns their own progress",
             )
             assertEquals(
                 HttpStatusCode.Forbidden,
-                api.updateBook(bookId, libId, BookUpdateImpl(title = Patch.Set("Renamed")), token).status,
+                api.updateBook(bookId, libId, BookUpdate(title = Patch.Set("Renamed")), token).status,
                 "library content is still off limits",
             )
         }
@@ -45,11 +45,11 @@ class ProgressPermissionTest : DeweyTest() {
         withLibrary(LibraryPermissionLevel.READ_WRITE) { token, libId, bookId ->
             assertEquals(
                 HttpStatusCode.NoContent,
-                api.setBookProgress(bookId, libId, ProgressUpdateImpl(positionMs = 42000), token).status,
+                api.setBookProgress(bookId, libId, ProgressUpdate(positionMs = 42000), token).status,
             )
             assertEquals(
                 HttpStatusCode.OK,
-                api.updateBook(bookId, libId, BookUpdateImpl(title = Patch.Set("Renamed")), token).status,
+                api.updateBook(bookId, libId, BookUpdate(title = Patch.Set("Renamed")), token).status,
             )
         }
 

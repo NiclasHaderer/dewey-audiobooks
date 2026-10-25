@@ -24,6 +24,7 @@ import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.swagger.v3.oas.models.OpenAPI
+import kotlinx.serialization.Serializable
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
 import kotlin.test.Test
@@ -53,6 +54,7 @@ interface SpecNamed {
     val name: String
 }
 
+@Serializable
 data class SpecItem(
     val id: Uuid,
     val kind: SpecItemKind,
@@ -61,11 +63,13 @@ data class SpecItem(
     override val name: String,
 ) : SpecNamed
 
+@Serializable
 data class SpecPage<T>(
     val items: List<T>,
     val total: Long,
 )
 
+@Serializable
 data class SpecPatch(
     val note: Patch<String?> = Patch.Absent,
     val kind: Patch<SpecItemKind?> = Patch.Absent,
@@ -117,10 +121,10 @@ private fun Application.specRoutes() {
     }
 
     routing {
+        post<SpecApi.Ping, Unit, Unit> { _, _ -> TODO() }
         get<SpecApi.Items, SpecPage<SpecItem>> { TODO() }
         delete<SpecApi.Item, Unit, Unit> { _, _ -> TODO() }
         patch<SpecApi.Item, SpecPatch, Unit> { _, _ -> TODO() }
-        post<SpecApi.Ping, Unit, Unit> { _, _ -> TODO() }
     }
 }
 
@@ -170,13 +174,11 @@ class SchemaGenerationTest {
     }
 
     @Test
-    fun `allOf is only emitted when there is a super class`() {
-        assertNull(api.components.schemas["SpecPage_SpecItem"]!!.allOf)
-        assertEquals(
-            1,
-            api.components.schemas["SpecItem"]!!
-                .allOf.size,
-        )
+    fun `a property from a super type sits on the class, the way it is serialized`() {
+        val item = api.components.schemas["SpecItem"]!!
+        assertNull(item.allOf)
+        assertContains(item.properties.keys, "name")
+        assertNull(api.components.schemas["SpecNamed"])
     }
 
     @Test
@@ -273,6 +275,39 @@ class SchemaGenerationTest {
         val label = patch.properties["label"]!!
         assertEquals("string", label.type)
         assertNull(label.nullable)
+    }
+
+    @Test
+    fun `the written spec lists paths and components by name`() {
+        val file = createTempDirectory().resolve("openapi.yaml")
+        testApplication {
+            application {
+                specRoutes()
+                generateOpenApiSpec(file)
+            }
+            client.httpGet("/")
+        }
+        val spec = file.readText()
+
+        fun keysUnder(section: String) =
+            spec
+                .substringAfter("\n$section:\n")
+                .lines()
+                .takeWhile { it.isEmpty() || it.startsWith(" ") }
+                .filter { "^  [^ ].*:$".toRegex().matches(it) }
+                .map { it.trim().removeSuffix(":") }
+
+        val paths = keysUnder("paths")
+        assertEquals(paths.sorted(), paths)
+        assertEquals(3, paths.size)
+        val schemas =
+            spec
+                .substringAfter("\n  schemas:\n")
+                .lines()
+                .filter { "^    [^ ].*:$".toRegex().matches(it) }
+                .map { it.trim().removeSuffix(":") }
+        assertEquals(schemas.sorted(), schemas)
+        assertContains(schemas, "SpecPage_SpecItem")
     }
 
     @Test

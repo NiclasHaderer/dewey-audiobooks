@@ -1,7 +1,6 @@
 package io.dewey.openapi.client.common
 
 import io.dewey.openapi.ktor.OpenApiRoute
-import io.dewey.openapi.ktor.Summary
 import java.io.File
 import java.nio.file.Path
 
@@ -36,8 +35,7 @@ abstract class ClientGenerator(
     }
 
     protected fun getRouteName(route: OpenApiRoute): String? {
-        val summary = route.requestParamsType.findAnnotations<Summary>().firstOrNull { it.method == route.method.value }
-        val summaryString = summary?.summary ?: return null
+        val summaryString = route.summary ?: return null
         return summaryString
             .split(" ")
             .mapIndexed { index, word ->

@@ -2,11 +2,10 @@ package io.dewey.openapi.client.kotlin
 
 import io.dewey.openapi.client.common.ClientGenerator
 import io.dewey.openapi.client.common.ClientPart
-import io.dewey.openapi.client.common.TypeGenerator
 import io.dewey.openapi.common.getResourceContent
 import io.dewey.openapi.ktor.OpenApiRoute
 import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
-import io.github.oshai.kotlinlogging.KotlinLogging.logger
+import io.dewey.openapi.wire.WireModel
 import io.ktor.server.application.Application
 import java.io.File
 import java.nio.file.Path
@@ -29,9 +28,7 @@ class KotlinClientGenerator(
     dist: Path,
     fileWriter: ((File, String) -> Unit)?,
     cleanDistPackage: Boolean,
-    directoryToScanForTypes: List<String>,
 ) : ClientGenerator(dist, fileWriter, cleanDistPackage) {
-    private val logger = logger {}
     private val staticFiles by lazy {
         listOf(
             "RequestRunner" to getResourceContent("/kotlin/RequestRunner.kt"),
@@ -43,27 +40,23 @@ class KotlinClientGenerator(
         )
     }
     private val clientImports = mutableSetOf<String>()
-    private val typeDefinitions = mutableMapOf<String, KtTypeGenerator.KtReferenceType>()
-    private val typeProviders =
-        TypeGenerator.Provider(
-            KtTypeGenerator::class,
-            listOf("io.dewey.openapi.client.kotlin") + directoryToScanForTypes,
-        )
+    private val model = WireModel()
 
     override fun generateClient(): List<ClientPart> =
         buildList {
             val clientFunctions =
-                (routes.map { it to false } + webSockets.map { it to true }).map { (route, webSocket) ->
-                    KtClientFunction(
-                        getRouteName = this@KotlinClientGenerator::getRouteName,
-                        route = route,
-                        clientImports = clientImports,
-                        typeDefinitions = typeDefinitions,
-                        typeProviders = typeProviders,
-                        errorHandling = errorHandling,
-                        webSocket = webSocket,
-                    )
-                }
+                (routes.map { it to false } + webSockets.map { it to true })
+                    .sortedBy { (route) -> getRouteName(route).orEmpty() }
+                    .map { (route, webSocket) ->
+                        KtClientFunction(
+                            getRouteName = this@KotlinClientGenerator::getRouteName,
+                            route = route,
+                            clientImports = clientImports,
+                            model = model,
+                            errorHandling = errorHandling,
+                            webSocket = webSocket,
+                        )
+                    }
 
             val base =
                 buildString {
@@ -147,42 +140,11 @@ class KotlinClientGenerator(
                 },
             )
             addAll(
-                typeDefinitions.values.map {
-                    ClientPart(
-                        path = "models/${it.name()}.kt",
-                        content =
-                            buildString {
-                                append("package $packageName.models\n\n")
-                                if (it.imports().isNotEmpty()) {
-                                    append(it.imports().joinToString("\n"))
-                                    append("\n\n")
-                                }
-                                append(it.content())
-                            },
-                    )
+                model.declarations.map {
+                    ClientPart(path = "models/${it.name}.kt", content = it.kotlinFile("$packageName.models"))
                 },
             )
-            assertTypeNames(typeDefinitions)
         }
-
-    private fun assertTypeNames(typeDefinitions: MutableMap<String, KtTypeGenerator.KtReferenceType>) {
-        for (type in typeDefinitions.values) {
-            // We only care about types that end with Impl
-            if (!type.name().endsWith("Impl")) continue
-            val nameWithSuffix = type.name()
-            val nameWithoutSuffix = nameWithSuffix.removeSuffix("Impl")
-            val typeWithoutSuffix = typeDefinitions[nameWithoutSuffix]
-            if (typeWithoutSuffix != null) {
-                logger.error {
-                    buildString {
-                        append("Type $nameWithSuffix exists as Impl and non-Impl type. ")
-                        append("Only return the non-Impl type if the properties are the same. ")
-                        append("If the properties are different, rename one of the types to avoid name clashes.")
-                    }
-                }
-            }
-        }
-    }
 }
 
 fun Application.generateKotlinClient(
@@ -191,7 +153,6 @@ fun Application.generateKotlinClient(
     savePath: Path,
     routes: List<OpenApiRoute>? = null,
     fileWriter: ((File, String) -> Unit)? = null,
-    directoryToScanForTypes: List<String> = emptyList(),
     abstract: Boolean = true,
     cleanDistPackage: Boolean = true,
     errorHandling: KtErrorHandling = KtErrorHandling.Either,
@@ -205,7 +166,6 @@ fun Application.generateKotlinClient(
         apiClientName = apiClientName,
         apiVersion = config.apiVersion,
         fileWriter = fileWriter,
-        directoryToScanForTypes = directoryToScanForTypes,
         abstract = abstract,
         cleanDistPackage = cleanDistPackage,
         errorHandling = errorHandling,
@@ -218,7 +178,6 @@ fun Application.generateKotlinClient(
     savePath: String,
     routes: List<OpenApiRoute>? = null,
     fileWriter: ((File, String) -> Unit)? = null,
-    directoryToScanForTypes: List<String> = emptyList(),
     abstract: Boolean = true,
     cleanDistPackage: Boolean = true,
     errorHandling: KtErrorHandling = KtErrorHandling.Either,
@@ -228,7 +187,6 @@ fun Application.generateKotlinClient(
     routes = routes,
     apiClientName = apiClientName,
     fileWriter = fileWriter,
-    directoryToScanForTypes = directoryToScanForTypes,
     abstract = abstract,
     cleanDistPackage = cleanDistPackage,
     errorHandling = errorHandling,

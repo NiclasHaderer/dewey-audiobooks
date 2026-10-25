@@ -1,88 +1,56 @@
 package io.dewey.openapi.ktor
 
-import io.dewey.openapi.common.ClassType
 import io.dewey.openapi.common.InternalAPI
+import io.dewey.openapi.common.findAnnotationUp
+import io.dewey.openapi.common.findAnnotationsFirstUp
 import io.dewey.openapi.common.fullPath
-import io.dewey.openapi.common.optional
 import io.dewey.openapi.common.parent
-import io.dewey.openapi.ktor.schema.generateSchemas
-import io.dewey.openapi.ktor.schema.toNamed
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.resources.Resource
 import io.ktor.server.routing.Route
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.findAnnotations
+import kotlin.reflect.typeOf
 
 class OpenApiRoute(
     val method: HttpMethod,
     val basePath: String,
-    val requestParamsType: ClassType,
-    val requestBodyType: ClassType,
-    val responseBodyType: ClassType,
+    val paramsType: KType,
+    val requestType: KType,
+    val responseType: KType,
 ) {
     constructor(
         method: HttpMethod,
         route: Route,
-        params: ClassType,
-        request: ClassType,
-        response: ClassType,
-    ) : this(method, route.fullPath(), params, request, response)
-
-    interface Parameter {
-        val name: String
-        val type: ClassType
-        val origin: ClassType
-        val optional: Boolean
-        val description: String?
-    }
-
-    data class PathParameter(
-        override val name: String,
-        override val type: ClassType,
-        override val origin: ClassType,
-        override val description: String? = null,
-    ) : Parameter {
-        override val optional = false
-    }
-
-    data class QueryParameter(
-        override val name: String,
-        override val type: ClassType,
-        override val origin: ClassType,
-        override val optional: Boolean,
-        override val description: String? = null,
-    ) : Parameter
+        paramsType: KType,
+        requestType: KType,
+        responseType: KType,
+    ) : this(method, route.fullPath(), paramsType, requestType, responseType)
 
     companion object {
         inline fun <reified PARAMS, reified BODY, reified RESPONSE> create(
             method: HttpMethod,
             route: Route,
-        ): OpenApiRoute =
-            OpenApiRoute(
-                method = method,
-                route = route,
-                params = ClassType.create<PARAMS>(),
-                request = ClassType.create<BODY>(),
-                response = ClassType.create<RESPONSE>(),
-            )
+        ): OpenApiRoute = OpenApiRoute(method, route, typeOf<PARAMS>(), typeOf<BODY>(), typeOf<RESPONSE>())
     }
 
-    val queryParameters by lazy {
-        extractAllQueryParams(requestParamsType).map { it to generateSchemas(it.type).toNamed() }
-    }
+    val paramsClass: KClass<*> get() = paramsType.classifier as KClass<*>
 
-    val pathParameters by lazy {
-        extractAllPathParams(requestParamsType).map { it to generateSchemas(it.type).toNamed() }
-    }
+    val hasRequestBody: Boolean get() = requestType.classifier != Unit::class
+
+    val hasResponseBody: Boolean get() = responseType.classifier != Unit::class
 
     @OptIn(InternalAPI::class)
     val resourcePath by lazy {
         var resourcePath = ""
-        var resourceClass: KClass<*>? = this.requestParamsType.clazz
+        var resourceClass: KClass<*>? = paramsClass
         while (resourceClass != null) {
             // Init has already checked that every class is decorated as a resource
-            val resource = resourceClass!!.findAnnotation<Resource>()!!
+            val resource = resourceClass.findAnnotation<Resource>()!!
             if (resource.path.isNotBlank()) {
                 resourcePath =
                     if (resourcePath.isNotBlank()) {
@@ -91,44 +59,32 @@ class OpenApiRoute(
                         resource.path
                     }
             }
-            resourceClass = resourceClass!!.parent
+            resourceClass = resourceClass.parent
         }
         resourcePath.ifBlank { null }
     }
 
-    val description by lazy { requestParamsType.findAnnotation<Description>()?.description }
+    val description by lazy { paramsClass.findAnnotation<Description>()?.description }
 
     private val operation by lazy {
-        requestParamsType.findAnnotations<Summary>().firstOrNull { it.method == this.method.value }
+        paramsClass.findAnnotations<Summary>().firstOrNull { it.method == this.method.value }
     }
 
     val summary by lazy { operation?.summary }
 
     val secured by lazy {
-        if (requestParamsType.findAnnotation<NotSecured>() != null) {
+        if (paramsClass.findAnnotation<NotSecured>() != null) {
             null
         } else {
-            requestParamsType.findAnnotationUp<Secured>()
+            paramsClass.findAnnotationUp<Secured>()
         }
     }
-
-    val requestBody by lazy { generateSchemas(requestBodyType).toNamed() }
-
-    val responseBody by lazy { generateSchemas(responseBodyType).toNamed() }
-
-    val responseDescription by lazy { responseBodyType.findAnnotation<Description>() }
-
-    val bodyDescription by lazy { requestBodyType.findAnnotation<Description>() }
-
-    val responseContentType by lazy { responseBody.first.contentType }
-
-    val requestContentType by lazy { requestBody.first.contentType }
 
     val responseStatusCode by lazy {
         val declared = operation?.status?.takeIf { it != Summary.INFER_STATUS }
         when {
             declared != null -> HttpStatusCode.fromValue(declared)
-            responseBodyType.clazz == Unit::class -> HttpStatusCode.NoContent
+            !hasResponseBody -> HttpStatusCode.NoContent
             else -> HttpStatusCode.OK
         }
     }
@@ -141,7 +97,7 @@ class OpenApiRoute(
         fullPath.replace("/+".toRegex(), "/")
     }
 
-    val tags by lazy { requestParamsType.findAnnotationsFirstUp<Tagged>().map { it.name } }
+    val tags by lazy { paramsClass.findAnnotationsFirstUp<Tagged>().map { it.name } }
 
     val operationId by lazy {
         val segments =
@@ -158,122 +114,28 @@ class OpenApiRoute(
     }
 
     init {
-        assertParamsHierarchy()
+        assertParamsHierarchy(paramsClass)
     }
 
-    private fun assertParamsHierarchy(paramsClassType: ClassType = requestParamsType) {
-        val paramsClazz = paramsClassType.clazz
+    @OptIn(InternalAPI::class)
+    private fun assertParamsHierarchy(paramsClazz: KClass<*>) {
         // There are three conditions under which the hierarchy is valid:
         // 1. Every class over params is decorated as @Resource
         paramsClazz.findAnnotation<Resource>()
-            ?: throw IllegalStateException(
-                "Class ${paramsClassType.clazz.qualifiedName} is not decorated as a resource",
-            )
+            ?: throw IllegalStateException("Class ${paramsClazz.qualifiedName} is not decorated as a resource")
 
-        if (paramsClassType.parent == null) return
-        val parentClassType = paramsClassType.parent!!
+        val parent = paramsClazz.parent ?: return
 
         // 2. Every class has a field which references the parent class name, because otherwise the
         // ktor routing will not work as one would think
-        val hasDeclaredParent =
-            paramsClassType.properties.map { it.returnType.classifier as KClass<*> }.any { it == parentClassType.clazz }
+        val hasDeclaredParent = paramsClazz.declaredMemberProperties.any { it.returnType.classifier == parent }
         if (!hasDeclaredParent) {
             throw IllegalStateException(
-                "Class ${paramsClazz.qualifiedName} has no property of type ${parentClassType.clazz.qualifiedName}." +
+                "Class ${paramsClazz.qualifiedName} has no property of type ${parent.qualifiedName}." +
                     "You have to create an additional property with the parent class as type",
             )
         }
         // 3. Every parent fulfills requirements 1 and 2
-        assertParamsHierarchy(parentClassType)
-    }
-
-    private fun extractAllPathParams(
-        params: ClassType,
-        takenParams: MutableMap<String, PathParameter> = mutableMapOf(),
-    ): List<PathParameter> {
-        val pathParams = extractPathParamsForClass(params)
-        for (param in pathParams) {
-            // Check if the variable name is already taken
-            if (takenParams.containsKey(param.name)) {
-                throw IllegalStateException(
-                    "Class ${params.clazz.qualifiedName} has a duplicate path parameter name ${param.name}. " +
-                        "The parameter is already taken by ${takenParams[param.name]!!.origin.clazz.qualifiedName}",
-                )
-            }
-        }
-        takenParams.putAll(pathParams.associateBy { it.name })
-
-        // Go up and check the parent
-        params.parent?.run { extractAllPathParams(this, takenParams) }
-        return takenParams.values.toList()
-    }
-
-    private fun extractPathParamsForClass(params: ClassType): List<PathParameter> {
-        val pathParams = mutableListOf<PathParameter>()
-        val resourcePath = params.findAnnotation<Resource>()!!.path
-        val matches = "\\{((?:[a-z]|[A-Z]|_)+)}".toRegex().findAll(resourcePath)
-        for (match in matches) {
-            val varName = match.groupValues[1]
-            // Check if the variable name is a valid kotlin variable name
-            val varMember =
-                params.properties.find { it.name == varName }
-                    ?: throw IllegalStateException(
-                        "Class ${params.clazz.qualifiedName} has a path parameter $varName " +
-                            "which is not declared as a member. " +
-                            "You have to create a property with the name $varName",
-                    )
-            pathParams.add(
-                PathParameter(
-                    name = varName,
-                    type = params.forMember(varMember),
-                    origin = params,
-                    description = varMember.findAnnotation<Description>()?.description,
-                ),
-            )
-        }
-        return pathParams
-    }
-
-    private fun extractAllQueryParams(
-        params: ClassType,
-        takenParams: MutableMap<String, QueryParameter> = mutableMapOf(),
-    ): List<QueryParameter> {
-        val queryParams = extractQueryParamsForClass(params)
-        for (param in queryParams) {
-            if (param.name in takenParams) {
-                throw IllegalStateException(
-                    "Class ${params.clazz.qualifiedName} has a query parameter " +
-                        "called ${param.name} which is also used in " +
-                        "${takenParams[param.name]!!.origin.clazz.qualifiedName}. " +
-                        "Do not used duplicate parameters",
-                )
-            }
-        }
-
-        takenParams.putAll(queryParams.associateBy { it.name })
-        params.parent?.run { extractAllQueryParams(this, takenParams) }
-        return takenParams.values.toList()
-    }
-
-    private fun extractQueryParamsForClass(params: ClassType): List<QueryParameter> {
-        val pathParams = extractPathParamsForClass(params).map { it.name }.toSet()
-        val queryParams =
-            params.properties
-                .filter {
-                    // Remove path parameters
-                    it.name !in pathParams
-                }.filter {
-                    // Remove injected parent
-                    it.returnType.classifier != params.parent?.clazz
-                }.map {
-                    QueryParameter(
-                        name = it.name,
-                        type = params.forMember(it),
-                        origin = params,
-                        optional = it.optional,
-                        description = it.findAnnotation<Description>()?.description,
-                    )
-                }
-        return queryParams
+        assertParamsHierarchy(parent)
     }
 }

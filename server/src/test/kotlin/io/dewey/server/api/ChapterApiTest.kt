@@ -1,8 +1,8 @@
 package io.dewey.server.api
 
 import io.dewey.client.gen.models.BookField
-import io.dewey.client.gen.models.BookUpdateImpl
-import io.dewey.client.gen.models.ChapterMarkImpl
+import io.dewey.client.gen.models.BookUpdate
+import io.dewey.client.gen.models.ChapterMark
 import io.dewey.openapi.common.Patch
 import io.dewey.server.DeweyTest
 import io.dewey.server.api
@@ -51,11 +51,11 @@ class ChapterApiTest : DeweyTest() {
             val token = bearer(login("admin"))
             val marks =
                 listOf(
-                    ChapterMarkImpl(startMs = 0, title = "Prologue"),
-                    ChapterMarkImpl(startMs = 500, title = "Arrakis"),
+                    ChapterMark(startMs = 0, title = "Prologue"),
+                    ChapterMark(startMs = 500, title = "Arrakis"),
                 )
 
-            val response = api.updateBook(bookId, libId, BookUpdateImpl(chapters = Patch.Set(marks)), token)
+            val response = api.updateBook(bookId, libId, BookUpdate(chapters = Patch.Set(marks)), token)
 
             assertEquals(HttpStatusCode.OK, response.status)
             val edited = api.getBook(bookId, libId, token).body()
@@ -63,7 +63,7 @@ class ChapterApiTest : DeweyTest() {
             assertEquals(listOf(500L, 2000L), edited.chapters.map { it.endMs })
             assertEquals(listOf(BookField.CHAPTERS), edited.locked)
 
-            api.updateBook(bookId, libId, BookUpdateImpl(unlock = Patch.Set(listOf(BookField.CHAPTERS))), token)
+            api.updateBook(bookId, libId, BookUpdate(unlock = Patch.Set(listOf(BookField.CHAPTERS))), token)
 
             val unlocked = api.getBook(bookId, libId, token).body()
             assertEquals(listOf("Part 1", "Part 2"), unlocked.chapters.map { it.title })
@@ -79,11 +79,11 @@ class ChapterApiTest : DeweyTest() {
             val token = bearer(login("admin"))
             val marks =
                 listOf(
-                    ChapterMarkImpl(startMs = 0, title = "Prologue"),
-                    ChapterMarkImpl(startMs = 500, title = " "),
+                    ChapterMark(startMs = 0, title = "Prologue"),
+                    ChapterMark(startMs = 500, title = " "),
                 )
 
-            val response = api.updateBook(bookId, libId, BookUpdateImpl(chapters = Patch.Set(marks)), token)
+            val response = api.updateBook(bookId, libId, BookUpdate(chapters = Patch.Set(marks)), token)
 
             assertEquals(HttpStatusCode.OK, response.status)
             val edited = api.getBook(bookId, libId, token).body()
@@ -101,14 +101,14 @@ class ChapterApiTest : DeweyTest() {
             val invalid =
                 listOf(
                     emptyList(),
-                    listOf(ChapterMarkImpl(startMs = 500, title = "B"), ChapterMarkImpl(startMs = 0, title = "A")),
+                    listOf(ChapterMark(startMs = 500, title = "B"), ChapterMark(startMs = 0, title = "A")),
                     listOf(
-                        ChapterMarkImpl(startMs = 0, title = "A"),
-                        ChapterMarkImpl(startMs = 1000, title = "Past the end"),
+                        ChapterMark(startMs = 0, title = "A"),
+                        ChapterMark(startMs = 1000, title = "Past the end"),
                     ),
                 )
             for (marks in invalid) {
-                val response = api.updateBook(bookId, libId, BookUpdateImpl(chapters = Patch.Set(marks)), token)
+                val response = api.updateBook(bookId, libId, BookUpdate(chapters = Patch.Set(marks)), token)
                 assertEquals(HttpStatusCode.BadRequest, response.status, "$marks must be rejected")
             }
         }
