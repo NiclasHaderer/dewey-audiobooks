@@ -1,11 +1,11 @@
 package io.dewey.server
 
-import io.dewey.client.gen.models.DeweyLoginUser
-import io.dewey.client.gen.models.DeweyModifyPermissions
-import io.dewey.client.gen.models.DeweyRegisterUser
-import io.dewey.client.gen.models.LibraryPermissionLevel
-import io.dewey.client.gen.models.UpdateLibraryPermissions
-import io.dewey.client.gen.models.UpdateUserPermissions
+import io.dewey.client.models.DeweyLoginUser
+import io.dewey.client.models.DeweyModifyPermissions
+import io.dewey.client.models.DeweyRegisterUser
+import io.dewey.client.models.LibraryPermissionLevel
+import io.dewey.client.models.UpdateLibraryPermissions
+import io.dewey.client.models.UpdateUserPermissions
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication

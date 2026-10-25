@@ -1,6 +1,6 @@
 package io.dewey.server
 
-import io.dewey.client.gen.DeweyClientImpl
+import io.dewey.client.DeweyClientImpl
 import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody

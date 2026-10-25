@@ -1,6 +1,6 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.DeweyLoginUser
+import io.dewey.client.models.DeweyLoginUser
 import io.dewey.server.DeweyTest
 import io.dewey.server.TEST_PASSWORD
 import io.dewey.server.api

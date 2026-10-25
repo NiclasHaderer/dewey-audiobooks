@@ -21,8 +21,8 @@ fun main() {
             routing()
             generateTsClient("web/src/client/generated")
             generateKotlinClient(
-                apiClientPackageName = "io.dewey.client.gen",
-                savePath = "client/src/main/kotlin/io/dewey/client/gen",
+                apiClientPackageName = "io.dewey.client",
+                savePath = "client/src/main/kotlin/io/dewey/client",
                 apiClientName = "DeweyClient",
                 errorHandling = KtErrorHandling.Exception,
             )

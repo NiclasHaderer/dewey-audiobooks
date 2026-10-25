@@ -1,8 +1,8 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.AuthorCreate
-import io.dewey.client.gen.models.LibraryPermissionLevel
-import io.dewey.client.gen.models.SeriesCreate
+import io.dewey.client.models.AuthorCreate
+import io.dewey.client.models.LibraryPermissionLevel
+import io.dewey.client.models.SeriesCreate
 import io.dewey.server.DeweyTest
 import io.dewey.server.api
 import io.dewey.server.bearer

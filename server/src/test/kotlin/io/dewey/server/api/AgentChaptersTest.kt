@@ -1,6 +1,6 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.BookUpdate
+import io.dewey.client.models.BookUpdate
 import io.dewey.metadata.FakeMetadataAgent
 import io.dewey.metadata.MetadataAgents
 import io.dewey.metadata.responses.MetadataChapters
@@ -24,7 +24,7 @@ import org.koin.dsl.module
 import org.koin.mp.KoinPlatform.getKoin
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import io.dewey.client.gen.models.ChapterMark as ClientChapterMark
+import io.dewey.client.models.ChapterMark as ClientChapterMark
 
 class AgentChaptersTest : DeweyTest() {
     private val agentChapters = listOf(ChapterMark("Prologue", 0), ChapterMark("Arrakis", 2_000))

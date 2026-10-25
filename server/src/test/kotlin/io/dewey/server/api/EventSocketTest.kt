@@ -1,11 +1,11 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.ApiSocket
-import io.dewey.client.gen.models.ChangeEvent
-import io.dewey.client.gen.models.ChangeEventBatch
-import io.dewey.client.gen.models.ChangeType
-import io.dewey.client.gen.models.ChangedEntity
-import io.dewey.client.gen.models.LibraryPermissionLevel
+import io.dewey.client.ApiSocket
+import io.dewey.client.models.ChangeEvent
+import io.dewey.client.models.ChangeEventBatch
+import io.dewey.client.models.ChangeType
+import io.dewey.client.models.ChangedEntity
+import io.dewey.client.models.LibraryPermissionLevel
 import io.dewey.models.FileScanner
 import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.dewey.server.DeweyTest

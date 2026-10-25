@@ -1,8 +1,8 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.BookField
-import io.dewey.client.gen.models.BookUpdate
-import io.dewey.client.gen.models.ChapterMark
+import io.dewey.client.models.BookField
+import io.dewey.client.models.BookUpdate
+import io.dewey.client.models.ChapterMark
 import io.dewey.openapi.common.Patch
 import io.dewey.server.DeweyTest
 import io.dewey.server.api

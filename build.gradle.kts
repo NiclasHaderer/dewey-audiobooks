@@ -21,7 +21,6 @@ subprojects {
     apply<KtlintPlugin>()
     configure<KtlintExtension> {
         version.set(ktlintVersion)
-        filter { exclude { it.file.path.contains("${File.separator}gen${File.separator}") } }
     }
 
     plugins.withType<JavaPlugin> {
