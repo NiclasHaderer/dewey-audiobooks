@@ -14,6 +14,7 @@ import io.dewey.server.newBook
 import io.dewey.server.newLibrary
 import io.dewey.server.newTrack
 import io.dewey.server.newUser
+import io.dewey.server.plugins.auth.resolveUserPermissions
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -47,6 +48,8 @@ class ProgressRepositoryTest : DeweyTest() {
 
     /** newTrack seeds 60_000 ms per track, so three tracks make a three minute book. */
     private val durationMs = 180_000L
+
+    private fun readable(user: Uuid) = resolveUserPermissions(user).libraries.map { it.id }
 
     @BeforeTest
     fun seed() {
@@ -117,37 +120,40 @@ class ProgressRepositoryTest : DeweyTest() {
         val reset = progressOf()
         assertEquals(0, reset.positionMs)
         assertEquals(PlayStatus.UNPLAYED, reset.status)
-        assertTrue(progressRepository.continueListening(userId, 10).isEmpty(), "nothing to continue at zero")
+        assertTrue(
+            progressRepository.continueListening(userId, readable(userId), 10).isEmpty(),
+            "nothing to continue at zero",
+        )
     }
 
     @Test
     fun `mark listened works on a book that was never opened`() {
         progressRepository.setFinished(userId, libId, bookId, finished = true)
         assertEquals(PlayStatus.FINISHED, progressOf().status)
-        assertTrue(progressRepository.continueListening(userId, limit = 10).isEmpty())
+        assertTrue(progressRepository.continueListening(userId, readable(userId), limit = 10).isEmpty())
     }
 
     @Test
     fun `dismissal hides a book from continue listening but keeps it resumable`() {
         progressRepository.upsert(userId, libId, bookId, 42_000)
-        assertEquals(listOf(bookId), progressRepository.continueListening(userId, 10).map { it.id })
+        assertEquals(listOf(bookId), progressRepository.continueListening(userId, readable(userId), 10).map { it.id })
 
         progressRepository.setDismissed(userId, libId, bookId, dismissed = true)
-        assertTrue(progressRepository.continueListening(userId, 10).isEmpty())
+        assertTrue(progressRepository.continueListening(userId, readable(userId), 10).isEmpty())
         assertEquals(42_000, progressOf().positionMs)
 
         progressRepository.setDismissed(userId, libId, bookId, dismissed = false)
-        assertEquals(listOf(bookId), progressRepository.continueListening(userId, 10).map { it.id })
+        assertEquals(listOf(bookId), progressRepository.continueListening(userId, readable(userId), 10).map { it.id })
     }
 
     @Test
     fun `playing a dismissed book brings it back into continue listening`() {
         progressRepository.upsert(userId, libId, bookId, 42_000)
         progressRepository.setDismissed(userId, libId, bookId, dismissed = true)
-        assertTrue(progressRepository.continueListening(userId, 10).isEmpty())
+        assertTrue(progressRepository.continueListening(userId, readable(userId), 10).isEmpty())
 
         progressRepository.upsert(userId, libId, bookId, 50_000)
-        assertEquals(listOf(bookId), progressRepository.continueListening(userId, 10).map { it.id })
+        assertEquals(listOf(bookId), progressRepository.continueListening(userId, readable(userId), 10).map { it.id })
     }
 
     @Test
@@ -155,7 +161,7 @@ class ProgressRepositoryTest : DeweyTest() {
         progressRepository.upsert(userId, libId, bookId, 42_000)
         backdate(bookId, Clock.System.now() - WEEK * 3)
 
-        assertTrue(progressRepository.continueListening(userId, 10).isEmpty())
+        assertTrue(progressRepository.continueListening(userId, readable(userId), 10).isEmpty())
         assertEquals(42_000, progressOf().positionMs)
     }
 
@@ -173,10 +179,10 @@ class ProgressRepositoryTest : DeweyTest() {
     fun `history exposes the log entries with their book`() {
         progressRepository.upsert(userId, libId, bookId, 30_000)
 
-        val entry = progressRepository.history(userId, limit = 10, offset = 0).single()
+        val entry = progressRepository.history(userId, readable(userId), limit = 10, offset = 0).single()
         assertEquals(bookId, entry.book.id)
         assertEquals(30_000, entry.positionMs)
-        assertEquals(1, progressRepository.historyTotal(userId))
+        assertEquals(1, progressRepository.historyTotal(userId, readable(userId)))
     }
 
     @Test
@@ -201,7 +207,7 @@ class ProgressRepositoryTest : DeweyTest() {
         }
 
         assertTrue(
-            progressRepository.continueListening(userId, 10).none { it.id == otherBook },
+            progressRepository.continueListening(userId, readable(userId), 10).none { it.id == otherBook },
             "a book outside the readable libraries must never be resolved",
         )
     }
@@ -241,7 +247,7 @@ class ProgressRepositoryTest : DeweyTest() {
         progressRepository.upsert(userId, libId, bookId, 42_000)
 
         assertEquals(PlayStatus.UNPLAYED, bookRepository.get(other, bookId, libId).status)
-        assertTrue(progressRepository.continueListening(other, 10).isEmpty())
+        assertTrue(progressRepository.continueListening(other, readable(other), 10).isEmpty())
     }
 
     /** Progress has no read endpoint of its own; it is read off the book. */

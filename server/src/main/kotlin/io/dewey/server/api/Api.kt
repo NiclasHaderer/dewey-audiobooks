@@ -130,6 +130,20 @@ class Api {
             data class Current(
                 private val parent: User,
             ) : DeweyCurrentUserParams
+
+            @Summary("List access tokens", method = "GET")
+            @Summary("Create access token", method = "POST", status = 201)
+            @Resource("tokens")
+            data class Tokens(
+                private val parent: User,
+            ) {
+                @Summary("Revoke access token", method = "DELETE")
+                @Resource("{tokenId}")
+                data class Id(
+                    val tokenId: Uuid,
+                    private val parent: Tokens,
+                )
+            }
         }
     }
 

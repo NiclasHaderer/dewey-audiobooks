@@ -5,6 +5,7 @@ import io.dewey.auth.models.DeweyUser
 import io.dewey.auth.models.DeweyUserWithPermissions
 import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
+import io.dewey.auth.utils.requireLoginSession
 import io.dewey.auth.utils.wrap
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
@@ -18,9 +19,10 @@ fun RoutingContext.displayUser(params: DeweyDisplayUserParams): DeweyUser {
     val principal = deweyPrincipal<DeweyPrincipal>()
     val config = deweyAuthConfig<Any, Any>()
 
-    if (principal.userId != params.id && !config.isAdmin(principal)) {
+    if (principal.userId != params.id && !principal.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can view another user")
     }
+    if (principal.userId != params.id) principal.requireLoginSession("view other accounts")
 
     val user = config.getUserById(params.id) ?: throw ErrorResponse.notFound("User", params.id)
     return user.wrap()

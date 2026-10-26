@@ -16,7 +16,6 @@ import io.dewey.server.database.tables.insert
 import io.dewey.server.database.tables.toProgressLogRow
 import io.dewey.server.database.tables.toUserBookProgressRow
 import io.dewey.server.database.tables.update
-import io.dewey.server.plugins.auth.resolveUserPermissions
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.and
@@ -64,18 +63,24 @@ interface ProgressRepository {
         dismissed: Boolean,
     )
 
+    // [readable] are the libraries the request may read, which an access token can narrow below its user's
     fun continueListening(
         userId: Uuid,
+        readable: Collection<Uuid>,
         limit: Int,
     ): List<Book>
 
     fun history(
         userId: Uuid,
+        readable: Collection<Uuid>,
         limit: Int,
         offset: Long,
     ): List<ListeningHistoryEntry>
 
-    fun historyTotal(userId: Uuid): Long
+    fun historyTotal(
+        userId: Uuid,
+        readable: Collection<Uuid>,
+    ): Long
 }
 
 class ProgressRepositoryImpl :
@@ -157,11 +162,11 @@ class ProgressRepositoryImpl :
 
     override fun continueListening(
         userId: Uuid,
+        readable: Collection<Uuid>,
         limit: Int,
     ): List<Book> =
         transaction {
             val cutoff = Clock.System.now() - WEEK * config.continueListeningWeeks
-            val readable = readableLibraries(userId)
             val rows =
                 UserBookProgressTable
                     .selectAll()
@@ -182,11 +187,11 @@ class ProgressRepositoryImpl :
 
     override fun history(
         userId: Uuid,
+        readable: Collection<Uuid>,
         limit: Int,
         offset: Long,
     ): List<ListeningHistoryEntry> =
         transaction {
-            val readable = readableLibraries(userId)
             val rows =
                 ProgressLogTable
                     .selectAll()
@@ -210,13 +215,16 @@ class ProgressRepositoryImpl :
             }
         }
 
-    override fun historyTotal(userId: Uuid): Long =
+    override fun historyTotal(
+        userId: Uuid,
+        readable: Collection<Uuid>,
+    ): Long =
         transaction {
             ProgressLogTable
                 .selectAll()
                 .where {
                     (ProgressLogTable.user eq userId) and
-                        (ProgressLogTable.library inList readableLibraries(userId))
+                        (ProgressLogTable.library inList readable)
                 }.count()
         }
 
@@ -249,7 +257,7 @@ class ProgressRepositoryImpl :
     private fun booksById(
         bookIds: List<Uuid>,
         userId: Uuid,
-        readable: List<Uuid>,
+        readable: Collection<Uuid>,
     ): Map<Uuid, Book> {
         // The progress log holds one row per write, so a page of history is mostly the same few books
         // repeated. Deduplicating keeps the IN list proportional to the books, not to the rows.
@@ -289,6 +297,4 @@ class ProgressRepositoryImpl :
         // Can be null if the book has no tracks
         return row[total] ?: 0
     }
-
-    private fun readableLibraries(userId: Uuid): List<Uuid> = resolveUserPermissions(userId).libraries.map { it.id }
 }

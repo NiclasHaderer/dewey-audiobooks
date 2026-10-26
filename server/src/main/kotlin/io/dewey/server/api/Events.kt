@@ -1,5 +1,6 @@
 package io.dewey.server.api
 
+import io.dewey.auth.utils.requireLoginSession
 import io.dewey.models.ChangeEvent
 import io.dewey.models.ChangeEventBatch
 import io.dewey.models.ChangeType
@@ -21,9 +22,13 @@ fun Routing.eventRouting() {
     val changeEvents by inject<ChangeEvents>()
 
     webSocket<Api.Events, Unit, ChangeEventBatch> {
-        val userId =
-            call.principal<DeweyPrincipalImpl>()?.userId
+        val principal =
+            call.principal<DeweyPrincipalImpl>()
                 ?: throw ErrorResponse.internalError("Could not get principal of the event socket")
+        // The token is only checked at the handshake, so a socket opened with one would keep listening after the
+        // token was revoked or expired. Re-checking it per batch is not worth it while no token client listens.
+        principal.requireLoginSession("listen to events")
+        val userId = principal.userId
 
         val forwarding =
             launch {

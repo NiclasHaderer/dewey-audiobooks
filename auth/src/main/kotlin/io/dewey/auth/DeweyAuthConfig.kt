@@ -7,6 +7,7 @@ import io.dewey.auth.models.DeweyDatabaseUser
 import io.dewey.auth.models.DeweyJwtTypes
 import io.dewey.auth.models.DeweyRegisteredUser
 import io.dewey.auth.utils.DeweyPrincipal
+import io.dewey.auth.utils.accessTokenId
 import io.dewey.auth.utils.userForToken
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.http.auth.HttpAuthHeader
@@ -25,8 +26,18 @@ import kotlin.uuid.Uuid
 
 internal typealias KeyId = String
 
-internal typealias GetPrincipal =
-    ApplicationCall.(user: DeweyDatabaseUser, setError: (error: ErrorResponse) -> Unit) -> DeweyPrincipal?
+class DeweyAccessToken<out PERMISSIONS>(
+    val id: Uuid,
+    val permissions: PERMISSIONS,
+)
+
+// The access token is null for a login session
+internal typealias GetPrincipal<TOKEN_PERMISSIONS> =
+    ApplicationCall.(
+        user: DeweyDatabaseUser,
+        accessToken: DeweyAccessToken<TOKEN_PERMISSIONS>?,
+        setError: (error: ErrorResponse) -> Unit,
+    ) -> DeweyPrincipal?
 
 internal typealias AuthHeaderProvider = (call: ApplicationCall) -> HttpAuthHeader?
 
@@ -37,21 +48,21 @@ fun bearerFromHeaderOrCookie(cookieName: String): AuthHeaderProvider =
             ?: call.request.cookies[cookieName]?.let { HttpAuthHeader.Single("Bearer", it) }
     }
 
-internal val PLUGIN_CONFIG_KEY = AttributeKey<DeweyAuthConfig<*, *>>("DeweyAuthPlugin")
+internal val PLUGIN_CONFIG_KEY = AttributeKey<DeweyAuthConfig<*, *, *>>("DeweyAuthPlugin")
 
 internal fun <PERMISSIONS, UPDATE_PERMISSIONS> RoutingContext.deweyAuthConfig():
-    DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS> {
+    DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS, *> {
     if (!call.attributes.contains(PLUGIN_CONFIG_KEY)) {
         throw IllegalStateException("DeweyAuthPlugin not installed")
     }
 
     @Suppress("UNCHECKED_CAST")
-    return call.attributes[PLUGIN_CONFIG_KEY] as DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>
+    return call.attributes[PLUGIN_CONFIG_KEY] as DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS, *>
 }
 
 private val JWT_VALIDATION_FAILED = AttributeKey<ErrorResponse>("JWT_VALIDATION_FAILED")
 
-class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
+class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS, TOKEN_PERMISSIONS>(
     val ssl: Boolean = true,
     val firstUserIsAdmin: Boolean = true,
     val realm: String? = null,
@@ -60,7 +71,7 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
     val keyPairs: Map<KeyId, KeyPair>,
     val activeKeyId: KeyId,
     val issuer: String,
-    val guards: Map<String, GetPrincipal>,
+    val guards: Map<String, GetPrincipal<TOKEN_PERMISSIONS>>,
     val guardAuthHeaders: Map<String, AuthHeaderProvider>,
     val getUserByUsername: (username: String) -> DeweyDatabaseUser?,
     val allowNewSignups: () -> Boolean,
@@ -75,7 +86,7 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
     val passwordMeetsRequirements: (password: String) -> Pair<Boolean, String?>,
     val usernameMeetsRequirements: (username: String) -> Pair<Boolean, String?>,
     val getUserPermissions: RoutingContext.(user: DeweyDatabaseUser) -> PERMISSIONS,
-    private val isAdminUser: (user: DeweyDatabaseUser) -> Boolean,
+    private val getAccessToken: (tokenId: Uuid) -> TOKEN_PERMISSIONS?,
 ) {
     // The signing keys are in memory, so tokens are verified directly instead of going through the JWKS endpoint
     internal fun verifierFor(keyId: KeyId?): JWTVerifier? {
@@ -102,13 +113,23 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
                         verifierFor(runCatching { JWT.decode(token).keyId }.getOrNull())
                     }
 
+                    // The access JWT of a login, or an access token the user created for a script
                     validate { jwtCredential ->
-                        val user =
-                            userForToken(jwtCredential.payload, DeweyJwtTypes.Access) ?: run {
-                                attributes.put(JWT_VALIDATION_FAILED, ErrorResponse.unauthorized("JWT is not valid"))
-                                return@validate null
+                        fun invalid(): Nothing? {
+                            attributes.put(JWT_VALIDATION_FAILED, ErrorResponse.unauthorized("JWT is not valid"))
+                            return null
+                        }
+
+                        val payload = jwtCredential.payload
+                        val tokenId = accessTokenId(payload)
+                        val type = if (tokenId == null) DeweyJwtTypes.SessionAccess else DeweyJwtTypes.AccessToken
+                        val user = userForToken(payload, type) ?: return@validate invalid()
+                        // Looked up here rather than by each guard, so no guard can let a revoked token through
+                        val accessToken =
+                            tokenId?.let { id ->
+                                DeweyAccessToken(id, getAccessToken(id) ?: return@validate invalid())
                             }
-                        getPrincipal(user) { error -> attributes.put(JWT_VALIDATION_FAILED, error) }
+                        getPrincipal(user, accessToken) { error -> attributes.put(JWT_VALIDATION_FAILED, error) }
                     }
 
                     challenge { _, _ ->
@@ -119,13 +140,9 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
             }
         }
     }
-
-    internal fun isAdmin(principal: DeweyPrincipal): Boolean {
-        return isAdminUser(getUserById(principal.userId) ?: return false)
-    }
 }
 
-class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS> {
+class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS, TOKEN_PERMISSIONS> {
     var ssl = true
 
     // Default user settings
@@ -174,23 +191,23 @@ class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS> {
             Pair(true, null)
         }
     }
-    private lateinit var isAdminUser: (user: DeweyDatabaseUser) -> Boolean
+    private lateinit var getAccessToken: (tokenId: Uuid) -> TOKEN_PERMISSIONS?
 
     // Guards
-    private val guards = mutableMapOf<String, GetPrincipal>()
+    private val guards = mutableMapOf<String, GetPrincipal<TOKEN_PERMISSIONS>>()
     private val guardAuthHeaders = mutableMapOf<String, AuthHeaderProvider>()
 
     fun configureGuard(
         guard: String,
         authHeader: AuthHeaderProvider? = null,
-        getPrincipal: GetPrincipal,
+        getPrincipal: GetPrincipal<TOKEN_PERMISSIONS>,
     ) {
         guards[guard] = getPrincipal
         if (authHeader != null) guardAuthHeaders[guard] = authHeader
     }
 
     // Builder
-    fun build(): DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS> {
+    fun build(): DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS, TOKEN_PERMISSIONS> {
         keyPairs.values.forEach { keyPair ->
             require(keyPair.public.algorithm == "RSA") { "KeyPair ${keyPair.public} is not a RSA key pair" }
         }
@@ -221,7 +238,7 @@ class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS> {
             passwordMeetsRequirements = passwordMeetsRequirements,
             usernameMeetsRequirements = usernameMeetsRequirements,
             getUserPermissions = getUserPermissions,
-            isAdminUser = isAdminUser,
+            getAccessToken = getAccessToken,
         )
     }
 
@@ -234,8 +251,9 @@ class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS> {
         this.allowNewSignups = allowNewSignups
     }
 
-    fun isAdminUser(isAdminUser: (user: DeweyDatabaseUser) -> Boolean) {
-        this.isAdminUser = isAdminUser
+    /** The permissions of a token, null once it was revoked. Called on every request made with one. */
+    fun getAccessToken(getAccessToken: (tokenId: Uuid) -> TOKEN_PERMISSIONS?) {
+        this.getAccessToken = getAccessToken
     }
 
     fun getUserById(getUserById: (id: Uuid) -> DeweyDatabaseUser?) {

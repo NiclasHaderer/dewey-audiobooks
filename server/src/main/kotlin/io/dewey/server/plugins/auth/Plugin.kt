@@ -3,10 +3,12 @@ package io.dewey.server.plugins.auth
 import io.dewey.auth.DeweyAuthenticationPlugin
 import io.dewey.auth.bearerFromHeaderOrCookie
 import io.dewey.auth.models.DeweyDatabaseUser
+import io.dewey.models.AccessTokenPermissions
 import io.dewey.models.UpdateUserPermissions
 import io.dewey.models.UserPermissions
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.dewey.server.config.DeweyConfig
+import io.dewey.server.database.tables.AccessTokenTable
 import io.dewey.server.database.tables.LibraryTable
 import io.dewey.server.database.tables.LibraryUserTable
 import io.dewey.server.database.tables.UserRow
@@ -14,6 +16,7 @@ import io.dewey.server.database.tables.UserTable
 import io.dewey.server.database.tables.insert
 import io.dewey.server.database.tables.toUserRow
 import io.dewey.server.events.ChangeEvents
+import io.dewey.server.repositories.AccessTokenRepository
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import org.jetbrains.exposed.v1.core.*
@@ -51,27 +54,31 @@ internal fun userRow(id: Uuid): UserRow? =
 fun Application.configureAuthentication() {
     val deweyConfig by inject<DeweyConfig>()
     val changeEvents by inject<ChangeEvents>()
+    val accessTokens by inject<AccessTokenRepository>()
     val keyPair = getOrCreateKeyPair(deweyConfig.jwtKeyFile)
 
-    install(DeweyAuthenticationPlugin.build<UserPermissions, UpdateUserPermissions>()) {
+    install(DeweyAuthenticationPlugin.build<UserPermissions, UpdateUserPermissions, AccessTokenPermissions>()) {
         ssl = deweyConfig.tls
         issuer = "dewey.io"
         keyPairs["dewey"] = keyPair
         activeKeyId = "dewey"
 
-        configureGuard(Guards.Normal) { user, _ -> DeweyPrincipalImpl(user.id) }
+        configureGuard(Guards.Normal) { user, accessToken, _ -> DeweyPrincipalImpl(user.id, accessToken) }
 
         configureGuard(
             Guards.Media,
             authHeader = bearerFromHeaderOrCookie("access"),
-        ) { user, _ -> DeweyPrincipalImpl(user.id) }
+        ) { user, accessToken, _ -> DeweyPrincipalImpl(user.id, accessToken) }
 
-        configureGuard(Guards.Admin) { user, setError ->
-            DeweyPrincipalImpl(user.id).takeIf { it.permissions.isAdmin } ?: run {
-                setError(ErrorResponse.unauthorized("User is not an admin"))
+        configureGuard(Guards.Admin) { user, accessToken, setError ->
+            DeweyPrincipalImpl(user.id, accessToken).takeIf { it.permissions.isAdmin } ?: run {
+                val reason = if (accessToken == null) "User is not an admin" else "The access token has no admin rights"
+                setError(ErrorResponse.unauthorized(reason))
                 null
             }
         }
+
+        getAccessToken { tokenId -> accessTokens.getTokenPermissions(tokenId) }
 
         getUserByUsername { username ->
             transaction {
@@ -133,6 +140,7 @@ fun Application.configureAuthentication() {
                     it[passwordHash] = newPassword
                     it[tokenVersion] = tokenVersion + 1
                 }
+                AccessTokenTable.deleteWhere { AccessTokenTable.user eq user.id }
                 userRow(user.id)!!.toExternalUser()
             }
         }
@@ -163,8 +171,8 @@ fun Application.configureAuthentication() {
             }.also { changeEvents.permissionsChanged() }
         }
 
-        isAdminUser { user: DeweyDatabaseUser -> transaction { userRow(user.id)?.admin ?: false } }
-
-        getUserPermissions { user: DeweyDatabaseUser -> resolveUserPermissions(user.id) }
+        getUserPermissions { user: DeweyDatabaseUser ->
+            deweyPrincipalOrNull()?.takeIf { it.userId == user.id }?.permissions ?: resolveUserPermissions(user.id)
+        }
     }
 }

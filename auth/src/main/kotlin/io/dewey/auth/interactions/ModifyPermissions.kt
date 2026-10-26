@@ -5,6 +5,7 @@ import io.dewey.auth.models.DeweyModifyPermissions
 import io.dewey.auth.models.DeweyUser
 import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
+import io.dewey.auth.utils.requireLoginSession
 import io.dewey.auth.utils.wrap
 import io.dewey.auth.withUserMutation
 import io.dewey.openapi.ktor.errors.ErrorResponse
@@ -22,9 +23,10 @@ fun <UPDATE_PERMISSIONS> RoutingContext.modifyUserPermissions(
     val principal = deweyPrincipal<DeweyPrincipal>()
     val config = deweyAuthConfig<Any, UPDATE_PERMISSIONS>()
 
-    if (!config.isAdmin(principal)) {
+    if (!principal.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can modify permissions")
     }
+    principal.requireLoginSession("change permissions")
 
     return withUserMutation {
         val user = config.getUserById(params.id) ?: throw ErrorResponse.notFound("User", params.id)

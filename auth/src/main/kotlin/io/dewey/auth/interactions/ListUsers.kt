@@ -4,6 +4,7 @@ import io.dewey.auth.deweyAuthConfig
 import io.dewey.auth.models.DeweyUserWithPermissions
 import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
+import io.dewey.auth.utils.requireLoginSession
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
 
@@ -15,9 +16,10 @@ fun <PERMISSIONS : Any> RoutingContext.listUsers(
     val config = deweyAuthConfig<PERMISSIONS, Any>()
 
     val principal = deweyPrincipal<DeweyPrincipal>()
-    if (!config.isAdmin(principal)) {
+    if (!principal.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can list users")
     }
+    principal.requireLoginSession("list users")
 
     return config.listAllUsers().map { user ->
         val permissions = config.run { getUserPermissions(user) }

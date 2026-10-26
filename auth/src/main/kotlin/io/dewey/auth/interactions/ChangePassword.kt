@@ -7,6 +7,7 @@ import io.dewey.auth.utils.deweyPrincipal
 import io.dewey.auth.utils.generateJwtPairForUser
 import io.dewey.auth.utils.hashPassword
 import io.dewey.auth.utils.passwordMatches
+import io.dewey.auth.utils.requireLoginSession
 import io.dewey.auth.withUserMutation
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
@@ -23,9 +24,11 @@ fun RoutingContext.changeUserPassword(
     val principal = deweyPrincipal<DeweyPrincipal>()
     val config = deweyAuthConfig<Any, Any>()
 
-    if (principal.userId != params.id && !config.isAdmin(principal)) {
+    if (principal.userId != params.id && !principal.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can change another user's password")
     }
+    // A password is a credential, which nothing but a login gets to replace
+    principal.requireLoginSession("change a password")
 
     val user = config.getUserById(params.id) ?: throw ErrorResponse.userError("Could not find user with username")
 
