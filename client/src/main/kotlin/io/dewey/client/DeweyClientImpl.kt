@@ -1199,6 +1199,30 @@ abstract class DeweyClientImpl(
             )
         }
 
+    override suspend fun revealAccessToken(
+        tokenId: Uuid,
+        body: RevealAccessToken,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<RevealAccessToken>,
+        onAfterRequest: OnAfterRequest<RevealAccessToken, RevealedAccessToken>,
+    ): OpenApiHttpResponse<RevealedAccessToken> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens/$tokenId/reveal",
+                    method = HttpMethod("POST"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal",
+                ),
+                typeInfo<RevealAccessToken>(),
+                typeInfo<RevealedAccessToken>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
     override suspend fun revokeAccessToken(
         tokenId: Uuid,
         headers: Headers,

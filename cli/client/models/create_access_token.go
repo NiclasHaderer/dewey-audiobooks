@@ -7,5 +7,6 @@ import "time"
 type CreateAccessToken struct {
 	ExpiresAt   *time.Time             `json:"expiresAt"`
 	Name        string                 `json:"name"`
+	Password    string                 `json:"password"`
 	Permissions AccessTokenPermissions `json:"permissions"`
 }

@@ -7,5 +7,6 @@ import kotlin.time.Instant
 data class CreateAccessToken(
     val expiresAt: Instant? = null,
     val name: String,
+    val password: String,
     val permissions: AccessTokenPermissions,
 )

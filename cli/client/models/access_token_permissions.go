@@ -2,10 +2,7 @@
 
 package models
 
-// What an access token may do, never more than its user
 type AccessTokenPermissions struct {
-	// Admin rights, which only count while the user is an admin
-	IsAdmin bool `json:"isAdmin"`
-	// The libraries and the level per library, or null for every library of the user at the user's level
+	IsAdmin   bool                 `json:"isAdmin"`
 	Libraries []AccessTokenLibrary `json:"libraries"`
 }

@@ -54,6 +54,8 @@ import type {
   PaginatedResponse,
   PartialUpdateLibrary,
   ProgressUpdate,
+  RevealAccessToken,
+  RevealedAccessToken,
   Series,
   SeriesCreate,
   SeriesDetailed,
@@ -851,6 +853,23 @@ export const createApi = (
         [...defaultInterceptors, ...interceptors],
         executor,
         false
+      )
+    },
+    revealAccessToken: (
+      { tokenId }: { tokenId: UUID },
+      body: RevealAccessToken,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<RevealedAccessToken>> => {
+      return _request(
+        `/api/auth/user/tokens/${tokenId}/reveal`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
       )
     },
     revokeAccessToken: (

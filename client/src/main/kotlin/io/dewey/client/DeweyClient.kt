@@ -385,6 +385,14 @@ interface DeweyClient {
         onAfterRequest: OnAfterRequest<Unit, DeweyJWKs> = { _, _ -> },
     ): OpenApiHttpResponse<DeweyJWKs>
 
+    suspend fun revealAccessToken(
+        tokenId: Uuid,
+        body: RevealAccessToken,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<RevealAccessToken> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<RevealAccessToken, RevealedAccessToken> = { _, _ -> },
+    ): OpenApiHttpResponse<RevealedAccessToken>
+
     suspend fun revokeAccessToken(
         tokenId: Uuid,
         headers: Headers = Headers.Empty,

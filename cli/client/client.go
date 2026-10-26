@@ -749,6 +749,20 @@ func (c *Client) RetrieveJwks(ctx context.Context) (models.DeweyJWKs, error) {
 	return out, err
 }
 
+// RevealAccessToken calls POST /api/auth/user/tokens/{tokenId}/reveal: Reveal access token
+func (c *Client) RevealAccessToken(ctx context.Context, tokenID models.UUID, body models.RevealAccessToken) (models.RevealedAccessToken, error) {
+	r := request{
+		method:  "POST",
+		path:    "/api/auth/user/tokens/" + pathValue(tokenID) + "/reveal",
+		body:    body,
+		hasBody: true,
+		secured: true,
+	}
+	var out models.RevealedAccessToken
+	err := c.json(ctx, r, &out)
+	return out, err
+}
+
 // RevokeAccessToken calls DELETE /api/auth/user/tokens/{tokenId}: Revoke access token
 func (c *Client) RevokeAccessToken(ctx context.Context, tokenID models.UUID) error {
 	r := request{
