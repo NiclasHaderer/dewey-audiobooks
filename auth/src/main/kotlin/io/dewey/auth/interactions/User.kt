@@ -19,7 +19,7 @@ fun RoutingContext.displayUser(params: DeweyDisplayUserParams): DeweyUser {
     val config = deweyAuthConfig<Any, Any>()
 
     if (principal.userId != params.id && !config.isAdmin(principal)) {
-        throw ErrorResponse.forbidden("View", "account")
+        throw ErrorResponse.forbidden("Only admins can view another user")
     }
 
     val user = config.getUserById(params.id) ?: throw ErrorResponse.notFound("User", params.id)

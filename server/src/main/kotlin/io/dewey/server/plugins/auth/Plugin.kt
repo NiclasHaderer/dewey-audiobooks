@@ -1,7 +1,6 @@
 package io.dewey.server.plugins.auth
 
 import io.dewey.auth.DeweyAuthenticationPlugin
-import io.dewey.auth.JwtError
 import io.dewey.auth.bearerFromHeaderOrCookie
 import io.dewey.auth.models.DeweyDatabaseUser
 import io.dewey.models.UpdateUserPermissions
@@ -15,7 +14,6 @@ import io.dewey.server.database.tables.UserTable
 import io.dewey.server.database.tables.insert
 import io.dewey.server.database.tables.toUserRow
 import io.dewey.server.events.ChangeEvents
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import org.jetbrains.exposed.v1.core.*
@@ -70,7 +68,7 @@ fun Application.configureAuthentication() {
 
         configureGuard(Guards.Admin) { user, setError ->
             DeweyPrincipalImpl(user.id).takeIf { it.permissions.isAdmin } ?: run {
-                setError(JwtError("User is not an admin", HttpStatusCode.Unauthorized))
+                setError(ErrorResponse.unauthorized("User is not an admin"))
                 null
             }
         }

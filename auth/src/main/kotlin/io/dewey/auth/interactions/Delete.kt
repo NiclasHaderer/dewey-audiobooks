@@ -20,7 +20,7 @@ fun RoutingContext.deleteUser(
     val config = deweyAuthConfig<Any, Any>()
 
     if (principal.userId != params.id && !config.isAdmin(principal)) {
-        throw ErrorResponse.forbidden("Delete", "user")
+        throw ErrorResponse.forbidden("Only admins can delete another user")
     }
 
     withUserMutation {

@@ -8,7 +8,7 @@ import io.dewey.auth.models.DeweyJwtTypes
 import io.dewey.auth.models.DeweyRegisteredUser
 import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.userForToken
-import io.ktor.http.HttpStatusCode
+import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
@@ -16,7 +16,6 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.auth.parseAuthorizationHeader
-import io.ktor.server.response.respond
 import io.ktor.server.routing.RoutingContext
 import io.ktor.util.AttributeKey
 import java.security.KeyPair
@@ -27,7 +26,7 @@ import kotlin.uuid.Uuid
 internal typealias KeyId = String
 
 internal typealias GetPrincipal =
-    ApplicationCall.(user: DeweyDatabaseUser, setError: (error: JwtError) -> Unit) -> DeweyPrincipal?
+    ApplicationCall.(user: DeweyDatabaseUser, setError: (error: ErrorResponse) -> Unit) -> DeweyPrincipal?
 
 internal typealias AuthHeaderProvider = (call: ApplicationCall) -> HttpAuthHeader?
 
@@ -50,12 +49,7 @@ internal fun <PERMISSIONS, UPDATE_PERMISSIONS> RoutingContext.deweyAuthConfig():
     return call.attributes[PLUGIN_CONFIG_KEY] as DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>
 }
 
-data class JwtError(
-    val error: String,
-    val statusCode: HttpStatusCode,
-)
-
-private val JWT_VALIDATION_FAILED = AttributeKey<JwtError>("JWT_VALIDATION_FAILED")
+private val JWT_VALIDATION_FAILED = AttributeKey<ErrorResponse>("JWT_VALIDATION_FAILED")
 
 class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
     val ssl: Boolean = true,
@@ -111,21 +105,15 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS>(
                     validate { jwtCredential ->
                         val user =
                             userForToken(jwtCredential.payload, DeweyJwtTypes.Access) ?: run {
-                                attributes.put(
-                                    JWT_VALIDATION_FAILED,
-                                    JwtError("JWT is not valid", HttpStatusCode.Unauthorized),
-                                )
+                                attributes.put(JWT_VALIDATION_FAILED, ErrorResponse.unauthorized("JWT is not valid"))
                                 return@validate null
                             }
                         getPrincipal(user) { error -> attributes.put(JWT_VALIDATION_FAILED, error) }
                     }
 
                     challenge { _, _ ->
-                        val error = call.attributes.getOrNull(JWT_VALIDATION_FAILED)
-                        call.respond(
-                            error?.statusCode ?: HttpStatusCode.Unauthorized,
-                            mapOf("error" to (error?.error ?: "Unknown JWT error")),
-                        )
+                        throw call.attributes.getOrNull(JWT_VALIDATION_FAILED)
+                            ?: ErrorResponse.unauthorized("Unknown JWT error")
                     }
                 }
             }
