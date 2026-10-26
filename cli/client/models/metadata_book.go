@@ -3,6 +3,7 @@
 package models
 
 type MetadataBook struct {
+	Asin           *string                `json:"asin"`
 	Authors        []MetadataSearchAuthor `json:"authors"`
 	CoverURL       *string                `json:"coverURL"`
 	Description    *string                `json:"description"`

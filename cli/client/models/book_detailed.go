@@ -3,6 +3,7 @@
 package models
 
 type BookDetailed struct {
+	Asin           *string           `json:"asin"`
 	Authors        []NamedID         `json:"authors"`
 	Chapters       []Chapter         `json:"chapters"`
 	CoverID        *UUID             `json:"coverID"`

@@ -18,6 +18,7 @@ const (
 	BookFieldNarrators      BookField = "NARRATORS"
 	BookFieldGenres         BookField = "GENRES"
 	BookFieldIsbn           BookField = "ISBN"
+	BookFieldAsin           BookField = "ASIN"
 	BookFieldCoverID        BookField = "COVER_ID"
 	BookFieldChapters       BookField = "CHAPTERS"
 )

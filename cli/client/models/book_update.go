@@ -3,6 +3,7 @@
 package models
 
 type BookUpdate struct {
+	Asin           Patch[*string]           `json:"asin,omitzero"`
 	Authors        Patch[[]UUID]            `json:"authors,omitzero"`
 	Chapters       Patch[[]ChapterMark]     `json:"chapters,omitzero"`
 	Cover          Patch[*string]           `json:"cover,omitzero"`
