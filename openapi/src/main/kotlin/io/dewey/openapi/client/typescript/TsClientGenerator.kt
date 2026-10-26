@@ -2,6 +2,7 @@ package io.dewey.openapi.client.typescript
 
 import io.dewey.openapi.client.common.ClientGenerator
 import io.dewey.openapi.client.common.ClientPart
+import io.dewey.openapi.client.common.splitWords
 import io.dewey.openapi.common.getResourceContent
 import io.dewey.openapi.common.padLinesStart
 import io.dewey.openapi.ktor.OpenApiRoute
@@ -280,12 +281,15 @@ class TsClientGenerator(
 
     private fun modelFile(definition: TypeDefinition): String =
         buildString {
-            definition.uses.forEach { append("import type {$it} from \"./$it\";\n") }
+            definition.uses.forEach { append("import type {$it} from \"./${fileName(it)}\";\n") }
             if (definition.uses.isNotEmpty()) append("\n")
             append("export ${definition.code}\n")
         }
 
-    private fun modelIndex(): String = typeDefinitions.keys.joinToString("") { "export * from \"./$it\";\n" }
+    private fun modelIndex(): String =
+        typeDefinitions.keys.joinToString("") { "export * from \"./${fileName(it)}\";\n" }
+
+    private fun fileName(name: String): String = splitWords(name, "-")
 
     override fun generateClient(): List<ClientPart> {
         val clientRequests = getClientRequests()
@@ -293,7 +297,10 @@ class TsClientGenerator(
             ClientPart("client.ts", requestRunner),
             ClientPart("api-client.ts", clientRequests),
             ClientPart("models/index.ts", modelIndex()),
-        ) + typeDefinitions.map { (name, definition) -> ClientPart("models/$name.ts", modelFile(definition)) }
+        ) +
+            typeDefinitions.map { (name, definition) ->
+                ClientPart("models/${fileName(name)}.ts", modelFile(definition))
+            }
     }
 }
 

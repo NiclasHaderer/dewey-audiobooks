@@ -11,7 +11,8 @@ import io.dewey.client.models.DeweyModifyPermissions
 import io.dewey.client.models.DeweyRenameUser
 import io.dewey.client.models.LibraryPermissionLevel
 import io.dewey.client.models.PartialUpdateLibrary
-import io.dewey.client.models.RevealAccessToken
+import io.dewey.client.models.PasswordConfirmation
+import io.dewey.client.models.UpdateAccessToken
 import io.dewey.client.models.UpdateUserPermissions
 import io.dewey.openapi.common.Patch
 import io.dewey.server.DeweyTest
@@ -153,6 +154,81 @@ class AccessTokenTest : DeweyTest() {
         }
 
     @Test
+    fun `editing a token changes what a copy already in use may do`() =
+        deweyServer {
+            val libId = newLibrary("lib")
+            val bookId = newBook("Dune", libId)
+            val session = bearer(login("admin"))
+            val token = token(session, isAdmin = false)
+            val readOnly =
+                AccessTokenPermissions(false, listOf(AccessTokenLibrary(libId, LibraryPermissionLevel.READONLY)))
+
+            val updated =
+                api.updateAccessToken(
+                    token.id,
+                    UpdateAccessToken(name = "renamed", permissions = readOnly, password = TEST_PASSWORD),
+                    session,
+                )
+
+            assertEquals(HttpStatusCode.OK, updated.status)
+            assertEquals("renamed", updated.body().name)
+            assertEquals(
+                HttpStatusCode.Forbidden,
+                api.updateBook(bookId, libId, BookUpdate(title = Patch.Set("Renamed")), token.headers).status,
+            )
+        }
+
+    @Test
+    fun `editing a token takes the password of a login of its user`() =
+        deweyServer {
+            val libId = newLibrary("lib")
+            val session = bearer(login("admin"))
+            val token = token(session, isAdmin = false)
+            val other = bearer(registerWithAccess("listener", libId, LibraryPermissionLevel.READ_WRITE))
+            val wider = AccessTokenPermissions(true, null)
+
+            val wrong = api.updateAccessToken(
+                token.id,
+                UpdateAccessToken(name = "cli", permissions = wider, password = "wrong password"),
+                session,
+            )
+            val byToken = api.updateAccessToken(
+                token.id,
+                UpdateAccessToken(name = "cli", permissions = wider, password = TEST_PASSWORD),
+                token.headers,
+            )
+            val byOther = api.updateAccessToken(
+                token.id,
+                UpdateAccessToken(name = "cli", permissions = wider, password = TEST_PASSWORD),
+                other,
+            )
+
+            assertEquals(HttpStatusCode.BadRequest, wrong.status)
+            assertEquals(HttpStatusCode.Forbidden, byToken.status)
+            assertEquals(HttpStatusCode.NotFound, byOther.status)
+            assertEquals(
+                false,
+                api
+                    .listAccessTokens(session)
+                    .body()
+                    .single()
+                    .permissions.isAdmin,
+            )
+        }
+
+    @Test
+    fun `a wrong password revokes nothing`() =
+        deweyServer {
+            val session = bearer(login("admin"))
+            val token = token(session)
+
+            val revoked = api.revokeAccessToken(token.id, PasswordConfirmation("wrong password"), session)
+
+            assertEquals(HttpStatusCode.BadRequest, revoked.status)
+            assertEquals(HttpStatusCode.OK, api.listLibraries(token.headers).status)
+        }
+
+    @Test
     fun `a token limited to one library cannot reach another`() =
         deweyServer {
             val allowed = newLibrary("allowed", folders = listOf("/media/allowed"))
@@ -205,7 +281,10 @@ class AccessTokenTest : DeweyTest() {
         deweyServer {
             val session = bearer(login("admin"))
             val revoked = token(session)
-            assertEquals(HttpStatusCode.NoContent, api.revokeAccessToken(revoked.id, session).status)
+            assertEquals(
+                HttpStatusCode.NoContent,
+                api.revokeAccessToken(revoked.id, PasswordConfirmation(TEST_PASSWORD), session).status,
+            )
 
             assertEquals(HttpStatusCode.Unauthorized, api.listLibraries(bearer("not-a-token")).status)
             assertEquals(HttpStatusCode.Unauthorized, api.listLibraries(revoked.headers).status)
@@ -296,8 +375,8 @@ class AccessTokenTest : DeweyTest() {
             val session = bearer(login("admin"))
             val token = token(session)
 
-            val wrong = api.revealAccessToken(token.id, RevealAccessToken("wrong password"), session)
-            val revealed = api.revealAccessToken(token.id, RevealAccessToken(TEST_PASSWORD), session)
+            val wrong = api.revealAccessToken(token.id, PasswordConfirmation("wrong password"), session)
+            val revealed = api.revealAccessToken(token.id, PasswordConfirmation(TEST_PASSWORD), session)
 
             assertEquals(HttpStatusCode.BadRequest, wrong.status)
             assertEquals(HttpStatusCode.OK, revealed.status)
@@ -313,8 +392,8 @@ class AccessTokenTest : DeweyTest() {
             val token = token(bearer(login("admin")))
             val other = bearer(registerWithAccess("listener", libId, LibraryPermissionLevel.READ_WRITE))
 
-            val byToken = api.revealAccessToken(token.id, RevealAccessToken(TEST_PASSWORD), token.headers)
-            val byOther = api.revealAccessToken(token.id, RevealAccessToken(TEST_PASSWORD), other)
+            val byToken = api.revealAccessToken(token.id, PasswordConfirmation(TEST_PASSWORD), token.headers)
+            val byOther = api.revealAccessToken(token.id, PasswordConfirmation(TEST_PASSWORD), other)
 
             assertEquals(HttpStatusCode.Forbidden, byToken.status)
             assertEquals(HttpStatusCode.NotFound, byOther.status)
@@ -329,8 +408,14 @@ class AccessTokenTest : DeweyTest() {
 
             val listed = api.listAccessTokens(first.headers).body()
             assertEquals(listOf(first.id, second.id), listed.map { it.id })
-            assertEquals(HttpStatusCode.Forbidden, api.revokeAccessToken(second.id, first.headers).status)
-            assertEquals(HttpStatusCode.Forbidden, api.revokeAccessToken(first.id, first.headers).status)
+            assertEquals(
+                HttpStatusCode.Forbidden,
+                api.revokeAccessToken(second.id, PasswordConfirmation(TEST_PASSWORD), first.headers).status,
+            )
+            assertEquals(
+                HttpStatusCode.Forbidden,
+                api.revokeAccessToken(first.id, PasswordConfirmation(TEST_PASSWORD), first.headers).status,
+            )
             assertEquals(HttpStatusCode.OK, api.listLibraries(first.headers).status)
         }
 
@@ -342,7 +427,10 @@ class AccessTokenTest : DeweyTest() {
             val other = bearer(registerWithAccess("listener", libId, LibraryPermissionLevel.READ_WRITE))
 
             assertEquals(emptyList(), api.listAccessTokens(other).body())
-            assertEquals(HttpStatusCode.NotFound, api.revokeAccessToken(adminToken.id, other).status)
+            assertEquals(
+                HttpStatusCode.NotFound,
+                api.revokeAccessToken(adminToken.id, PasswordConfirmation(TEST_PASSWORD), other).status,
+            )
             assertEquals(HttpStatusCode.OK, api.listLibraries(adminToken.headers).status)
         }
 }

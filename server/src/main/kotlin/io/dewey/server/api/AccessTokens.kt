@@ -2,14 +2,15 @@ package io.dewey.server.api
 
 import io.dewey.auth.interactions.confirmPassword
 import io.dewey.auth.interactions.issueAccessToken
-import io.dewey.auth.utils.requireLoginSession
 import io.dewey.models.AccessToken
 import io.dewey.models.CreateAccessToken
 import io.dewey.models.CreatedAccessToken
-import io.dewey.models.RevealAccessToken
+import io.dewey.models.PasswordConfirmation
 import io.dewey.models.RevealedAccessToken
+import io.dewey.models.UpdateAccessToken
 import io.dewey.openapi.ktor.delete
 import io.dewey.openapi.ktor.get
+import io.dewey.openapi.ktor.patch
 import io.dewey.openapi.ktor.post
 import io.dewey.server.plugins.auth.deweyPrincipal
 import io.dewey.server.repositories.AccessTokenRepository
@@ -28,16 +29,22 @@ fun Routing.accessTokenRouting() {
         CreatedAccessToken(issueAccessToken(userId, accessToken.id, accessToken.expiresAt), accessToken)
     }
 
-    post<Api.Auth.User.Tokens.Id.Reveal, RevealAccessToken, RevealedAccessToken> { route, reveal ->
-        confirmPassword(reveal.password, "show an access token")
+    post<Api.Auth.User.Tokens.Id.Reveal, PasswordConfirmation, RevealedAccessToken> { route, confirmation ->
+        confirmPassword(confirmation.password, "show an access token")
         val userId = deweyPrincipal().userId
         val accessToken = accessTokens.get(userId, route.tokenId)
         RevealedAccessToken(issueAccessToken(userId, accessToken.id, accessToken.expiresAt))
     }
 
-    delete<Api.Auth.User.Tokens.Id, Unit, Unit> { route, _ ->
-        val principal = deweyPrincipal()
-        principal.requireLoginSession("revoke an access token")
-        accessTokens.revoke(principal.userId, route.tokenId)
+    // The token carries only its row id, so a change reaches every copy of it on the next request. The expiry is
+    // signed into the token instead and cannot change after the fact.
+    patch<Api.Auth.User.Tokens.Id, UpdateAccessToken, AccessToken> { route, update ->
+        confirmPassword(update.password, "change an access token")
+        accessTokens.update(deweyPrincipal().userId, route.tokenId, update)
+    }
+
+    delete<Api.Auth.User.Tokens.Id, PasswordConfirmation, Unit> { route, confirmation ->
+        confirmPassword(confirmation.password, "revoke an access token")
+        accessTokens.revoke(deweyPrincipal().userId, route.tokenId)
     }
 }

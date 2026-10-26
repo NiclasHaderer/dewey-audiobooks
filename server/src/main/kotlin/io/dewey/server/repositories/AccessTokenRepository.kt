@@ -3,6 +3,7 @@ package io.dewey.server.repositories
 import io.dewey.models.AccessToken
 import io.dewey.models.AccessTokenPermissions
 import io.dewey.models.CreateAccessToken
+import io.dewey.models.UpdateAccessToken
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.dewey.server.database.tables.AccessTokenTable
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -32,6 +33,12 @@ interface AccessTokenRepository {
         tokenId: Uuid,
     ): AccessToken
 
+    fun update(
+        userId: Uuid,
+        tokenId: Uuid,
+        update: UpdateAccessToken,
+    ): AccessToken
+
     fun revoke(
         userId: Uuid,
         tokenId: Uuid,
@@ -47,11 +54,7 @@ class AccessTokenRepositoryImpl : AccessTokenRepository {
         userId: Uuid,
         create: CreateAccessToken,
     ): AccessToken {
-        if (create.name.isBlank()) throw ErrorResponse.userError("Access tokens must have a name")
         val now = Clock.System.now()
-        if (create.expiresAt != null && create.expiresAt <= now) {
-            throw ErrorResponse.userError("The access token would expire right away, pick an expiry in the future")
-        }
         return transaction {
             val id =
                 AccessTokenTable.insertAndGetId {
@@ -88,6 +91,21 @@ class AccessTokenRepositoryImpl : AccessTokenRepository {
                 .where { (AccessTokenTable.id eq tokenId) and (AccessTokenTable.user eq userId) }
                 .singleOrNull()
                 ?.toAccessToken() ?: throw ErrorResponse.notFound("Access token", tokenId)
+        }
+
+    override fun update(
+        userId: Uuid,
+        tokenId: Uuid,
+        update: UpdateAccessToken,
+    ): AccessToken =
+        transaction {
+            val updated =
+                AccessTokenTable.update({ (AccessTokenTable.id eq tokenId) and (AccessTokenTable.user eq userId) }) {
+                    it[name] = update.name.trim()
+                    it[permissions] = update.permissions
+                }
+            if (updated == 0) throw ErrorResponse.notFound("Access token", tokenId)
+            get(userId, tokenId)
         }
 
     override fun revoke(

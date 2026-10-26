@@ -52,3 +52,13 @@ abstract class ClientGenerator(
             .replace(Regex("[^A-Za-z0-9]"), "")
     }
 }
+
+/** A CamelCase name in lower case with [separator] between its words, keeping acronyms such as JWK together. */
+internal fun splitWords(
+    name: String,
+    separator: String,
+): String =
+    name
+        .replace(Regex("([a-z0-9])([A-Z])"), "$1$separator$2")
+        .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1$separator$2")
+        .lowercase()

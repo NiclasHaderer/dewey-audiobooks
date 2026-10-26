@@ -137,6 +137,7 @@ class Api {
             data class Tokens(
                 private val parent: User,
             ) {
+                @Summary("Update access token", method = "PATCH")
                 @Summary("Revoke access token", method = "DELETE")
                 @Resource("{tokenId}")
                 data class Id(

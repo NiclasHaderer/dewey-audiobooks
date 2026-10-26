@@ -1,5 +1,6 @@
 package io.dewey.openapi.client.go
 
+import io.dewey.openapi.client.common.splitWords
 import io.dewey.openapi.wire.Body
 import io.dewey.openapi.wire.Declaration
 import io.dewey.openapi.wire.EnumDeclaration
@@ -136,11 +137,7 @@ internal fun Declaration.goFile(packageName: String): String =
     }
 
 /** A Go file name for a model, lower snake case as Go spells them. */
-internal fun fileName(name: String): String =
-    exported(name)
-        .replace(Regex("([a-z0-9])([A-Z])"), "$1_$2")
-        .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1_$2")
-        .lowercase() + ".go"
+internal fun fileName(name: String): String = splitWords(exported(name), "_") + ".go"
 
 private fun EnumDeclaration.enumType(): String {
     val type = exported(name)
