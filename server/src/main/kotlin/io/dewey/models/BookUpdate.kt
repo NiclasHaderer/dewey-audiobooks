@@ -27,6 +27,7 @@ data class BookUpdate(
     val narrators: Patch<List<String>?> = Patch.Absent,
     val genres: Patch<List<String>?> = Patch.Absent,
     val isbn: Patch<String?> = Patch.Absent,
+    val asin: Patch<String?> = Patch.Absent,
     val cover: Patch<String?> = Patch.Absent,
     val chapters: Patch<List<ChapterMark>> = Patch.Absent,
     val unlock: Patch<List<BookField>> = Patch.Absent,

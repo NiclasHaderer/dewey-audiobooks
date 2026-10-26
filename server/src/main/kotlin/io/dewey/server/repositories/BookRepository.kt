@@ -245,6 +245,7 @@ class BookRepositoryImpl :
                     narrators = edit.value(BookField.NARRATORS, book.narrators, partial.narrators),
                     genres = edit.value(BookField.GENRES, book.genres, partial.genres),
                     isbn = edit.value(BookField.ISBN, book.isbn, partial.isbn),
+                    asin = edit.value(BookField.ASIN, book.asin, partial.asin),
                     coverID = edit.value(BookField.COVER_ID, book.coverID, cover),
                     chapters = chapters.takeUnless { unlocksChapters },
                     locked = edit.locked,

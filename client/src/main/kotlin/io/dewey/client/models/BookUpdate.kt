@@ -10,6 +10,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class BookUpdate(
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val asin: Patch<String?> = Patch.Absent,
     @EncodeDefault(EncodeDefault.Mode.NEVER) val authors: Patch<List<Uuid>> = Patch.Absent,
     @EncodeDefault(EncodeDefault.Mode.NEVER) val chapters: Patch<List<ChapterMark>> = Patch.Absent,
     @EncodeDefault(EncodeDefault.Mode.NEVER) val cover: Patch<String?> = Patch.Absent,

@@ -27,6 +27,7 @@ enum class BookField : MetadataField {
     NARRATORS,
     GENRES,
     ISBN,
+    ASIN,
     COVER_ID,
     CHAPTERS,
 }
@@ -38,6 +39,7 @@ object BookTable : LibraryEntityTable("book", BookField.TITLE.column, ChangedEnt
     val language = enumerationByName<MetadataLanguage>(BookField.LANGUAGE.column, 255).nullable()
     val description = text(BookField.DESCRIPTION.column).nullable()
     val isbn = varchar(BookField.ISBN.column, 255).nullable()
+    val asin = varchar(BookField.ASIN.column, 255).nullable()
     val provider = varchar(BookField.PROVIDER.column, 255).nullable()
     val providerId = varchar(BookField.PROVIDER_ID.column, 255).nullable()
     val providerRating = float(BookField.PROVIDER_RATING.column).nullable()

@@ -12,5 +12,6 @@ export type BookField =
   | "NARRATORS"
   | "GENRES"
   | "ISBN"
+  | "ASIN"
   | "COVER_ID"
   | "CHAPTERS"

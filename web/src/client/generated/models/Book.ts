@@ -5,6 +5,7 @@ import type { TitledId } from "./TitledId"
 import type { UUID } from "./UUID"
 
 export interface Book {
+  asin: string | null
   authors: Array<NamedId>
   coverID: UUID | null
   description: string | null
