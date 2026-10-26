@@ -25,6 +25,7 @@
           actionlint
           ktlint
           fnm
+          go                 # builds the cli, gofmt formats its generated code
         ];
 
         shellHook = ''

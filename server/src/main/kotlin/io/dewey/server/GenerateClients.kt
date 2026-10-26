@@ -1,5 +1,6 @@
 package io.dewey.server
 
+import io.dewey.openapi.client.go.generateGoClient
 import io.dewey.openapi.client.kotlin.KtErrorHandling
 import io.dewey.openapi.client.kotlin.generateKotlinClient
 import io.dewey.openapi.client.typescript.generateTsClient
@@ -25,6 +26,11 @@ fun main() {
                 savePath = "client/src/main/kotlin/io/dewey/client",
                 apiClientName = "DeweyClient",
                 errorHandling = KtErrorHandling.Exception,
+            )
+            generateGoClient(
+                packageName = "client",
+                importPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/client",
+                savePath = "cli/client",
             )
             generateOpenApiSpec(Path.of("gen/openapi.yaml"))
         }.apply {
