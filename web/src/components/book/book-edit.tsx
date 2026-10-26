@@ -2,6 +2,7 @@ import { fromFormDate, unique } from "@/utils/utils.ts"
 import {
   BookMarkedIcon,
   CalendarIcon,
+  HashIcon,
   LayersIcon,
   ListOrderedIcon,
   LanguagesIcon,
@@ -36,6 +37,7 @@ const mergeMetaIntoBook = ({ ...book }: BookUpdate, meta: MetadataBook): BookUpd
   book.language = meta.language || book.language
   book.releaseDate = meta.releaseDate || book.releaseDate
   book.isbn = meta.isbn || book.isbn
+  book.asin = meta.asin || book.asin
   book.publisher = meta.publisher || book.publisher
   book.providerRating = meta.providerRating ?? book.providerRating
   book.provider = meta.id.provider
@@ -50,6 +52,7 @@ const bookToUpdate = (book: Book): BookUpdate => {
     description: book.description,
     genres: book.genres,
     isbn: book.isbn,
+    asin: book.asin,
     language: book.language,
     narrators: book.narrators,
     provider: book.provider,
@@ -170,6 +173,7 @@ const BookForm: FC<{ form: FormContext<BookUpdate>; libraryId: UUID }> = ({ form
             leftIcon={<CalendarIcon />}
           />
           <ManagedInput name="isbn" labelClassName="w-28" label="ISBN" leftIcon={<ListOrderedIcon />} />
+          <ManagedInput name="asin" labelClassName="w-28" label="ASIN" leftIcon={<HashIcon />} />
           <ManagedInput name="publisher" labelClassName="w-28" label="Publisher" leftIcon={<BookMarkedIcon />} />
         </div>
       </div>

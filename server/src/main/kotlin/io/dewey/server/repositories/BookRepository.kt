@@ -368,6 +368,7 @@ class BookRepositoryImpl :
                     narrators =
                         write.value(BookField.NARRATORS, book.narrators) { bookMetadata.narrators.ifEmpty { null } },
                     isbn = write.value(BookField.ISBN, book.isbn) { bookMetadata.isbn },
+                    asin = write.value(BookField.ASIN, book.asin) { bookMetadata.asin },
                     coverID = write.value(BookField.COVER_ID, book.coverID) { getOrCreateImage(newCover, it) },
                     chapters =
                         write.value(BookField.CHAPTERS, book.chapters) {

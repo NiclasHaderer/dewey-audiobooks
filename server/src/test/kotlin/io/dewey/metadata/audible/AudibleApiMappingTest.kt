@@ -41,6 +41,7 @@ class AudibleApiMappingTest {
         assertEquals("Pottermore Publishing", book.publisher)
         assertEquals(MetadataLanguage.English, book.language)
         assertEquals("9781781102633", book.isbn)
+        assertEquals("B017V4IM1G", book.asin)
         assertEquals(4.908434538641135f, book.providerRating)
     }
 

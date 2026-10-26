@@ -74,6 +74,7 @@ class MetadataWriteTest : DeweyTest() {
         narrators: List<String> = emptyList(),
         series: String? = null,
         seriesIndex: Float? = null,
+        asin: String? = null,
         book: String = "A Book",
         path: String = "/media/books/A Book/01.mp3",
     ) = AudioFileAnalysisResultImpl(
@@ -82,6 +83,7 @@ class MetadataWriteTest : DeweyTest() {
         book = book,
         series = series,
         seriesIndex = seriesIndex,
+        asin = asin,
         durationMs = 60_000,
         path = path,
         lastModified = Instant.fromEpochMilliseconds(0),
@@ -103,6 +105,13 @@ class MetadataWriteTest : DeweyTest() {
         assertEquals("Mine", book.description, "a rescan must not overwrite an edit")
         assertEquals(listOf("Second"), book.narrators, "a field nobody edited must follow the tags")
         assertEquals(setOf(BookField.DESCRIPTION), book.locked)
+    }
+
+    @Test
+    fun `the ASIN in the tags is stored on the book`() {
+        trackManager.insert(scan(asin = "B017V4IM1G"), libId)
+
+        assertEquals("B017V4IM1G", bookRepository.raw(bookId(), libId).asin)
     }
 
     @Test
@@ -168,6 +177,7 @@ class MetadataWriteTest : DeweyTest() {
                         authors = hit.authors,
                         description = "From the agent",
                         isbn = "123",
+                        asin = "B000000123",
                     )
                 },
             )
@@ -196,6 +206,7 @@ class MetadataWriteTest : DeweyTest() {
         val preferred = bookRepository.raw(fileWins, preferring)
         assertEquals("From the tags", preferred.description, "the files are preferred, the agent only fills gaps")
         assertEquals("123", preferred.isbn)
+        assertEquals("B000000123", preferred.asin)
         assertEquals("fake", preferred.provider, "the match itself is always recorded")
     }
 

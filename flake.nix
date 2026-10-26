@@ -21,6 +21,7 @@
           jextract           # regenerates :taglib's committed FFM bindings
           git
           ffmpeg             # regenerates the audio test fixtures
+          atomicparsley      # writes the mp4 freeform tags ffmpeg cannot
           actionlint
           ktlint
           fnm

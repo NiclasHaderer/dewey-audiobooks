@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MetadataBook(
+    val asin: String? = null,
     val authors: List<MetadataSearchAuthor>? = null,
     val coverURL: String? = null,
     val description: String? = null,

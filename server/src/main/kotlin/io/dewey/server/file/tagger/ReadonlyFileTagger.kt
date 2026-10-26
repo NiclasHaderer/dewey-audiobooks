@@ -71,6 +71,9 @@ class ReadonlyFileTagger(
     val seriesIndex: Float?
         get() = (first("CATALOGNUMBER") ?: first("PART"))?.toFloatOrNull()
 
+    val asin: String?
+        get() = first("ASIN") ?: first("AUDIBLE_ASIN")
+
     private fun first(key: String): String? = properties[key]?.firstOrNull()?.ifBlank { null }
 
     private companion object {

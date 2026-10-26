@@ -61,6 +61,7 @@ internal fun testBook(
     publisher = null,
     language = null,
     isbn = null,
+    asin = null,
 )
 
 internal fun testAuthor(

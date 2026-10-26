@@ -9,6 +9,7 @@ import {
   CircleCheckIcon,
   CirclePlayIcon,
   ClockIcon,
+  HashIcon,
   ImageOffIcon,
   LanguagesIcon,
   LayersIcon,
@@ -196,6 +197,11 @@ const Meta: FC<MetaProps> = ({ book, libraryId, runtime }) => (
       {book.isbn ? (
         <MetaItem icon={BarcodeIcon}>
           <span className="tabular-nums">{book.isbn}</span>
+        </MetaItem>
+      ) : null}
+      {book.asin ? (
+        <MetaItem icon={HashIcon}>
+          <span className="tabular-nums">{book.asin}</span>
         </MetaItem>
       ) : null}
     </div>

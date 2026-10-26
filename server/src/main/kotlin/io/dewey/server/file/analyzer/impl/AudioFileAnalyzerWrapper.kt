@@ -53,6 +53,7 @@ private fun AudioFileAnalysisResult.fillFrom(other: AudioFileAnalysisResult): Au
         narrators = narrators.ifEmpty { other.narrators },
         series = series ?: other.series,
         seriesIndex = seriesIndex ?: other.seriesIndex,
+        asin = asin ?: other.asin,
         genres = genres.ifEmpty { other.genres },
         cover = cover ?: other.cover,
         chapters = chapters,
