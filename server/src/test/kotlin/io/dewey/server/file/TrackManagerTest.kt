@@ -1,8 +1,8 @@
 package io.dewey.server.file
 
-import io.dewey.client.gen.models.BookDetailed
-import io.dewey.client.gen.models.LibraryPermissionLevel
-import io.dewey.client.gen.models.SeriesDetailed
+import io.dewey.client.models.BookDetailed
+import io.dewey.client.models.LibraryPermissionLevel
+import io.dewey.client.models.SeriesDetailed
 import io.dewey.models.FileScanner
 import io.dewey.server.DeweyTest
 import io.dewey.server.api

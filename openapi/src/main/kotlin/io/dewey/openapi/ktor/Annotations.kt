@@ -1,5 +1,8 @@
 package io.dewey.openapi.ktor
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialInfo
+
 @Target(AnnotationTarget.CLASS)
 annotation class Secured(
     val name: String,
@@ -13,6 +16,9 @@ annotation class Tagged(
     val name: String,
 )
 
+// A SerialInfo annotation reaches the descriptor, which is where the schema generators read it from
+@OptIn(ExperimentalSerializationApi::class)
+@SerialInfo
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
 annotation class Description(
     val description: String,

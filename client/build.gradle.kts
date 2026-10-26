@@ -18,11 +18,6 @@ afterEvaluate {
     }
 }
 
-// The sources in io/dewey/client/gen are written by the server's generateClients task
-tasks.named("compileKotlin") {
-    dependsOn(":server:generateClients")
-}
-
 dependencies {
     api(project(":openapi-models"))
     api(libs.arrow.core)

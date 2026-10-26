@@ -1,12 +1,11 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.ApiSocket
-import io.dewey.client.gen.models.ChangeEvent
-import io.dewey.client.gen.models.ChangeEventBatch
-import io.dewey.client.gen.models.ChangeEventImpl
-import io.dewey.client.gen.models.ChangeType
-import io.dewey.client.gen.models.ChangedEntity
-import io.dewey.client.gen.models.LibraryPermissionLevel
+import io.dewey.client.ApiSocket
+import io.dewey.client.models.ChangeEvent
+import io.dewey.client.models.ChangeEventBatch
+import io.dewey.client.models.ChangeType
+import io.dewey.client.models.ChangedEntity
+import io.dewey.client.models.LibraryPermissionLevel
 import io.dewey.models.FileScanner
 import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.dewey.server.DeweyTest
@@ -77,7 +76,7 @@ class EventSocketTest : DeweyTest() {
         type: ChangeType,
         id: Uuid,
         libraryId: Uuid,
-    ): ChangeEvent = ChangeEventImpl(entity = entity, id = id, libraryId = libraryId, type = type)
+    ): ChangeEvent = ChangeEvent(entity = entity, id = id, libraryId = libraryId, type = type)
 
     @Test
     fun `a commit reaches a connected client after the empty batch that says it is listening`() =

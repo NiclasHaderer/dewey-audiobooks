@@ -1,9 +1,20 @@
 package io.dewey.openapi
 
 import io.dewey.openapi.client.typescript.generateTsClient
+import io.dewey.openapi.ktor.get
+import io.dewey.openapi.ktor.plugins.OpenAPIRouting
+import io.ktor.server.application.install
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.dataconversion.DataConversion
+import io.ktor.server.resources.Resources
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TsGenerationTest {
     @Test
@@ -14,7 +25,7 @@ class TsGenerationTest {
                 testRoutes()
                 generateTsClient(
                     dist = "",
-                    fileWriter = { file, content -> generatedStuff[file.name] = content },
+                    fileWriter = { file, content -> generatedStuff[file.path] = content },
                     apiFactoryName = "createTestApi",
                     // The writer above keeps everything in memory, so there is no dist to clean.
                     cleanDistPackage = false,
@@ -22,66 +33,104 @@ class TsGenerationTest {
             }
         }
         val models =
-            """
-            /* eslint-disable */
-            // @ts-nocheck
-            import type { Pair } from "./utility-types";
+            mapOf(
+                "models/index.ts" to
+                    listOf(
+                        "GenericRoute",
+                        "GenericRoute2",
+                        "GenericRoute3",
+                        "ListRoute",
+                        "MapRoute",
+                        "Pair",
+                        "SetRoute",
+                        "UUID",
+                    ).joinToString("") { "export * from \"./$it\";\n" },
+                "models/GenericRoute.ts" to
+                    """
+                    import type {Pair} from "./Pair";
+                    import type {UUID} from "./UUID";
 
-            export interface Something {
-              name: string;
-            }
-            
-            export type UUID = `$\{string}-$\{string}-$\{string}-$\{string}-$\{string}`
-            
-            export interface ListRoute extends Something {
-              override name: string;
-              someParam: Array<UUID>;
-            }
-            
-            export interface MapRoute {
-              hint: string | null;
-              label?: string;
-              lookup?: Record<string, UUID> | null;
-              name: boolean;
-              note?: string | null;
-              someParam: Record<string, UUID>;
-            }
-            
-            export interface SetRoute {
-              name: number;
-              someParam: Array<UUID>;
-            }
-            
-            export interface GenericRoute<T> {
-              name: Pair<any, UUID>;
-              someParam: T;
-            }
-            
-            export interface GenericRoute2<T , U> {
-              name: string;
-              someParam: T;
-              someParam2: U;
-            }
-            
-            export interface GenericRoute3<T> {
-              name: string;
-              someParam: Record<string, T>;
-              someParam2: GenericRoute2<T, string>;
-            }
-            """.trimIndent()
-                .replace("\\{", "{")
+                    export interface GenericRoute<T extends NonNullable<unknown>> {
+                      name: Pair<string, UUID>;
+                      someParam: T;
+                    }
 
-        val generatedModels = generatedStuff["models.ts"]
-        assertEquals(models, generatedModels)
+                    """.trimIndent(),
+                "models/GenericRoute2.ts" to
+                    """
+                    export interface GenericRoute2<T, U> {
+                      name: string;
+                      someParam: T;
+                      someParam2: U;
+                    }
+
+                    """.trimIndent(),
+                "models/GenericRoute3.ts" to
+                    """
+                    import type {GenericRoute2} from "./GenericRoute2";
+
+                    export interface GenericRoute3<T> {
+                      name: string;
+                      someParam: Record<string, T>;
+                      someParam2: GenericRoute2<T, string>;
+                    }
+
+                    """.trimIndent(),
+                "models/ListRoute.ts" to
+                    """
+                    import type {UUID} from "./UUID";
+
+                    export interface ListRoute {
+                      name: string;
+                      someParam: Array<UUID>;
+                    }
+
+                    """.trimIndent(),
+                "models/MapRoute.ts" to
+                    """
+                    import type {UUID} from "./UUID";
+
+                    export interface MapRoute {
+                      hint: string | null;
+                      label?: string;
+                      lookup?: Record<string, UUID> | null;
+                      name: boolean;
+                      note?: string | null;
+                      someParam: Record<string, UUID>;
+                    }
+
+                    """.trimIndent(),
+                "models/Pair.ts" to
+                    """
+                    export interface Pair<A, B> {
+                      first: A;
+                      second: B;
+                    }
+
+                    """.trimIndent(),
+                "models/SetRoute.ts" to
+                    """
+                    import type {UUID} from "./UUID";
+
+                    export interface SetRoute {
+                      name: number;
+                      someParam: Array<UUID>;
+                    }
+
+                    """.trimIndent(),
+                "models/UUID.ts" to
+                    $$"""
+                    export type UUID = `${string}-${string}-${string}-${string}-${string}`
+
+                    """.trimIndent(),
+            )
+
+        assertEquals(models, generatedStuff.filterKeys { it.startsWith("models/") })
 
         val apiClient =
             $$"""
-            /* eslint-disable */
-            // noinspection JSUnusedGlobalSymbols,ES6UnusedImports
-            // noinspection ES6UnusedImports
-            // @ts-nocheck
             import {ApiCallData, ApiInterceptor, ApiResponse, ApiSocket, ApiSocketData, ApiSocketInterceptor, _request, _createUrl, _mergeHeaders, _socket} from "./client";
-            import type {GenericRoute, GenericRoute2, GenericRoute3, ListRoute, MapRoute, SetRoute, Something, UUID} from "./models";
+            import type {GenericRoute, GenericRoute2, GenericRoute3, ListRoute, MapRoute, SetRoute, UUID} from "./models";
 
             export const createTestApi = (
               defaultHeaders: HeadersInit = {},
@@ -93,6 +142,9 @@ class TsGenerationTest {
               const defaultHeadersImpl = new Headers(defaultHeaders)
               return {
                 apiVersion: "1.2.3",
+                listen: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, interceptors: ApiSocketInterceptor[] = []): Promise<ApiSocket<never, ListRoute>> => {
+                  return _socket(_createUrl(`/${path}/listen`, {name, someParam}), [...defaultSocketInterceptors, ...interceptors], socketExecutor, false);
+                },
                 v1: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<ListRoute>> => {
                   return _request(_createUrl(`/${path}/V1`, {name, someParam}), "GET", "json", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
                 },
@@ -107,9 +159,6 @@ class TsGenerationTest {
                 },
                 v5: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, body: GenericRoute2<string, UUID>, headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<GenericRoute3<string>>> => {
                   return _request(_createUrl(`/${path}/V5`, {name, someParam}), "POST", "json", _mergeHeaders(defaultHeadersImpl, headers), body, [...defaultInterceptors, ...interceptors], executor, false);
-                },
-                listen: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, interceptors: ApiSocketInterceptor[] = []): Promise<ApiSocket<never, ListRoute>> => {
-                  return _socket(_createUrl(`/${path}/listen`, {name, someParam}), [...defaultSocketInterceptors, ...interceptors], socketExecutor, false);
                 }
               } as const;
             }
@@ -119,4 +168,29 @@ class TsGenerationTest {
         val generatedApiClient = generatedStuff["api-client.ts"]
         assertEquals(apiClient, generatedApiClient)
     }
+
+    @Test
+    fun `a model named like an alias the client defines is refused`() {
+        lateinit var error: IllegalStateException
+        testApplication {
+            application {
+                install(Resources)
+                install(DataConversion)
+                install(ContentNegotiation)
+                install(OpenAPIRouting) { info { version = "1.2.3" } }
+                routing { get<Routes.V1, UuidClash> { TODO() } }
+                error =
+                    assertFailsWith<IllegalStateException> {
+                        generateTsClient(dist = "", fileWriter = { _, _ -> }, cleanDistPackage = false)
+                    }
+            }
+        }
+        assertContains(error.message!!, "UUID")
+    }
 }
+
+@Serializable
+@SerialName("io.dewey.openapi.UUID")
+data class UuidClash(
+    val count: Int,
+)

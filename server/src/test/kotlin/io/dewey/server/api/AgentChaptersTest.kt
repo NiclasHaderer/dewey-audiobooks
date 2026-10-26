@@ -1,7 +1,6 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.BookUpdateImpl
-import io.dewey.client.gen.models.ChapterMarkImpl
+import io.dewey.client.models.BookUpdate
 import io.dewey.metadata.FakeMetadataAgent
 import io.dewey.metadata.MetadataAgents
 import io.dewey.metadata.responses.MetadataChapters
@@ -25,6 +24,7 @@ import org.koin.dsl.module
 import org.koin.mp.KoinPlatform.getKoin
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import io.dewey.client.models.ChapterMark as ClientChapterMark
 
 class AgentChaptersTest : DeweyTest() {
     private val agentChapters = listOf(ChapterMark("Prologue", 0), ChapterMark("Arrakis", 2_000))
@@ -41,7 +41,7 @@ class AgentChaptersTest : DeweyTest() {
     private suspend fun ApplicationTestBuilder.matchedChapterTitles(
         preferEmbeddedMetadata: Boolean = false,
         trackChapters: List<TrackChapter> = emptyList(),
-        edited: List<ChapterMarkImpl>? = null,
+        edited: List<ClientChapterMark>? = null,
     ): List<String?> {
         val name = "lib-$preferEmbeddedMetadata"
         val libId =
@@ -53,7 +53,7 @@ class AgentChaptersTest : DeweyTest() {
         val bookId = newBook("Dune", libId, authors = listOf(newAuthor("Frank Herbert", libId)))
         newTrack("Dune", "/media/$name/dune.m4b", bookId, libId, durationMs = 60_000, chapters = trackChapters)
         val token = bearer(login("admin"))
-        if (edited != null) api.updateBook(bookId, libId, BookUpdateImpl(chapters = Patch.Set(edited)), token)
+        if (edited != null) api.updateBook(bookId, libId, BookUpdate(chapters = Patch.Set(edited)), token)
 
         assertEquals(HttpStatusCode.OK, api.autoMatchBook(bookId, libId, token).status)
 
@@ -79,7 +79,7 @@ class AgentChaptersTest : DeweyTest() {
 
             assertEquals(
                 listOf("Mine"),
-                matchedChapterTitles(edited = listOf(ChapterMarkImpl(startMs = 0, title = "Mine"))),
+                matchedChapterTitles(edited = listOf(ClientChapterMark(startMs = 0, title = "Mine"))),
             )
         }
 

@@ -1,6 +1,6 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.DeweyLoginUserImpl
+import io.dewey.client.models.DeweyLoginUser
 import io.dewey.server.DeweyTest
 import io.dewey.server.TEST_PASSWORD
 import io.dewey.server.api
@@ -20,7 +20,7 @@ class RefreshTokenTest : DeweyTest() {
     fun `refreshing hands out a new refresh cookie that works on its own`() =
         deweyServer {
             register("alice")
-            val login = api.loginUser(DeweyLoginUserImpl(password = TEST_PASSWORD, username = "alice"))
+            val login = api.loginUser(DeweyLoginUser(password = TEST_PASSWORD, username = "alice"))
             val firstRefresh = login.authCookie("refresh")
 
             val refreshed = api.refreshAccessToken(cookie("refresh", firstRefresh.value))

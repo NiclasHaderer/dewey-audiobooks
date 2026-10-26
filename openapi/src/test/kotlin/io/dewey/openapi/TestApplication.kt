@@ -15,6 +15,7 @@ import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -65,11 +66,13 @@ interface Something {
     val name: String
 }
 
+@Serializable
 class ListRoute(
     override val name: String,
     val someParam: List<Uuid>,
 ) : Something
 
+@Serializable
 class MapRoute(
     val name: Boolean,
     val someParam: Map<String, Uuid>,
@@ -79,22 +82,26 @@ class MapRoute(
     val hint: String?,
 )
 
+@Serializable
 class SetRoute(
     val name: Float,
     val someParam: Set<Uuid>,
 )
 
-class GenericRoute<T>(
-    val name: Pair<Any, Uuid>,
+@Serializable
+class GenericRoute<T : Any>(
+    val name: Pair<String, Uuid>,
     val someParam: T,
 )
 
+@Serializable
 class GenericRoute2<T, U>(
     val name: String,
     val someParam: T,
     val someParam2: U,
 )
 
+@Serializable
 class GenericRoute3<T>(
     val name: String,
     val someParam: Map<String, T>,

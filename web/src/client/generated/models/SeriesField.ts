@@ -1,0 +1,2 @@
+export type SeriesField =
+  "TITLE" | "PROVIDER" | "PROVIDER_ID" | "TOTAL_BOOKS" | "PRIMARY_WORKS" | "COVER_ID" | "DESCRIPTION"

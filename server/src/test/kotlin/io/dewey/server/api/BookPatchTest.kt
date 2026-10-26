@@ -1,7 +1,7 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.BookField
-import io.dewey.client.gen.models.BookUpdateImpl
+import io.dewey.client.models.BookField
+import io.dewey.client.models.BookUpdate
 import io.dewey.openapi.common.Patch
 import io.dewey.server.DeweyTest
 import io.dewey.server.api
@@ -37,7 +37,7 @@ class BookPatchTest : DeweyTest() {
             }
             val token = bearer(login("admin"))
 
-            val response = api.updateBook(bookId, libId, BookUpdateImpl(description = Patch.Set(null)), token)
+            val response = api.updateBook(bookId, libId, BookUpdate(description = Patch.Set(null)), token)
 
             assertEquals(HttpStatusCode.OK, response.status)
             val book = response.body()
@@ -53,13 +53,13 @@ class BookPatchTest : DeweyTest() {
             val bookId = newBook("Dune", libId)
             val token = bearer(login("admin"))
 
-            api.updateBook(bookId, libId, BookUpdateImpl(description = Patch.Set("Mine")), token)
+            api.updateBook(bookId, libId, BookUpdate(description = Patch.Set("Mine")), token)
             val edited = api.getBook(bookId, libId, token).body()
             assertEquals("Mine", edited.description)
             assertEquals(listOf(BookField.DESCRIPTION), edited.locked)
 
             val response =
-                api.updateBook(bookId, libId, BookUpdateImpl(unlock = Patch.Set(listOf(BookField.DESCRIPTION))), token)
+                api.updateBook(bookId, libId, BookUpdate(unlock = Patch.Set(listOf(BookField.DESCRIPTION))), token)
 
             assertEquals(HttpStatusCode.OK, response.status)
             val unlocked = api.getBook(bookId, libId, token).body()
@@ -78,7 +78,7 @@ class BookPatchTest : DeweyTest() {
                 api.updateBook(
                     bookId,
                     libId,
-                    BookUpdateImpl(description = Patch.Set("Mine"), unlock = Patch.Set(listOf(BookField.DESCRIPTION))),
+                    BookUpdate(description = Patch.Set("Mine"), unlock = Patch.Set(listOf(BookField.DESCRIPTION))),
                     token,
                 )
 
@@ -92,7 +92,7 @@ class BookPatchTest : DeweyTest() {
             val bookId = newBook("Dune", libId)
             val token = bearer(login("admin"))
 
-            val response = api.updateBook(bookId, libId, BookUpdateImpl(title = Patch.Set("  ")), token)
+            val response = api.updateBook(bookId, libId, BookUpdate(title = Patch.Set("  ")), token)
 
             assertEquals(HttpStatusCode.BadRequest, response.status)
         }

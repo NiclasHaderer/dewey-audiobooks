@@ -1,7 +1,3 @@
-/* eslint-disable */
-// noinspection JSUnusedGlobalSymbols,ES6UnusedImports
-// noinspection ES6UnusedImports
-// @ts-nocheck
 import {
   ApiCallData,
   ApiInterceptor,
@@ -19,18 +15,11 @@ import type {
   Author,
   AuthorCreate,
   AuthorDetailed,
-  AuthorField,
   AuthorUpdate,
   Book,
   BookDetailed,
-  BookField,
   BookUpdate,
-  ChangeEvent,
   ChangeEventBatch,
-  ChangeType,
-  ChangedEntity,
-  Chapter,
-  ChapterMark,
   DeweyAccessToken,
   DeweyChangePassword,
   DeweyJWKs,
@@ -45,49 +34,35 @@ import type {
   FileSystemItem,
   Genre,
   GenreDetailed,
-  JWK,
   Library,
-  LibraryPermissionLevel,
-  LibraryPermissions,
   LibrarySearchResult,
   ListeningHistoryEntry,
   MetadataAgentApiModel,
-  MetadataAgentID,
   MetadataAuthor,
   MetadataBook,
-  MetadataBookSeries,
   MetadataChapters,
   MetadataLanguage,
-  MetadataRegion,
-  MetadataSearchAuthor,
-  MetadataSearchBook,
   MetadataSearchCount,
   MetadataSeries,
   NamedId,
-  NamedMetadataAgent,
   Narrator,
   NarratorDetailed,
   Order,
   PaginatedResponse,
   PartialUpdateLibrary,
-  PlayStatus,
   ProgressUpdate,
   Series,
   SeriesCreate,
   SeriesDetailed,
-  SeriesField,
   SeriesUpdate,
   SetDismissed,
   SetFinished,
   ThirdPartyLicense,
   TitledId,
-  Track,
   UUID,
   UpdateLibrary,
-  UpdateLibraryPermissions,
   UpdateUserPermissions,
   UserPermissions,
-  YearRange,
 } from "./models"
 
 export const createApi = (
@@ -105,216 +80,66 @@ export const createApi = (
   const defaultHeadersImpl = new Headers(defaultHeaders)
   return {
     apiVersion: "0.0.2",
-    loginUser: (
-      body: DeweyLoginUser,
+    autoMatchAuthor: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyAccessToken>> => {
+    ): Promise<ApiResponse<Author>> => {
       return _request(
-        `/api/auth/login`,
+        `/api/libraries/${libraryId}/authors/${id}/automatch`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    autoMatchBook: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Book>> => {
+      return _request(
+        `/api/libraries/${libraryId}/books/${id}/automatch`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    autoMatchSeries: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Series>> => {
+      return _request(
+        `/api/libraries/${libraryId}/series/${id}/automatch`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    createAuthor: (
+      { libraryId }: { libraryId: UUID },
+      body: AuthorCreate,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<AuthorDetailed>> => {
+      return _request(
+        `/api/libraries/${libraryId}/authors`,
         "POST",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    logoutUser: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Empty>> => {
-      return _request(
-        `/api/auth/logout`,
-        "POST",
-        "text",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    registerUser: (
-      body: DeweyRegisterUser,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyUser>> => {
-      return _request(
-        `/api/auth/register`,
-        "POST",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    retrieveJwks: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<DeweyJWKs>> => {
-      return _request(
-        `/api/auth/jwks.json`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    updatePermissions: (
-      { id }: { id: UUID },
-      body: DeweyModifyPermissions<UpdateUserPermissions>,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyUser>> => {
-      return _request(
-        `/api/auth/user/${id}/permissions`,
-        "PUT",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getUser: (
-      { id }: { id: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyUser>> => {
-      return _request(
-        `/api/auth/user/${id}`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    deleteUser: (
-      { id }: { id: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Empty>> => {
-      return _request(
-        `/api/auth/user/${id}`,
-        "DELETE",
-        "text",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getCurrentUser: (
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyUserWithPermissions<UserPermissions>>> => {
-      return _request(
-        `/api/auth/user/current`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    listUsers: (
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<DeweyUserWithPermissions<UserPermissions>>>> => {
-      return _request(
-        `/api/auth/user`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    updateUsername: (
-      { id }: { id: UUID },
-      body: DeweyRenameUser,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyUser>> => {
-      return _request(
-        `/api/auth/user/${id}/username`,
-        "POST",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    updatePassword: (
-      { id }: { id: UUID },
-      body: DeweyChangePassword,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Empty>> => {
-      return _request(
-        `/api/auth/user/${id}/password`,
-        "POST",
-        "text",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    refreshAccessToken: (
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<DeweyAccessToken>> => {
-      return _request(
-        `/api/auth/user/refresh`,
-        "POST",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    listFoldersAtACertainPath: (
-      { path, showHidden }: { path: string; showHidden?: boolean },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<FileSystemItem>>> => {
-      return _request(
-        _createUrl(`/api/fs`, { path, showHidden }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    listLibraries: (
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<Library>>> => {
-      return _request(
-        `/api/libraries`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
@@ -336,31 +161,15 @@ export const createApi = (
         true
       )
     },
-    getLibrary: (
+    createSeries: (
       { libraryId }: { libraryId: UUID },
+      body: SeriesCreate,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Library>> => {
+    ): Promise<ApiResponse<SeriesDetailed>> => {
       return _request(
-        `/api/libraries/${libraryId}`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    updateLibrary: (
-      { libraryId }: { libraryId: UUID },
-      body: PartialUpdateLibrary,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Library>> => {
-      return _request(
-        `/api/libraries/${libraryId}`,
-        "PATCH",
+        `/api/libraries/${libraryId}/series`,
+        "POST",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         body,
@@ -385,14 +194,14 @@ export const createApi = (
         true
       )
     },
-    rescanLibrary: (
-      { libraryId }: { libraryId: UUID },
+    deleteUser: (
+      { id }: { id: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Empty>> => {
       return _request(
-        `/api/libraries/${libraryId}/rescan`,
-        "POST",
+        `/api/auth/user/${id}`,
+        "DELETE",
         "text",
         _mergeHeaders(defaultHeadersImpl, headers),
         undefined,
@@ -401,13 +210,44 @@ export const createApi = (
         true
       )
     },
-    searchInAllLibraries: (
-      { author, book, q, series }: { author?: string; book?: string; q?: string; series?: string },
+    getApiVersion: (
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<LibrarySearchResult>> => {
+    ): Promise<ApiResponse<ApiVersion>> => {
       return _request(
-        _createUrl(`/api/libraries/search`, { author, book, q, series }),
+        `/api/version`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        false
+      )
+    },
+    getAudioFile: (
+      { id }: { id: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Blob>> => {
+      return _request(
+        `/api/stream/audio/${id}`,
+        "GET",
+        "blob",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getAuthor: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<AuthorDetailed>> => {
+      return _request(
+        `/api/libraries/${libraryId}/authors/${id}`,
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -417,12 +257,13 @@ export const createApi = (
         true
       )
     },
-    listFileScanners: (
+    getAuthorAutocomplete: (
+      { q, libraryId }: { q: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<FileScanner>>> => {
+    ): Promise<ApiResponse<Array<NamedId>>> => {
       return _request(
-        `/api/scanners`,
+        _createUrl(`/api/libraries/${libraryId}/authors/autocomplete`, { q }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -432,12 +273,274 @@ export const createApi = (
         true
       )
     },
-    listMetadataAgents: (
+    getAuthorMetadata: (
+      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<MetadataAgentApiModel>>> => {
+    ): Promise<ApiResponse<MetadataAuthor>> => {
       return _request(
-        `/api/metadata-agents`,
+        _createUrl(`/api/libraries/${libraryId}/metadata/author/${id}`, { provider }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getBook: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<BookDetailed>> => {
+      return _request(
+        `/api/libraries/${libraryId}/books/${id}`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getBookAutocomplete: (
+      { q, libraryId }: { q: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<TitledId>>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/books/autocomplete`, { q }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getBookChapterMetadata: (
+      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<MetadataChapters>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/metadata/book/${id}/chapters`, { provider }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getBookMetadata: (
+      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<MetadataBook>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/metadata/book/${id}`, { provider }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getContinueListening: (
+      { limit }: { limit?: number },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<Book>>> => {
+      return _request(
+        _createUrl(`/api/me/continue-listening`, { limit }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getCurrentUser: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyUserWithPermissions<UserPermissions>>> => {
+      return _request(
+        `/api/auth/user/current`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getGenre: (
+      { name, libraryId }: { name: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<GenreDetailed>> => {
+      return _request(
+        `/api/libraries/${libraryId}/genres/${name}`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getImageFile: (
+      { id }: { id: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Blob>> => {
+      return _request(
+        `/api/stream/images/${id}`,
+        "GET",
+        "blob",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getLibrary: (
+      { libraryId }: { libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Library>> => {
+      return _request(
+        `/api/libraries/${libraryId}`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getListeningHistory: (
+      { limit, offset }: { limit?: number; offset?: number },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<PaginatedResponse<ListeningHistoryEntry>>> => {
+      return _request(
+        _createUrl(`/api/me/history`, { limit, offset }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getNarrator: (
+      { name, libraryId }: { name: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<NarratorDetailed>> => {
+      return _request(
+        `/api/libraries/${libraryId}/narrators/${name}`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getSeries: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<SeriesDetailed>> => {
+      return _request(
+        `/api/libraries/${libraryId}/series/${id}`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getSeriesAutocomplete: (
+      { q, libraryId }: { q: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<TitledId>>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/series/autocomplete`, { q }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getSeriesMetadata: (
+      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<MetadataSeries>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/metadata/series/${id}`, { provider }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    getUser: (
+      { id }: { id: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyUser>> => {
+      return _request(
+        `/api/auth/user/${id}`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    listAuthors: (
+      {
+        limit,
+        offset,
+        order,
+        showInvisible,
+        libraryId,
+      }: { limit?: number; offset?: number; order?: Order; showInvisible?: boolean; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<PaginatedResponse<Author>>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/authors`, { limit, offset, order, showInvisible }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -469,13 +572,12 @@ export const createApi = (
         true
       )
     },
-    getBook: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
+    listFileScanners: (
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<BookDetailed>> => {
+    ): Promise<ApiResponse<Array<FileScanner>>> => {
       return _request(
-        `/api/libraries/${libraryId}/books/${id}`,
+        `/api/scanners`,
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -485,30 +587,13 @@ export const createApi = (
         true
       )
     },
-    updateBook: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      body: BookUpdate,
+    listFoldersAtACertainPath: (
+      { path, showHidden }: { path: string; showHidden?: boolean },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Book>> => {
+    ): Promise<ApiResponse<Array<FileSystemItem>>> => {
       return _request(
-        `/api/libraries/${libraryId}/books/${id}`,
-        "PATCH",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getBookAutocomplete: (
-      { q, libraryId }: { q: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<TitledId>>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/books/autocomplete`, { q }),
+        _createUrl(`/api/fs`, { path, showHidden }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -518,14 +603,60 @@ export const createApi = (
         true
       )
     },
-    autoMatchBook: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
+    listGenres: (
+      { limit, offset, order, libraryId }: { limit?: number; offset?: number; order?: Order; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Book>> => {
+    ): Promise<ApiResponse<PaginatedResponse<Genre>>> => {
       return _request(
-        `/api/libraries/${libraryId}/books/${id}/automatch`,
-        "POST",
+        _createUrl(`/api/libraries/${libraryId}/genres`, { limit, offset, order }),
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    listLibraries: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<Library>>> => {
+      return _request(
+        `/api/libraries`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    listMetadataAgents: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<MetadataAgentApiModel>>> => {
+      return _request(
+        `/api/metadata-agents`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    listNarrators: (
+      { limit, offset, order, libraryId }: { limit?: number; offset?: number; order?: Order; libraryId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<PaginatedResponse<Narrator>>> => {
+      return _request(
+        _createUrl(`/api/libraries/${libraryId}/narrators`, { limit, offset, order }),
+        "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         undefined,
@@ -556,270 +687,136 @@ export const createApi = (
         true
       )
     },
-    createSeries: (
+    listThirdPartyLicenses: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<ThirdPartyLicense>>> => {
+      return _request(
+        `/api/licenses`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    listUsers: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<DeweyUserWithPermissions<UserPermissions>>>> => {
+      return _request(
+        `/api/auth/user`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    listenToEvents: (interceptors: ApiSocketInterceptor[] = []): Promise<ApiSocket<never, ChangeEventBatch>> => {
+      return _socket(`/api/events`, [...defaultSocketInterceptors, ...interceptors], socketExecutor, true)
+    },
+    loginUser: (
+      body: DeweyLoginUser,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyAccessToken>> => {
+      return _request(
+        `/api/auth/login`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        false
+      )
+    },
+    logoutUser: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Empty>> => {
+      return _request(
+        `/api/auth/logout`,
+        "POST",
+        "text",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        false
+      )
+    },
+    pingServer: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Empty>> => {
+      return _request(
+        `/api/ping`,
+        "POST",
+        "text",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        false
+      )
+    },
+    refreshAccessToken: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyAccessToken>> => {
+      return _request(
+        `/api/auth/user/refresh`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        false
+      )
+    },
+    registerUser: (
+      body: DeweyRegisterUser,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyUser>> => {
+      return _request(
+        `/api/auth/register`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        false
+      )
+    },
+    rescanLibrary: (
       { libraryId }: { libraryId: UUID },
-      body: SeriesCreate,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<SeriesDetailed>> => {
+    ): Promise<ApiResponse<Empty>> => {
       return _request(
-        `/api/libraries/${libraryId}/series`,
+        `/api/libraries/${libraryId}/rescan`,
         "POST",
-        "json",
+        "text",
         _mergeHeaders(defaultHeadersImpl, headers),
-        body,
+        undefined,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
       )
     },
-    getSeries: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<SeriesDetailed>> => {
+    retrieveJwks: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<DeweyJWKs>> => {
       return _request(
-        `/api/libraries/${libraryId}/series/${id}`,
+        `/api/auth/jwks.json`,
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         undefined,
         [...defaultInterceptors, ...interceptors],
         executor,
-        true
-      )
-    },
-    updateSeries: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      body: SeriesUpdate,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Series>> => {
-      return _request(
-        `/api/libraries/${libraryId}/series/${id}`,
-        "PATCH",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getSeriesAutocomplete: (
-      { q, libraryId }: { q: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<TitledId>>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/series/autocomplete`, { q }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    autoMatchSeries: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Series>> => {
-      return _request(
-        `/api/libraries/${libraryId}/series/${id}/automatch`,
-        "POST",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    listAuthors: (
-      {
-        limit,
-        offset,
-        order,
-        showInvisible,
-        libraryId,
-      }: { limit?: number; offset?: number; order?: Order; showInvisible?: boolean; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<PaginatedResponse<Author>>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/authors`, { limit, offset, order, showInvisible }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    createAuthor: (
-      { libraryId }: { libraryId: UUID },
-      body: AuthorCreate,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<AuthorDetailed>> => {
-      return _request(
-        `/api/libraries/${libraryId}/authors`,
-        "POST",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getAuthor: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<AuthorDetailed>> => {
-      return _request(
-        `/api/libraries/${libraryId}/authors/${id}`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    updateAuthor: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      body: AuthorUpdate,
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Author>> => {
-      return _request(
-        `/api/libraries/${libraryId}/authors/${id}`,
-        "PATCH",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        body,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getAuthorAutocomplete: (
-      { q, libraryId }: { q: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<NamedId>>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/authors/autocomplete`, { q }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    autoMatchAuthor: (
-      { id, libraryId }: { id: UUID; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Author>> => {
-      return _request(
-        `/api/libraries/${libraryId}/authors/${id}/automatch`,
-        "POST",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    listNarrators: (
-      { limit, offset, order, libraryId }: { limit?: number; offset?: number; order?: Order; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<PaginatedResponse<Narrator>>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/narrators`, { limit, offset, order }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getNarrator: (
-      { name, libraryId }: { name: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<NarratorDetailed>> => {
-      return _request(
-        `/api/libraries/${libraryId}/narrators/${name}`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    listGenres: (
-      { limit, offset, order, libraryId }: { limit?: number; offset?: number; order?: Order; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<PaginatedResponse<Genre>>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/genres`, { limit, offset, order }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getGenre: (
-      { name, libraryId }: { name: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<GenreDetailed>> => {
-      return _request(
-        `/api/libraries/${libraryId}/genres/${name}`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getAuthorMetadata: (
-      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<MetadataAuthor>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/metadata/author/${id}`, { provider }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
+        false
       )
     },
     searchAuthorMetadata: (
@@ -829,38 +826,6 @@ export const createApi = (
     ): Promise<ApiResponse<Array<MetadataAuthor>>> => {
       return _request(
         _createUrl(`/api/libraries/${libraryId}/metadata/author/search`, { q }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getBookMetadata: (
-      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<MetadataBook>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/metadata/book/${id}`, { provider }),
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    getBookChapterMetadata: (
-      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<MetadataChapters>> => {
-      return _request(
-        _createUrl(`/api/libraries/${libraryId}/metadata/book/${id}/chapters`, { provider }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -880,11 +845,11 @@ export const createApi = (
         q,
         libraryId,
       }: {
-        authorName?: string
-        keywords?: string
-        language?: MetadataLanguage
-        narrator?: string
-        pageSize?: MetadataSearchCount
+        authorName?: string | null
+        keywords?: string | null
+        language?: MetadataLanguage | null
+        narrator?: string | null
+        pageSize?: MetadataSearchCount | null
         q: string
         libraryId: UUID
       },
@@ -909,13 +874,18 @@ export const createApi = (
         true
       )
     },
-    getSeriesMetadata: (
-      { provider, id, libraryId }: { provider: string; id: string; libraryId: UUID },
+    searchInAllLibraries: (
+      {
+        author,
+        book,
+        q,
+        series,
+      }: { author?: string | null; book?: string | null; q?: string | null; series?: string | null },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<MetadataSeries>> => {
+    ): Promise<ApiResponse<LibrarySearchResult>> => {
       return _request(
-        _createUrl(`/api/libraries/${libraryId}/metadata/series/${id}`, { provider }),
+        _createUrl(`/api/libraries/search`, { author, book, q, series }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -926,7 +896,7 @@ export const createApi = (
       )
     },
     searchSeriesMetadata: (
-      { authorName, q, libraryId }: { authorName?: string; q: string; libraryId: UUID },
+      { authorName, q, libraryId }: { authorName?: string | null; q: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Array<MetadataSeries>>> => {
@@ -941,14 +911,14 @@ export const createApi = (
         true
       )
     },
-    setBookProgress: (
+    setBookDismissed: (
       { id, libraryId }: { id: UUID; libraryId: UUID },
-      body: ProgressUpdate,
+      body: SetDismissed,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Empty>> => {
       return _request(
-        `/api/libraries/${libraryId}/books/${id}/progress`,
+        `/api/libraries/${libraryId}/books/${id}/progress/dismissed`,
         "PUT",
         "text",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -975,14 +945,14 @@ export const createApi = (
         true
       )
     },
-    setBookDismissed: (
+    setBookProgress: (
       { id, libraryId }: { id: UUID; libraryId: UUID },
-      body: SetDismissed,
+      body: ProgressUpdate,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Empty>> => {
       return _request(
-        `/api/libraries/${libraryId}/books/${id}/progress/dismissed`,
+        `/api/libraries/${libraryId}/books/${id}/progress`,
         "PUT",
         "text",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -992,114 +962,124 @@ export const createApi = (
         true
       )
     },
-    getContinueListening: (
-      { limit }: { limit?: number },
+    updateAuthor: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      body: AuthorUpdate,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<Book>>> => {
+    ): Promise<ApiResponse<Author>> => {
       return _request(
-        _createUrl(`/api/me/continue-listening`, { limit }),
-        "GET",
+        `/api/libraries/${libraryId}/authors/${id}`,
+        "PATCH",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
       )
     },
-    getListeningHistory: (
-      { limit, offset }: { limit?: number; offset?: number },
+    updateBook: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      body: BookUpdate,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<PaginatedResponse<ListeningHistoryEntry>>> => {
+    ): Promise<ApiResponse<Book>> => {
       return _request(
-        _createUrl(`/api/me/history`, { limit, offset }),
-        "GET",
+        `/api/libraries/${libraryId}/books/${id}`,
+        "PATCH",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
       )
     },
-    getAudioFile: (
-      { id }: { id: UUID },
+    updateLibrary: (
+      { libraryId }: { libraryId: UUID },
+      body: PartialUpdateLibrary,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Blob>> => {
+    ): Promise<ApiResponse<Library>> => {
       return _request(
-        `/api/stream/audio/${id}`,
-        "GET",
-        "blob",
+        `/api/libraries/${libraryId}`,
+        "PATCH",
+        "json",
         _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
       )
     },
-    getImageFile: (
+    updatePassword: (
       { id }: { id: UUID },
+      body: DeweyChangePassword,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Blob>> => {
+    ): Promise<ApiResponse<Empty>> => {
       return _request(
-        `/api/stream/images/${id}`,
-        "GET",
-        "blob",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        true
-      )
-    },
-    pingServer: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Empty>> => {
-      return _request(
-        `/api/ping`,
+        `/api/auth/user/${id}/password`,
         "POST",
         "text",
         _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    getApiVersion: (
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<ApiVersion>> => {
-      return _request(
-        `/api/version`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
-        [...defaultInterceptors, ...interceptors],
-        executor,
-        false
-      )
-    },
-    listThirdPartyLicenses: (
-      headers: HeadersInit = {},
-      interceptors: ApiInterceptor[] = []
-    ): Promise<ApiResponse<Array<ThirdPartyLicense>>> => {
-      return _request(
-        `/api/licenses`,
-        "GET",
-        "json",
-        _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
       )
     },
-    listenToEvents: (interceptors: ApiSocketInterceptor[] = []): Promise<ApiSocket<never, ChangeEventBatch>> => {
-      return _socket(`/api/events`, [...defaultSocketInterceptors, ...interceptors], socketExecutor, true)
+    updatePermissions: (
+      { id }: { id: UUID },
+      body: DeweyModifyPermissions<UpdateUserPermissions>,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyUser>> => {
+      return _request(
+        `/api/auth/user/${id}/permissions`,
+        "PUT",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    updateSeries: (
+      { id, libraryId }: { id: UUID; libraryId: UUID },
+      body: SeriesUpdate,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Series>> => {
+      return _request(
+        `/api/libraries/${libraryId}/series/${id}`,
+        "PATCH",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    updateUsername: (
+      { id }: { id: UUID },
+      body: DeweyRenameUser,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<DeweyUser>> => {
+      return _request(
+        `/api/auth/user/${id}/username`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
     },
   } as const
 }

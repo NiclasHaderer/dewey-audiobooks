@@ -1,5 +1,9 @@
 package io.dewey.openapi.ktor
 
+import io.dewey.openapi.ktor.schema.SchemaComponents
+import io.dewey.openapi.ktor.schema.contentType
+import io.dewey.openapi.wire.ParameterLocation
+import io.dewey.openapi.wire.WireModel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -27,10 +31,13 @@ import io.swagger.v3.oas.models.security.SecurityRequirement
 private const val ERROR_SCHEMA_NAME = "ErrorResponse"
 
 class SchemaHolder {
+    private val model = WireModel()
+    private val components = SchemaComponents(model)
+
     private val _api: OpenAPI =
         OpenAPI().also {
             it.components = Components()
-            it.components.schemas = mutableMapOf()
+            it.components.schemas = sortedMapOf()
             it.paths = Paths()
             it.info = Info()
         }
@@ -38,9 +45,16 @@ class SchemaHolder {
     val api: OpenAPI
         get() = _api
 
-    fun json(): String = Json.mapper().writeValueAsString(_api)
+    fun json(): String = Json.mapper().writeValueAsString(sortedApi())
 
-    fun yaml(): String = Yaml.mapper().writeValueAsString(_api)
+    fun yaml(): String = Yaml.mapper().writeValueAsString(sortedApi())
+
+    private fun sortedApi(): OpenAPI {
+        val sorted = Paths()
+        _api.paths.toSortedMap().forEach(sorted::addPathItem)
+        _api.paths = sorted
+        return _api
+    }
 
     fun addRouteToApi(route: OpenApiRoute) {
         val operation = getOperation(route)
@@ -51,37 +65,27 @@ class SchemaHolder {
             method != HttpMethod.Head &&
             method != HttpMethod.Delete &&
             method != HttpMethod.Options &&
-            route.requestBodyType.clazz != Unit::class
+            route.hasRequestBody
         ) {
             addRequestBody(route, operation)
         }
         addResponse(route, operation)
         addErrorResponses(route, operation)
+        _api.components.schemas.putAll(components.components)
     }
 
     private fun addPathAndQueryParameters(
         operation: Operation,
         route: OpenApiRoute,
     ) {
-        for ((param, schema) in route.pathParameters) {
-            _api.components.schemas.putAll(schema.second)
+        val parameters = model.parameters(route.paramsType)
+        for (param in parameters) {
             operation.addParametersItem(
                 Parameter()
-                    .`in`("path")
+                    .`in`(param.location.name.lowercase())
                     .name(param.name)
                     .description(param.description)
-                    .schema(schema.first.reference())
-                    .required(true),
-            )
-        }
-        for ((param, schema) in route.queryParameters) {
-            _api.components.schemas.putAll(schema.second)
-            operation.addParametersItem(
-                Parameter()
-                    .`in`("query")
-                    .name(param.name)
-                    .description(param.description)
-                    .schema(schema.first.reference())
+                    .schema(components.schema(param.type))
                     .required(!param.optional),
             )
         }
@@ -91,19 +95,12 @@ class SchemaHolder {
         route: OpenApiRoute,
         operation: Operation,
     ) {
-        val (responseSchema, responseNamedSchemas) = route.responseBody
+        val body = model.body(route.responseType)
         val statusCode = route.responseStatusCode
-        val response = ApiResponse().description(route.responseDescription?.description ?: statusCode.description)
+        val response = ApiResponse().description(model.description(route.responseType) ?: statusCode.description)
 
-        if (route.responseBodyType.clazz != Unit::class) {
-            _api.components.schemas.putAll(responseNamedSchemas)
-            response.content(
-                Content()
-                    .addMediaType(
-                        route.responseContentType.toString(),
-                        MediaType().schema(responseSchema.reference()),
-                    ),
-            )
+        components.schema(body)?.let { schema ->
+            response.content(Content().addMediaType(body.contentType.toString(), MediaType().schema(schema)))
         }
 
         operation.responses = ApiResponses().addApiResponse(statusCode.value.toString(), response)
@@ -185,15 +182,12 @@ class SchemaHolder {
         route: OpenApiRoute,
         operation: Operation,
     ) {
-        val (bodySchema, bodyNamedSchemas) = route.requestBody
-        _api.components.schemas.putAll(bodyNamedSchemas)
+        val body = model.body(route.requestType)
+        val schema = components.schema(body) ?: return
         operation.requestBody(
             RequestBody()
-                .description(route.bodyDescription?.description)
-                .content(
-                    Content()
-                        .addMediaType(route.requestContentType.toString(), MediaType().schema(bodySchema.reference())),
-                ),
+                .description(model.description(route.requestType))
+                .content(Content().addMediaType(body.contentType.toString(), MediaType().schema(schema))),
         )
     }
 }

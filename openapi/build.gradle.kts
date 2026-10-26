@@ -8,9 +8,6 @@ dependencies {
     api(project(":openapi-models"))
     implementation(libs.kotlin.logging)
 
-    // Get type generators
-    implementation(libs.classgraph)
-
     // Ktor
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.status.pages)

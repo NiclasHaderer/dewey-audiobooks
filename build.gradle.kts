@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
 import org.jlleitschuh.gradle.ktlint.KtlintPlugin
+import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 val kotlinVersion = libs.versions.kotlin.get()
 val ktlintVersion = libs.versions.ktlint.get()
@@ -21,7 +22,10 @@ subprojects {
     apply<KtlintPlugin>()
     configure<KtlintExtension> {
         version.set(ktlintVersion)
-        filter { exclude { it.file.path.contains("${File.separator}gen${File.separator}") } }
+    }
+    // Regenerated code repeats the unformatted input of the last run, which Gradle would take as up to date
+    tasks.withType<KtLintFormatTask>().configureEach {
+        outputs.upToDateWhen { false }
     }
 
     plugins.withType<JavaPlugin> {

@@ -1,7 +1,7 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.LibraryPermissionLevel
-import io.dewey.client.gen.models.ProgressUpdateImpl
+import io.dewey.client.models.LibraryPermissionLevel
+import io.dewey.client.models.ProgressUpdate
 import io.dewey.server.DeweyTest
 import io.dewey.server.api
 import io.dewey.server.bearer
@@ -34,7 +34,7 @@ class LibraryRevocationTest : DeweyTest() {
             // Build up some state while access is still granted
             assertEquals(
                 HttpStatusCode.NoContent,
-                api.setBookProgress(bookId, libId, ProgressUpdateImpl(positionMs = 42000), token).status,
+                api.setBookProgress(bookId, libId, ProgressUpdate(positionMs = 42000), token).status,
             )
             assertTrue(
                 api
@@ -75,7 +75,7 @@ class LibraryRevocationTest : DeweyTest() {
 
             assertEquals(
                 HttpStatusCode.Forbidden,
-                api.setBookProgress(bookId, libId, ProgressUpdateImpl(positionMs = 99000), token).status,
+                api.setBookProgress(bookId, libId, ProgressUpdate(positionMs = 99000), token).status,
             )
         }
 
@@ -87,7 +87,7 @@ class LibraryRevocationTest : DeweyTest() {
             repeat(3) { newTrack("t$it", "/media/books/dune/$it.mp3", bookId, libId, trackNr = it + 1) }
             val token = bearer(registerWithAccess("listener", libId, LibraryPermissionLevel.READONLY))
 
-            api.setBookProgress(bookId, libId, ProgressUpdateImpl(positionMs = 42000), token)
+            api.setBookProgress(bookId, libId, ProgressUpdate(positionMs = 42000), token)
 
             revoke("listener", libId)
             assertTrue(api.getContinueListening(headers = token).body().isEmpty())

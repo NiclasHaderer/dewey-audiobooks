@@ -1,7 +1,7 @@
 package io.dewey.server.api
 
-import io.dewey.client.gen.models.DeweyChangePasswordImpl
-import io.dewey.client.gen.models.DeweyLoginUserImpl
+import io.dewey.client.models.DeweyChangePassword
+import io.dewey.client.models.DeweyLoginUser
 import io.dewey.server.DeweyTest
 import io.dewey.server.TEST_PASSWORD
 import io.dewey.server.api
@@ -22,7 +22,7 @@ class TokenVersionTest : DeweyTest() {
     fun `password change invalidates old access and refresh tokens`() =
         deweyServer {
             register("alice")
-            val login = api.loginUser(DeweyLoginUserImpl(password = TEST_PASSWORD, username = "alice"))
+            val login = api.loginUser(DeweyLoginUser(password = TEST_PASSWORD, username = "alice"))
             val oldAccess = login.authCookie("access").value
             val oldRefresh = login.authCookie("refresh").value
             assertEquals(HttpStatusCode.OK, api.listLibraries(bearer(oldAccess)).status)
@@ -30,7 +30,7 @@ class TokenVersionTest : DeweyTest() {
             val change =
                 api.updatePassword(
                     userId("alice"),
-                    DeweyChangePasswordImpl(currentPassword = TEST_PASSWORD, newPassword = TEST_PASSWORD),
+                    DeweyChangePassword(currentPassword = TEST_PASSWORD, newPassword = TEST_PASSWORD),
                     bearer(oldAccess),
                 )
             assertEquals(HttpStatusCode.NoContent, change.status)
