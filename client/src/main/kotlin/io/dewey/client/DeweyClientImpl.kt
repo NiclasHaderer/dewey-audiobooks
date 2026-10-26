@@ -1201,10 +1201,10 @@ abstract class DeweyClientImpl(
 
     override suspend fun revealAccessToken(
         tokenId: Uuid,
-        body: RevealAccessToken,
+        body: PasswordConfirmation,
         headers: Headers,
-        onBeforeRequest: OnBeforeRequest<RevealAccessToken>,
-        onAfterRequest: OnAfterRequest<RevealAccessToken, RevealedAccessToken>,
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation>,
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, RevealedAccessToken>,
     ): OpenApiHttpResponse<RevealedAccessToken> =
         run {
             makeRequest(
@@ -1216,7 +1216,7 @@ abstract class DeweyClientImpl(
                     shouldLogin = true,
                     securitySchema = "normal",
                 ),
-                typeInfo<RevealAccessToken>(),
+                typeInfo<PasswordConfirmation>(),
                 typeInfo<RevealedAccessToken>(),
                 onBeforeRequest = onBeforeRequest,
                 onAfterRequest = onAfterRequest,
@@ -1225,9 +1225,10 @@ abstract class DeweyClientImpl(
 
     override suspend fun revokeAccessToken(
         tokenId: Uuid,
+        body: PasswordConfirmation,
         headers: Headers,
-        onBeforeRequest: OnBeforeRequest<Unit>,
-        onAfterRequest: OnAfterRequest<Unit, Unit>,
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation>,
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, Unit>,
     ): OpenApiHttpResponse<Unit> =
         run {
             makeRequest(
@@ -1235,11 +1236,11 @@ abstract class DeweyClientImpl(
                     path = "/api/auth/user/tokens/$tokenId",
                     method = HttpMethod("DELETE"),
                     headers = headers,
-                    body = Unit,
+                    body = body,
                     shouldLogin = true,
                     securitySchema = "normal",
                 ),
-                typeInfo<Unit>(),
+                typeInfo<PasswordConfirmation>(),
                 typeInfo<Unit>(),
                 onBeforeRequest = onBeforeRequest,
                 onAfterRequest = onAfterRequest,
@@ -1431,6 +1432,30 @@ abstract class DeweyClientImpl(
                 ),
                 typeInfo<ProgressUpdate>(),
                 typeInfo<Unit>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
+    override suspend fun updateAccessToken(
+        tokenId: Uuid,
+        body: UpdateAccessToken,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<UpdateAccessToken>,
+        onAfterRequest: OnAfterRequest<UpdateAccessToken, AccessToken>,
+    ): OpenApiHttpResponse<AccessToken> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens/$tokenId",
+                    method = HttpMethod("PATCH"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal",
+                ),
+                typeInfo<UpdateAccessToken>(),
+                typeInfo<AccessToken>(),
                 onBeforeRequest = onBeforeRequest,
                 onAfterRequest = onAfterRequest,
             )

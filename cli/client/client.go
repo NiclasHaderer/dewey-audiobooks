@@ -750,7 +750,7 @@ func (c *Client) RetrieveJwks(ctx context.Context) (models.DeweyJWKs, error) {
 }
 
 // RevealAccessToken calls POST /api/auth/user/tokens/{tokenId}/reveal: Reveal access token
-func (c *Client) RevealAccessToken(ctx context.Context, tokenID models.UUID, body models.RevealAccessToken) (models.RevealedAccessToken, error) {
+func (c *Client) RevealAccessToken(ctx context.Context, tokenID models.UUID, body models.PasswordConfirmation) (models.RevealedAccessToken, error) {
 	r := request{
 		method:  "POST",
 		path:    "/api/auth/user/tokens/" + pathValue(tokenID) + "/reveal",
@@ -764,10 +764,12 @@ func (c *Client) RevealAccessToken(ctx context.Context, tokenID models.UUID, bod
 }
 
 // RevokeAccessToken calls DELETE /api/auth/user/tokens/{tokenId}: Revoke access token
-func (c *Client) RevokeAccessToken(ctx context.Context, tokenID models.UUID) error {
+func (c *Client) RevokeAccessToken(ctx context.Context, tokenID models.UUID, body models.PasswordConfirmation) error {
 	r := request{
 		method:  "DELETE",
 		path:    "/api/auth/user/tokens/" + pathValue(tokenID),
+		body:    body,
+		hasBody: true,
 		secured: true,
 	}
 	return c.json(ctx, r, nil)
@@ -921,6 +923,20 @@ func (c *Client) SetBookProgress(ctx context.Context, libraryID models.UUID, id 
 		secured: true,
 	}
 	return c.json(ctx, r, nil)
+}
+
+// UpdateAccessToken calls PATCH /api/auth/user/tokens/{tokenId}: Update access token
+func (c *Client) UpdateAccessToken(ctx context.Context, tokenID models.UUID, body models.UpdateAccessToken) (models.AccessToken, error) {
+	r := request{
+		method:  "PATCH",
+		path:    "/api/auth/user/tokens/" + pathValue(tokenID),
+		body:    body,
+		hasBody: true,
+		secured: true,
+	}
+	var out models.AccessToken
+	err := c.json(ctx, r, &out)
+	return out, err
 }
 
 // UpdateAuthor calls PATCH /api/libraries/{libraryId}/authors/{id}: Update author

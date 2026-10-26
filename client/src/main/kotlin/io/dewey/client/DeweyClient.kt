@@ -387,17 +387,18 @@ interface DeweyClient {
 
     suspend fun revealAccessToken(
         tokenId: Uuid,
-        body: RevealAccessToken,
+        body: PasswordConfirmation,
         headers: Headers = Headers.Empty,
-        onBeforeRequest: OnBeforeRequest<RevealAccessToken> = { _, _ -> },
-        onAfterRequest: OnAfterRequest<RevealAccessToken, RevealedAccessToken> = { _, _ -> },
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, RevealedAccessToken> = { _, _ -> },
     ): OpenApiHttpResponse<RevealedAccessToken>
 
     suspend fun revokeAccessToken(
         tokenId: Uuid,
+        body: PasswordConfirmation,
         headers: Headers = Headers.Empty,
-        onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
-        onAfterRequest: OnAfterRequest<Unit, Unit> = { _, _ -> },
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, Unit> = { _, _ -> },
     ): OpenApiHttpResponse<Unit>
 
     suspend fun searchAuthorMetadata(
@@ -466,6 +467,14 @@ interface DeweyClient {
         onBeforeRequest: OnBeforeRequest<ProgressUpdate> = { _, _ -> },
         onAfterRequest: OnAfterRequest<ProgressUpdate, Unit> = { _, _ -> },
     ): OpenApiHttpResponse<Unit>
+
+    suspend fun updateAccessToken(
+        tokenId: Uuid,
+        body: UpdateAccessToken,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<UpdateAccessToken> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<UpdateAccessToken, AccessToken> = { _, _ -> },
+    ): OpenApiHttpResponse<AccessToken>
 
     suspend fun updateAuthor(
         id: Uuid,

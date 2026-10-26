@@ -53,8 +53,8 @@ import type {
   Order,
   PaginatedResponse,
   PartialUpdateLibrary,
+  PasswordConfirmation,
   ProgressUpdate,
-  RevealAccessToken,
   RevealedAccessToken,
   Series,
   SeriesCreate,
@@ -65,6 +65,7 @@ import type {
   ThirdPartyLicense,
   TitledId,
   UUID,
+  UpdateAccessToken,
   UpdateLibrary,
   UpdateUserPermissions,
   UserPermissions,
@@ -857,7 +858,7 @@ export const createApi = (
     },
     revealAccessToken: (
       { tokenId }: { tokenId: UUID },
-      body: RevealAccessToken,
+      body: PasswordConfirmation,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<RevealedAccessToken>> => {
@@ -874,6 +875,7 @@ export const createApi = (
     },
     revokeAccessToken: (
       { tokenId }: { tokenId: UUID },
+      body: PasswordConfirmation,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Empty>> => {
@@ -882,7 +884,7 @@ export const createApi = (
         "DELETE",
         "text",
         _mergeHeaders(defaultHeadersImpl, headers),
-        undefined,
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
@@ -1024,6 +1026,23 @@ export const createApi = (
         `/api/libraries/${libraryId}/books/${id}/progress`,
         "PUT",
         "text",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    updateAccessToken: (
+      { tokenId }: { tokenId: UUID },
+      body: UpdateAccessToken,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<AccessToken>> => {
+      return _request(
+        `/api/auth/user/tokens/${tokenId}`,
+        "PATCH",
+        "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         body,
         [...defaultInterceptors, ...interceptors],
