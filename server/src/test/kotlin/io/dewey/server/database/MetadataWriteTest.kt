@@ -115,6 +115,24 @@ class MetadataWriteTest : DeweyTest() {
     }
 
     @Test
+    fun `a book with an ASIN is matched to the book of that ASIN`() {
+        val agent =
+            FakeMetadataAgent(
+                hits = listOf(searchHit("A Book", authors = listOf("An Author"))),
+                resolveAsin = { testBook(it).copy(description = "From the ASIN") },
+            )
+        useAgent(agent)
+        trackManager.insert(scan(asin = "B017V4IM1G"), libId)
+
+        bookRepository.autoMatch(userId, bookId(), libId)
+
+        val book = bookRepository.raw(bookId(), libId)
+        assertEquals("B017V4IM1G", book.providerID)
+        assertEquals("From the ASIN", book.description)
+        assertEquals(0, agent.searchCalls.get())
+    }
+
+    @Test
     fun `unlocking keeps the value until the next scan writes the field`() {
         trackManager.insert(scan(description = "From the tags"), libId)
         val id = bookId()

@@ -24,6 +24,11 @@ interface MetadataAgent {
         region: MetadataRegion,
     ): MetadataBook?
 
+    suspend fun getBookByAsin(
+        asin: String,
+        region: MetadataRegion,
+    ): MetadataBook? = null
+
     suspend fun getBookChapters(
         providerId: String,
         bookId: String,

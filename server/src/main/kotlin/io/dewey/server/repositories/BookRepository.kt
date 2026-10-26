@@ -311,7 +311,7 @@ class BookRepositoryImpl :
         id: Uuid,
         libraryId: Uuid,
     ): Book {
-        val (metadataWrapper, bookName, region, authorName, language, narrator, preferFile) =
+        val (metadataWrapper, bookName, region, authorName, language, narrator, asin, preferFile) =
             transaction {
                 val book = raw(id, libraryId)
                 val library = libraryRepository.raw(libraryId)
@@ -322,6 +322,7 @@ class BookRepositoryImpl :
                     bookAuthors(listOf(id))[id].orEmpty().joinToString(", ") { it.name },
                     book.language ?: library.language,
                     book.narrators?.firstOrNull(),
+                    book.asin,
                     library.preferEmbeddedMetadata,
                 )
             }
@@ -334,6 +335,7 @@ class BookRepositoryImpl :
                     authorName = authorName,
                     narrator = narrator,
                     language = language,
+                    asin = asin,
                 )
             } ?: throw noMatch(bookName)
         val matchedChapters =
@@ -387,6 +389,7 @@ class BookRepositoryImpl :
         val authorName: String,
         val language: MetadataLanguage,
         val narrator: String?,
+        val asin: String?,
         val preferFile: Boolean,
     )
 }

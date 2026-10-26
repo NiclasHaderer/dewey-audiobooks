@@ -21,6 +21,9 @@ internal const val AUDIOBOOKDB_PROVIDER_NAME = "audiobookdb"
 private const val AUTHOR_ROLE = "Author"
 private const val NARRATOR_ROLE = "Narrator"
 
+// The external filter of the API matches this case-sensitively
+internal const val AUDIBLE_EXTERNAL_CATEGORY = "Audible"
+
 @Serializable
 internal data class AudiobookDbApiIdName(
     val id: String,
@@ -132,6 +135,7 @@ internal data class AudiobookDbApiReleaseDetail(
     val book: AudiobookDbApiIdTitle? = null,
     val runtimeLengthMs: Long? = null,
     val chapterDetail: AudiobookDbApiChapterDetail? = null,
+    val external: List<AudiobookDbApiExternal> = emptyList(),
 ) {
     fun toMetadataChapters(): MetadataChapters? {
         val runtime = runtimeLengthMs ?: return null
@@ -162,9 +166,20 @@ internal data class AudiobookDbApiReleaseDetail(
             publisher = publisher?.name,
             language = MetadataLanguage.fromTag((language ?: book?.originalLanguage)?.name),
             isbn = isbn,
-            asin = null,
+            asin = external.firstOrNull { it.category?.title == AUDIBLE_EXTERNAL_CATEGORY }?.itemId,
         )
 }
+
+@Serializable
+internal data class AudiobookDbApiExternal(
+    val itemId: String? = null,
+    val category: AudiobookDbApiExternalCategory? = null,
+)
+
+@Serializable
+internal data class AudiobookDbApiExternalCategory(
+    val title: String? = null,
+)
 
 @Serializable
 internal data class AudiobookDbApiChapterDetail(

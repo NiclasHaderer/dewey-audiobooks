@@ -21,6 +21,7 @@ class AudiobookDbApiLiveTest {
     private val agent = AudiobookDbMetadataAgent()
     private val projectHailMaryBook = "hPjDhje6pNjQ"
     private val projectHailMary = "f3j8VRYwgytp"
+    private val projectHailMaryAsin = "B08G9PRS1K"
     private val andyWeir = "ypMPwXzWXaiX"
     private val forwardCollection = "rtEwTXFwaiHr"
     private val orderOfThePhoenix = "Harry Potter and the Order of the Phoenix, Book 5"
@@ -45,12 +46,27 @@ class AudiobookDbApiLiveTest {
             assertEquals("Audible Studios", book.publisher)
             assertEquals(MetadataLanguage.English, book.language)
             assertEquals("9781603935470", book.isbn)
+            assertEquals(projectHailMaryAsin, book.asin)
             assertTrue(book.providerRating!! > 0f, "rating was ${book.providerRating}")
             assertTrue(book.coverURL!!.contains("/source."), "cover was '${book.coverURL}'")
             assertTrue(
                 book.description!!.startsWith("Ryland Grace"),
                 "description was '${book.description?.take(60)}...'",
             )
+        }
+
+    @Test
+    fun `looks a release up by its ASIN`() =
+        runBlocking {
+            val book = assertNotNull(agent.getBookByAsin(projectHailMaryAsin, MetadataRegion.US))
+
+            assertEquals(projectHailMary, book.id.itemID)
+        }
+
+    @Test
+    fun `an unknown ASIN has no release`() =
+        runBlocking {
+            assertNull(agent.getBookByAsin("B000000000", MetadataRegion.US))
         }
 
     @Test

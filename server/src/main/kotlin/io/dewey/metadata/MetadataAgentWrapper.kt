@@ -101,8 +101,13 @@ class MetadataAgentWrapper(
         authorName: String? = null,
         narrator: String? = null,
         language: MetadataLanguage? = null,
+        asin: String? = null,
     ): MetadataBook? =
-        bestMatch(MetadataBook::fillFrom, { it.isWrittenBy(authorName) }) {
+        bestMatch(
+            MetadataBook::fillFrom,
+            accept = { it.isWrittenBy(authorName) },
+            direct = { agent -> asin?.let { agent.getBookByAsin(it, region) } },
+        ) {
             it.getBookByName(
                 bookName = bookName,
                 region = region,
@@ -126,11 +131,13 @@ class MetadataAgentWrapper(
     private suspend fun <T : Any> bestMatch(
         fill: (T, T) -> T,
         accept: (T) -> Boolean = { true },
+        direct: suspend (MetadataAgent) -> T? = { null },
         query: (MetadataAgent) -> Flow<T>,
     ): T? {
         var best: T? = null
         for (agent in agentList) {
-            val candidate = query(agent).firstOrNull(accept) ?: continue
+            // An identifier names the item, so its hit is not second-guessed like a search hit is
+            val candidate = direct(agent) ?: query(agent).firstOrNull(accept) ?: continue
             if (!combineFields) return candidate
             best = best?.let { fill(it, candidate) } ?: candidate
         }
