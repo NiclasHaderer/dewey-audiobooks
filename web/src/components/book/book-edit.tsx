@@ -2,7 +2,6 @@ import { fromFormDate, unique } from "@/utils/utils.ts"
 import {
   BookMarkedIcon,
   CalendarIcon,
-  HashIcon,
   LayersIcon,
   ListOrderedIcon,
   LanguagesIcon,
@@ -14,6 +13,7 @@ import {
 import { FC, useMemo } from "react"
 import { Book, BookUpdate, MetadataBook, UUID } from "@dewey/client"
 import { GenericEdit } from "@dewey/components/generic/generic-edit.tsx"
+import { AudibleIcon } from "@dewey/components/icons/audible"
 import { CoverPicker } from "@dewey/components/input/cover-picker"
 import { ManagedInput } from "@dewey/components/input/managed-input"
 import { MultiCombobox } from "@dewey/components/input/multi-combobox"
@@ -173,7 +173,7 @@ const BookForm: FC<{ form: FormContext<BookUpdate>; libraryId: UUID }> = ({ form
             leftIcon={<CalendarIcon />}
           />
           <ManagedInput name="isbn" labelClassName="w-28" label="ISBN" leftIcon={<ListOrderedIcon />} />
-          <ManagedInput name="asin" labelClassName="w-28" label="ASIN" leftIcon={<HashIcon />} />
+          <ManagedInput name="asin" labelClassName="w-28" label="ASIN" leftIcon={<AudibleIcon />} />
           <ManagedInput name="publisher" labelClassName="w-28" label="Publisher" leftIcon={<BookMarkedIcon />} />
         </div>
       </div>
