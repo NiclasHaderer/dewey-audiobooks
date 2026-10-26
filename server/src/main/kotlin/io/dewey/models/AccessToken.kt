@@ -19,10 +19,21 @@ data class CreateAccessToken(
     val name: String,
     val expiresAt: Instant? = null,
     val permissions: AccessTokenPermissions,
+    val password: String,
 )
 
 @Serializable
 data class CreatedAccessToken(
     val token: String,
     val accessToken: AccessToken,
+)
+
+@Serializable
+data class RevealAccessToken(
+    val password: String,
+)
+
+@Serializable
+data class RevealedAccessToken(
+    val token: String,
 )

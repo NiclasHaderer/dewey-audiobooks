@@ -47,14 +47,12 @@ fun Routing.libraryRouting() {
     }
 
     get<Api.Libraries.Search, LibrarySearchResult> {
-        val libsToSearch = deweyPrincipal().permissions.libraries.map { lib -> lib.id }
-
         val query =
             it.q ?: throw ErrorResponse.notImplemented(
                 "This is still under construction. Currently only the parameter 'q' is supported",
             )
 
-        SearchRepository.everywhere(query, libsToSearch, deweyPrincipal().userId)
+        SearchRepository.everywhere(query, deweyPrincipal())
     }
 }
 

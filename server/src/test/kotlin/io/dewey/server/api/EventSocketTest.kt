@@ -11,6 +11,7 @@ import io.dewey.client.models.LibraryPermissionLevel
 import io.dewey.models.FileScanner
 import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.dewey.server.DeweyTest
+import io.dewey.server.TEST_PASSWORD
 import io.dewey.server.TestDeweyClient
 import io.dewey.server.api
 import io.dewey.server.bearer
@@ -143,7 +144,10 @@ class EventSocketTest : DeweyTest() {
         deweyServer {
             val all = AccessTokenPermissions(isAdmin = true, libraries = null)
             val created =
-                api.createAccessToken(CreateAccessToken(name = "events", permissions = all), bearer(login("admin")))
+                api.createAccessToken(
+                    CreateAccessToken(name = "events", permissions = all, password = TEST_PASSWORD),
+                    bearer(login("admin")),
+                )
 
             assertFails { events(created.body().token) { nextBatch() } }
         }

@@ -142,7 +142,16 @@ class Api {
                 data class Id(
                     val tokenId: Uuid,
                     private val parent: Tokens,
-                )
+                ) {
+                    @Summary("Reveal access token", method = "POST")
+                    @Resource("reveal")
+                    data class Reveal(
+                        private val parent: Id,
+                    ) {
+                        val tokenId
+                            get() = parent.tokenId
+                    }
+                }
             }
         }
     }

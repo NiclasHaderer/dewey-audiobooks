@@ -1,10 +1,13 @@
 package io.dewey.server.api
 
+import io.dewey.auth.interactions.confirmPassword
 import io.dewey.auth.interactions.issueAccessToken
 import io.dewey.auth.utils.requireLoginSession
 import io.dewey.models.AccessToken
 import io.dewey.models.CreateAccessToken
 import io.dewey.models.CreatedAccessToken
+import io.dewey.models.RevealAccessToken
+import io.dewey.models.RevealedAccessToken
 import io.dewey.openapi.ktor.delete
 import io.dewey.openapi.ktor.get
 import io.dewey.openapi.ktor.post
@@ -18,18 +21,23 @@ fun Routing.accessTokenRouting() {
 
     get<Api.Auth.User.Tokens, List<AccessToken>> { accessTokens.list(deweyPrincipal().userId) }
 
-    // A token that could mint tokens could outlive its own revocation through them
     post<Api.Auth.User.Tokens, CreateAccessToken, CreatedAccessToken> { _, create ->
-        val principal = deweyPrincipal()
-        principal.requireLoginSession("create an access token")
-        val accessToken = accessTokens.create(principal.userId, create)
-        CreatedAccessToken(issueAccessToken(principal.userId, accessToken.id, accessToken.expiresAt), accessToken)
+        confirmPassword(create.password, "create an access token")
+        val userId = deweyPrincipal().userId
+        val accessToken = accessTokens.create(userId, create)
+        CreatedAccessToken(issueAccessToken(userId, accessToken.id, accessToken.expiresAt), accessToken)
     }
 
-    // A token may revoke itself, which is how a client logs out, but no other token
+    post<Api.Auth.User.Tokens.Id.Reveal, RevealAccessToken, RevealedAccessToken> { route, reveal ->
+        confirmPassword(reveal.password, "show an access token")
+        val userId = deweyPrincipal().userId
+        val accessToken = accessTokens.get(userId, route.tokenId)
+        RevealedAccessToken(issueAccessToken(userId, accessToken.id, accessToken.expiresAt))
+    }
+
     delete<Api.Auth.User.Tokens.Id, Unit, Unit> { route, _ ->
         val principal = deweyPrincipal()
-        if (principal.accessTokenId != route.tokenId) principal.requireLoginSession("revoke another access token")
+        principal.requireLoginSession("revoke an access token")
         accessTokens.revoke(principal.userId, route.tokenId)
     }
 }

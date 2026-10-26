@@ -27,6 +27,11 @@ interface AccessTokenRepository {
 
     fun list(userId: Uuid): List<AccessToken>
 
+    fun get(
+        userId: Uuid,
+        tokenId: Uuid,
+    ): AccessToken
+
     fun revoke(
         userId: Uuid,
         tokenId: Uuid,
@@ -71,6 +76,18 @@ class AccessTokenRepositoryImpl : AccessTokenRepository {
                 .where { AccessTokenTable.user eq userId }
                 .orderBy(AccessTokenTable.createdAt to SortOrder.ASC)
                 .map { it.toAccessToken() }
+        }
+
+    override fun get(
+        userId: Uuid,
+        tokenId: Uuid,
+    ): AccessToken =
+        transaction {
+            AccessTokenTable
+                .selectAll()
+                .where { (AccessTokenTable.id eq tokenId) and (AccessTokenTable.user eq userId) }
+                .singleOrNull()
+                ?.toAccessToken() ?: throw ErrorResponse.notFound("Access token", tokenId)
         }
 
     override fun revoke(

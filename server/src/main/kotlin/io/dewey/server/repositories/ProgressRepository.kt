@@ -16,6 +16,7 @@ import io.dewey.server.database.tables.insert
 import io.dewey.server.database.tables.toProgressLogRow
 import io.dewey.server.database.tables.toUserBookProgressRow
 import io.dewey.server.database.tables.update
+import io.dewey.server.plugins.auth.DeweyPrincipalImpl
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Transaction
 import org.jetbrains.exposed.v1.core.and
@@ -63,24 +64,18 @@ interface ProgressRepository {
         dismissed: Boolean,
     )
 
-    // [readable] are the libraries the request may read, which an access token can narrow below its user's
     fun continueListening(
-        userId: Uuid,
-        readable: Collection<Uuid>,
+        principal: DeweyPrincipalImpl,
         limit: Int,
     ): List<Book>
 
     fun history(
-        userId: Uuid,
-        readable: Collection<Uuid>,
+        principal: DeweyPrincipalImpl,
         limit: Int,
         offset: Long,
     ): List<ListeningHistoryEntry>
 
-    fun historyTotal(
-        userId: Uuid,
-        readable: Collection<Uuid>,
-    ): Long
+    fun historyTotal(principal: DeweyPrincipalImpl): Long
 }
 
 class ProgressRepositoryImpl :
@@ -161,11 +156,12 @@ class ProgressRepositoryImpl :
     }
 
     override fun continueListening(
-        userId: Uuid,
-        readable: Collection<Uuid>,
+        principal: DeweyPrincipalImpl,
         limit: Int,
     ): List<Book> =
         transaction {
+            val userId = principal.userId
+            val readable = principal.readableLibraries
             val cutoff = Clock.System.now() - WEEK * config.continueListeningWeeks
             val rows =
                 UserBookProgressTable
@@ -186,12 +182,13 @@ class ProgressRepositoryImpl :
         }
 
     override fun history(
-        userId: Uuid,
-        readable: Collection<Uuid>,
+        principal: DeweyPrincipalImpl,
         limit: Int,
         offset: Long,
     ): List<ListeningHistoryEntry> =
         transaction {
+            val userId = principal.userId
+            val readable = principal.readableLibraries
             val rows =
                 ProgressLogTable
                     .selectAll()
@@ -215,16 +212,13 @@ class ProgressRepositoryImpl :
             }
         }
 
-    override fun historyTotal(
-        userId: Uuid,
-        readable: Collection<Uuid>,
-    ): Long =
+    override fun historyTotal(principal: DeweyPrincipalImpl): Long =
         transaction {
             ProgressLogTable
                 .selectAll()
                 .where {
-                    (ProgressLogTable.user eq userId) and
-                        (ProgressLogTable.library inList readable)
+                    (ProgressLogTable.user eq principal.userId) and
+                        (ProgressLogTable.library inList principal.readableLibraries)
                 }.count()
         }
 
