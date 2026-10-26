@@ -45,6 +45,20 @@ func (c *Client) AutoMatchSeries(ctx context.Context, libraryID models.UUID, id 
 	return out, err
 }
 
+// CreateAccessToken calls POST /api/auth/user/tokens: Create access token
+func (c *Client) CreateAccessToken(ctx context.Context, body models.CreateAccessToken) (models.CreatedAccessToken, error) {
+	r := request{
+		method:  "POST",
+		path:    "/api/auth/user/tokens",
+		body:    body,
+		hasBody: true,
+		secured: true,
+	}
+	var out models.CreatedAccessToken
+	err := c.json(ctx, r, &out)
+	return out, err
+}
+
 // CreateAuthor calls POST /api/libraries/{libraryId}/authors: Create author
 func (c *Client) CreateAuthor(ctx context.Context, libraryID models.UUID, body models.AuthorCreate) (models.AuthorDetailed, error) {
 	r := request{
@@ -390,6 +404,18 @@ func (c *Client) GetUser(ctx context.Context, id models.UUID) (models.DeweyUser,
 	return out, err
 }
 
+// ListAccessTokens calls GET /api/auth/user/tokens: List access tokens
+func (c *Client) ListAccessTokens(ctx context.Context) ([]models.AccessToken, error) {
+	r := request{
+		method:  "GET",
+		path:    "/api/auth/user/tokens",
+		secured: true,
+	}
+	var out []models.AccessToken
+	err := c.json(ctx, r, &out)
+	return out, err
+}
+
 type ListAuthorsOptions struct {
 	Limit         *int32
 	Offset        *int64
@@ -721,6 +747,16 @@ func (c *Client) RetrieveJwks(ctx context.Context) (models.DeweyJWKs, error) {
 	var out models.DeweyJWKs
 	err := c.json(ctx, r, &out)
 	return out, err
+}
+
+// RevokeAccessToken calls DELETE /api/auth/user/tokens/{tokenId}: Revoke access token
+func (c *Client) RevokeAccessToken(ctx context.Context, tokenID models.UUID) error {
+	r := request{
+		method:  "DELETE",
+		path:    "/api/auth/user/tokens/" + pathValue(tokenID),
+		secured: true,
+	}
+	return c.json(ctx, r, nil)
 }
 
 // SearchAuthorMetadata calls GET /api/libraries/{libraryId}/metadata/author/search: Search author metadata

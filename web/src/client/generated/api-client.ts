@@ -11,6 +11,7 @@ import {
   _socket,
 } from "./client"
 import type {
+  AccessToken,
   ApiVersion,
   Author,
   AuthorCreate,
@@ -20,6 +21,8 @@ import type {
   BookDetailed,
   BookUpdate,
   ChangeEventBatch,
+  CreateAccessToken,
+  CreatedAccessToken,
   DeweyAccessToken,
   DeweyChangePassword,
   DeweyJWKs,
@@ -123,6 +126,22 @@ export const createApi = (
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    createAccessToken: (
+      body: CreateAccessToken,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<CreatedAccessToken>> => {
+      return _request(
+        `/api/auth/user/tokens`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
@@ -528,6 +547,21 @@ export const createApi = (
         true
       )
     },
+    listAccessTokens: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<AccessToken>>> => {
+      return _request(
+        `/api/auth/user/tokens`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
     listAuthors: (
       {
         limit,
@@ -817,6 +851,22 @@ export const createApi = (
         [...defaultInterceptors, ...interceptors],
         executor,
         false
+      )
+    },
+    revokeAccessToken: (
+      { tokenId }: { tokenId: UUID },
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Empty>> => {
+      return _request(
+        `/api/auth/user/tokens/${tokenId}`,
+        "DELETE",
+        "text",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
       )
     },
     searchAuthorMetadata: (

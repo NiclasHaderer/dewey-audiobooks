@@ -88,6 +88,29 @@ abstract class DeweyClientImpl(
             )
         }
 
+    override suspend fun createAccessToken(
+        body: CreateAccessToken,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<CreateAccessToken>,
+        onAfterRequest: OnAfterRequest<CreateAccessToken, CreatedAccessToken>,
+    ): OpenApiHttpResponse<CreatedAccessToken> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens",
+                    method = HttpMethod("POST"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal",
+                ),
+                typeInfo<CreateAccessToken>(),
+                typeInfo<CreatedAccessToken>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
     override suspend fun createAuthor(
         libraryId: Uuid,
         body: AuthorCreate,
@@ -689,6 +712,28 @@ abstract class DeweyClientImpl(
             )
         }
 
+    override suspend fun listAccessTokens(
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<Unit>,
+        onAfterRequest: OnAfterRequest<Unit, List<AccessToken>>,
+    ): OpenApiHttpResponse<List<AccessToken>> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens",
+                    method = HttpMethod("GET"),
+                    headers = headers,
+                    body = Unit,
+                    shouldLogin = true,
+                    securitySchema = "normal",
+                ),
+                typeInfo<Unit>(),
+                typeInfo<List<AccessToken>>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
     override suspend fun listAuthors(
         libraryId: Uuid,
         limit: Int?,
@@ -1149,6 +1194,29 @@ abstract class DeweyClientImpl(
                 ),
                 typeInfo<Unit>(),
                 typeInfo<DeweyJWKs>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
+    override suspend fun revokeAccessToken(
+        tokenId: Uuid,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<Unit>,
+        onAfterRequest: OnAfterRequest<Unit, Unit>,
+    ): OpenApiHttpResponse<Unit> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens/$tokenId",
+                    method = HttpMethod("DELETE"),
+                    headers = headers,
+                    body = Unit,
+                    shouldLogin = true,
+                    securitySchema = "normal",
+                ),
+                typeInfo<Unit>(),
+                typeInfo<Unit>(),
                 onBeforeRequest = onBeforeRequest,
                 onAfterRequest = onAfterRequest,
             )

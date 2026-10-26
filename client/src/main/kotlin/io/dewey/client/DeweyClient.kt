@@ -39,6 +39,13 @@ interface DeweyClient {
         onAfterRequest: OnAfterRequest<Unit, Series> = { _, _ -> },
     ): OpenApiHttpResponse<Series>
 
+    suspend fun createAccessToken(
+        body: CreateAccessToken,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<CreateAccessToken> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<CreateAccessToken, CreatedAccessToken> = { _, _ -> },
+    ): OpenApiHttpResponse<CreatedAccessToken>
+
     suspend fun createAuthor(
         libraryId: Uuid,
         body: AuthorCreate,
@@ -231,6 +238,12 @@ interface DeweyClient {
         onAfterRequest: OnAfterRequest<Unit, DeweyUser> = { _, _ -> },
     ): OpenApiHttpResponse<DeweyUser>
 
+    suspend fun listAccessTokens(
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<Unit, List<AccessToken>> = { _, _ -> },
+    ): OpenApiHttpResponse<List<AccessToken>>
+
     suspend fun listAuthors(
         libraryId: Uuid,
         limit: Int? = null,
@@ -371,6 +384,13 @@ interface DeweyClient {
         onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
         onAfterRequest: OnAfterRequest<Unit, DeweyJWKs> = { _, _ -> },
     ): OpenApiHttpResponse<DeweyJWKs>
+
+    suspend fun revokeAccessToken(
+        tokenId: Uuid,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<Unit, Unit> = { _, _ -> },
+    ): OpenApiHttpResponse<Unit>
 
     suspend fun searchAuthorMetadata(
         q: String,
