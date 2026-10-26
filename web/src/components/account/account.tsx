@@ -1,17 +1,10 @@
-import {
-  EyeIcon,
-  EyeOffIcon,
-  IdCardIcon,
-  LibraryIcon,
-  LockIcon,
-  PencilIcon,
-  ShieldCheckIcon,
-  Trash2Icon,
-} from "lucide-react"
-import { FC, useEffect, useMemo, useRef, useState } from "react"
+import { EyeIcon, IdCardIcon, LibraryIcon, LockIcon, PencilIcon, ShieldCheckIcon, Trash2Icon } from "lucide-react"
+import { FC, useEffect, useMemo, useRef } from "react"
 import { toast } from "sonner"
 import { DeweyUserWithPermissions, UserPermissions } from "@dewey/client"
+import { WIDE_LABEL } from "@dewey/components/input/field-line"
 import { ManagedInput } from "@dewey/components/input/managed-input.tsx"
+import { usePasswordToggle } from "@dewey/components/input/password-toggle"
 import { Avatar, AvatarFallback } from "@dewey/components/ui/avatar"
 import { Badge } from "@dewey/components/ui/badge"
 import { Button } from "@dewey/components/ui/button"
@@ -74,19 +67,7 @@ export const User: FC<{ user: DeweyUserWithPermissions<UserPermissions> }> = ({ 
     newPasswordRef.current = passwordForm.fields.newPassword
   }, [passwordForm.fields.newPassword])
 
-  const [passwordVisible, setPasswordVisible] = useState(false)
-  const passwordToggle = (
-    <Button
-      excludeFromTabOrder
-      variant="ghost"
-      size="icon"
-      aria-label={passwordVisible ? "Hide password" : "Show password"}
-      className="my-2 ml-2 h-full"
-      onPress={() => setPasswordVisible(prev => !prev)}
-    >
-      {passwordVisible ? <EyeOffIcon /> : <EyeIcon />}
-    </Button>
-  )
+  const password = usePasswordToggle()
 
   const libraries = user.permissions.libraries
 
@@ -145,7 +126,7 @@ export const User: FC<{ user: DeweyUserWithPermissions<UserPermissions> }> = ({ 
       <div className="grid gap-4 lg:grid-cols-2">
         <Form
           form={usernameForm}
-          className="bg-card flex flex-col gap-2 rounded-xl p-4"
+          className="bg-card flex flex-col rounded-xl p-4"
           onSubmit={values =>
             updateUsername.mutate(
               { id: user.id, username: values.username },
@@ -158,8 +139,8 @@ export const User: FC<{ user: DeweyUserWithPermissions<UserPermissions> }> = ({ 
             )
           }
         >
-          <h3 className="text-muted-foreground text-sm font-medium">Username</h3>
-          <ManagedInput name="username" leftIcon={<IdCardIcon />} placeholder="Username" />
+          <h3 className="text-muted-foreground mb-2 text-sm font-medium">Username</h3>
+          <ManagedInput name="username" label="Username" labelClassName={WIDE_LABEL} leftIcon={<IdCardIcon />} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button onPress={() => usernameForm.restoreInitial()} variant="secondary" className="w-full sm:w-auto">
               Cancel
@@ -172,7 +153,7 @@ export const User: FC<{ user: DeweyUserWithPermissions<UserPermissions> }> = ({ 
 
         <Form
           form={passwordForm}
-          className="bg-card flex flex-col gap-2 rounded-xl p-4"
+          className="bg-card flex flex-col rounded-xl p-4"
           onSubmit={values =>
             updatePassword.mutate(
               { id: user.id, currentPassword: values.currentPassword, newPassword: values.newPassword },
@@ -185,30 +166,33 @@ export const User: FC<{ user: DeweyUserWithPermissions<UserPermissions> }> = ({ 
             )
           }
         >
-          <h3 className="text-muted-foreground text-sm font-medium">Password</h3>
+          <h3 className="text-muted-foreground mb-2 text-sm font-medium">Password</h3>
           <ManagedInput
             name="currentPassword"
-            type={passwordVisible ? "text" : "password"}
+            label="Current password"
+            labelClassName={WIDE_LABEL}
+            type={password.type}
             leftIcon={<LockIcon />}
-            placeholder="Current password"
             autoComplete="current-password"
-            rightIcon={passwordToggle}
+            rightIcon={password.toggle}
           />
           <ManagedInput
             name="newPassword"
-            type={passwordVisible ? "text" : "password"}
+            label="New password"
+            labelClassName={WIDE_LABEL}
+            type={password.type}
             leftIcon={<LockIcon />}
-            placeholder="New password"
             autoComplete="new-password"
-            rightIcon={passwordToggle}
+            rightIcon={password.toggle}
           />
           <ManagedInput
             name="confirmPassword"
-            type={passwordVisible ? "text" : "password"}
+            label="Confirm password"
+            labelClassName={WIDE_LABEL}
+            type={password.type}
             leftIcon={<LockIcon />}
-            placeholder="Confirm new password"
             autoComplete="new-password"
-            rightIcon={passwordToggle}
+            rightIcon={password.toggle}
           />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button onPress={() => passwordForm.restoreInitial()} variant="secondary" className="w-full sm:w-auto">
