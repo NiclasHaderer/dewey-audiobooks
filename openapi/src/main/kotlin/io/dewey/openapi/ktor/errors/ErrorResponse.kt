@@ -38,10 +38,9 @@ class ErrorResponse private constructor(
         ): ErrorResponse = ErrorResponse(HttpStatusCode.Unauthorized, error, details)
 
         fun forbidden(
-            action: String,
-            resource: String,
+            error: String,
             details: JsonElement? = null,
-        ): ErrorResponse = ErrorResponse(HttpStatusCode.Forbidden, "Forbidden to $action $resource", details)
+        ): ErrorResponse = ErrorResponse(HttpStatusCode.Forbidden, error, details)
 
         fun notImplemented(
             error: String,

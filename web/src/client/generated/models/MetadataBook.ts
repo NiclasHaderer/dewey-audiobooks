@@ -4,6 +4,7 @@ import type { MetadataLanguage } from "./MetadataLanguage"
 import type { MetadataSearchAuthor } from "./MetadataSearchAuthor"
 
 export interface MetadataBook {
+  asin: string | null
   authors: Array<MetadataSearchAuthor> | null
   coverURL: string | null
   description: string | null

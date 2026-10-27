@@ -245,6 +245,7 @@ class BookRepositoryImpl :
                     narrators = edit.value(BookField.NARRATORS, book.narrators, partial.narrators),
                     genres = edit.value(BookField.GENRES, book.genres, partial.genres),
                     isbn = edit.value(BookField.ISBN, book.isbn, partial.isbn),
+                    asin = edit.value(BookField.ASIN, book.asin, partial.asin),
                     coverID = edit.value(BookField.COVER_ID, book.coverID, cover),
                     chapters = chapters.takeUnless { unlocksChapters },
                     locked = edit.locked,
@@ -367,6 +368,7 @@ class BookRepositoryImpl :
                     narrators =
                         write.value(BookField.NARRATORS, book.narrators) { bookMetadata.narrators.ifEmpty { null } },
                     isbn = write.value(BookField.ISBN, book.isbn) { bookMetadata.isbn },
+                    asin = write.value(BookField.ASIN, book.asin) { bookMetadata.asin },
                     coverID = write.value(BookField.COVER_ID, book.coverID) { getOrCreateImage(newCover, it) },
                     chapters =
                         write.value(BookField.CHAPTERS, book.chapters) {

@@ -21,6 +21,7 @@ open class Book(
     val description: String?,
     val narrators: List<String>,
     val isbn: String?,
+    val asin: String?,
     val coverID: Uuid?,
     val genres: List<String>,
     val durationMs: Long,

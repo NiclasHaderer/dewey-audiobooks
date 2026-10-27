@@ -98,6 +98,7 @@ internal data class AudibleApiProduct(
             publisher = publisherName,
             language = MetadataLanguage.fromTag(language),
             isbn = isbn,
+            asin = asin,
         )
 
     fun toMetadataSearchBook(

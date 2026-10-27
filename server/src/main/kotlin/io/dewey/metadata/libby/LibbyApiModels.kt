@@ -56,6 +56,7 @@ internal data class LibbyApiMedia(
             publisher = publisher?.name,
             language = languages.firstOrNull()?.let { MetadataLanguage.fromTag(it.id ?: it.name) },
             isbn = formats.firstNotNullOfOrNull { it.isbn },
+            asin = null,
         )
 
     fun toMetadataSearchBook(

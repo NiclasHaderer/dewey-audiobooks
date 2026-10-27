@@ -42,6 +42,7 @@ data class BookRow(
     val description: String?,
     val narrators: List<String>?,
     val isbn: String?,
+    val asin: String?,
     val provider: String?,
     val providerID: String?,
     val providerRating: Float?,
@@ -63,6 +64,7 @@ fun ResultRow.toBookRow(): BookRow =
         description = this[BookTable.description],
         narrators = this[BookTable.narrators],
         isbn = this[BookTable.isbn],
+        asin = this[BookTable.asin],
         provider = this[BookTable.provider],
         providerID = this[BookTable.providerId],
         providerRating = this[BookTable.providerRating],
@@ -87,6 +89,7 @@ fun BookTable.update(
         it[description] = row.description
         it[narrators] = row.narrators
         it[isbn] = row.isbn
+        it[asin] = row.asin
         it[provider] = row.provider
         it[providerId] = row.providerID
         it[providerRating] = row.providerRating
@@ -142,6 +145,7 @@ fun booksToModels(
             releaseDate = row.releaseDate,
             narrators = row.narrators.orEmpty(),
             isbn = row.isbn,
+            asin = row.asin,
             language = row.language,
             publisher = row.publisher,
             authors =

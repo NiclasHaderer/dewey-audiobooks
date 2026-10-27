@@ -8,6 +8,7 @@ import type { Track } from "./Track"
 import type { UUID } from "./UUID"
 
 export interface BookDetailed {
+  asin: string | null
   authors: Array<NamedId>
   chapters: Array<Chapter>
   coverID: UUID | null

@@ -6,6 +6,7 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class Book(
+    val asin: String? = null,
     val authors: List<NamedId>,
     val coverID: Uuid? = null,
     val description: String? = null,

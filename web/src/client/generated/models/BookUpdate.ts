@@ -4,6 +4,7 @@ import type { MetadataLanguage } from "./MetadataLanguage"
 import type { UUID } from "./UUID"
 
 export interface BookUpdate {
+  asin?: string | null
   authors?: Array<UUID>
   chapters?: Array<ChapterMark>
   cover?: string | null

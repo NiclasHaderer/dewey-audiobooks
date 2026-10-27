@@ -162,6 +162,7 @@ internal data class AudiobookDbApiReleaseDetail(
             publisher = publisher?.name,
             language = MetadataLanguage.fromTag((language ?: book?.originalLanguage)?.name),
             isbn = isbn,
+            asin = null,
         )
 }
 

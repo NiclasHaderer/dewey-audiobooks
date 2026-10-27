@@ -26,6 +26,7 @@ import { MobileDetailHeader } from "@dewey/components/detail/detail-layout"
 import { DetailSkeleton } from "@dewey/components/detail/detail-skeleton"
 import { PartialSection } from "@dewey/components/detail/partial-section"
 import { HtmlViewer } from "@dewey/components/html-editor"
+import { AudibleIcon } from "@dewey/components/icons/audible"
 import { Link } from "@dewey/components/link.tsx"
 import { QueryError } from "@dewey/components/status-page.tsx"
 import { Button } from "@dewey/components/ui/button"
@@ -196,6 +197,11 @@ const Meta: FC<MetaProps> = ({ book, libraryId, runtime }) => (
       {book.isbn ? (
         <MetaItem icon={BarcodeIcon}>
           <span className="tabular-nums">{book.isbn}</span>
+        </MetaItem>
+      ) : null}
+      {book.asin ? (
+        <MetaItem icon={AudibleIcon}>
+          <span className="tabular-nums">{book.asin}</span>
         </MetaItem>
       ) : null}
     </div>

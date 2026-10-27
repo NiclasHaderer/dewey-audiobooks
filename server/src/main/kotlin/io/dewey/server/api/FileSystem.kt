@@ -13,7 +13,7 @@ fun Routing.fileSystemRouting() {
 
         val children =
             directory.listFiles()
-                ?: throw ErrorResponse.forbidden("list", "Directory $path")
+                ?: throw ErrorResponse.forbidden("The server cannot read directory $path")
 
         children
             .filter { it.isDirectory && (showHidden || !it.isHidden) && !it.listFiles().isNullOrEmpty() }

@@ -27,4 +27,14 @@ class ReadonlyFileTaggerTest {
 
         assertEquals(listOf("Chapter One", null, "Chapter Three"), tags.chapters.map { it.title })
     }
+
+    @Test
+    fun `reads the ASIN from an mp4 freeform tag`() {
+        assertEquals("B017V4IM1G", ReadonlyFileTagger(taglibFixture("asin.m4b")).asin)
+    }
+
+    @Test
+    fun `reads the ASIN from a lowercase audible_asin tag`() {
+        assertEquals("B017V4IM1G", ReadonlyFileTagger(taglibFixture("audible-asin.mp3")).asin)
+    }
 }

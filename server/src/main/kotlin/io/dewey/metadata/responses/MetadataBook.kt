@@ -40,4 +40,5 @@ data class MetadataBook(
     val publisher: String?,
     val language: MetadataLanguage?,
     val isbn: String?,
+    val asin: String?,
 )

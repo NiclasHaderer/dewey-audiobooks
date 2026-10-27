@@ -191,6 +191,7 @@ private fun MetadataBook.fillFrom(other: MetadataBook): MetadataBook =
         publisher = publisher ?: other.publisher,
         language = language ?: other.language,
         isbn = isbn ?: other.isbn,
+        asin = asin ?: other.asin,
     )
 
 private fun MetadataSeries.fillFrom(other: MetadataSeries): MetadataSeries =

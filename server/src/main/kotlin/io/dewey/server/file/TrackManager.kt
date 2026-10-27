@@ -238,6 +238,7 @@ class TrackManager : KoinComponent {
                 description = write.value(BookField.DESCRIPTION, book.description) { scan.description },
                 narrators = write.value(BookField.NARRATORS, book.narrators) { scan.narrators.ifEmpty { null } },
                 releaseDate = write.value(BookField.RELEASE_DATE, book.releaseDate) { scan.date },
+                asin = write.value(BookField.ASIN, book.asin) { scan.asin },
                 genres = write.value(BookField.GENRES, book.genres) { normalizeGenres(scan.genres).ifEmpty { null } },
             ),
         )
