@@ -22,17 +22,11 @@ fun Application.configureOpenApi() {
         addServer { url = deweyConfig.baseUrl }
         components {
             securitySchemes {
-                http(Guards.Admin) {
-                    scheme = "bearer"
-                    bearerFormat = "JWT"
-                }
-                http(Guards.Normal) {
-                    scheme = "bearer"
-                    bearerFormat = "JWT"
-                }
-                http(Guards.Media) {
-                    scheme = "bearer"
-                    bearerFormat = "JWT"
+                for (guard in Guards.All) {
+                    http(guard) {
+                        scheme = "bearer"
+                        bearerFormat = "JWT"
+                    }
                 }
             }
         }

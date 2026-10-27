@@ -53,7 +53,7 @@ internal fun <T : Throwable> formatException(
         } else {
             call.respond(
                 statusCode,
-                ErrorBody(cause.toString(), statusCode.value),
+                ErrorBody(cause.message ?: statusCode.description, statusCode.value),
             )
         }
         cb?.invoke(cause)
@@ -74,13 +74,17 @@ fun Application.configureStatusPages(errorStatuses: ErrorStatuses.() -> Unit = {
     install(StatusPages) {
         ErrorStatuses(this, logger).apply(errorStatuses)
 
-        exception<ErrorResponse> { call, cause ->
-            if (call.response.isSent) return@exception logCommitted(logger, call, cause)
+        suspend fun respondError(
+            call: ApplicationCall,
+            cause: ErrorResponse,
+        ) {
+            if (call.response.isSent) return logCommitted(logger, call, cause)
             call.respond(
                 cause.status,
                 ErrorBody(cause.error, cause.status.value, cause.details),
             )
         }
+        exception<ErrorResponse> { call, cause -> respondError(call, cause) }
 
         val serverError =
             formatException<Throwable>(logger, HttpStatusCode.InternalServerError) { logger.error(it) { it.message } }
@@ -95,7 +99,15 @@ fun Application.configureStatusPages(errorStatuses: ErrorStatuses.() -> Unit = {
                 serverError(call, cause)
             }
         }
-        exception<BadRequestException>(formatException(logger, HttpStatusCode.BadRequest))
+        val badRequest = formatException<BadRequestException>(logger, HttpStatusCode.BadRequest)
+        exception<BadRequestException> { call, cause ->
+            // Ktor builds a resource while it routes the call, so a resource that refuses its parameters with an
+            // ErrorResponse arrives wrapped in a BadRequestException that would hide the reason
+            val refusal = generateSequence<Throwable>(
+                cause,
+            ) { it.cause }.filterIsInstance<ErrorResponse>().firstOrNull()
+            if (refusal != null) respondError(call, refusal) else badRequest(call, cause)
+        }
         exception<MissingRequestParameterException>(formatException(logger, HttpStatusCode.BadRequest))
         exception<ParameterConversionException>(formatException(logger, HttpStatusCode.BadRequest))
         exception<ContentTransformationException>(formatException(logger, HttpStatusCode.InternalServerError))

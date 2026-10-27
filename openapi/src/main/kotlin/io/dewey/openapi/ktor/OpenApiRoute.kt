@@ -1,7 +1,6 @@
 package io.dewey.openapi.ktor
 
 import io.dewey.openapi.common.InternalAPI
-import io.dewey.openapi.common.findAnnotationUp
 import io.dewey.openapi.common.findAnnotationsFirstUp
 import io.dewey.openapi.common.fullPath
 import io.dewey.openapi.common.parent
@@ -64,20 +63,26 @@ class OpenApiRoute(
         resourcePath.ifBlank { null }
     }
 
-    val description by lazy { paramsClass.findAnnotation<Description>()?.description }
-
     private val operation by lazy {
         paramsClass.findAnnotations<Summary>().firstOrNull { it.method == this.method.value }
     }
 
+    val description by lazy {
+        operation?.description?.ifBlank { null } ?: paramsClass.findAnnotation<Description>()?.description
+    }
+
+    val command by lazy { operation?.command?.ifBlank { null } }
+
     val summary by lazy { operation?.summary }
 
+    // The guard the resource declares for this method, else the nearest one declared for every method
+    @OptIn(InternalAPI::class)
     val secured by lazy {
-        if (paramsClass.findAnnotation<NotSecured>() != null) {
-            null
-        } else {
-            paramsClass.findAnnotationUp<Secured>()
-        }
+        if (paramsClass.findAnnotation<NotSecured>() != null) return@lazy null
+        paramsClass.findAnnotations<Secured>().firstOrNull { it.method.equals(method.value, ignoreCase = true) }
+            ?: generateSequence(paramsClass) { it.parent }.firstNotNullOfOrNull { resource ->
+                resource.findAnnotations<Secured>().firstOrNull { it.method.isEmpty() }
+            }
     }
 
     val responseStatusCode by lazy {
@@ -98,6 +103,10 @@ class OpenApiRoute(
     }
 
     val tags by lazy { paramsClass.findAnnotationsFirstUp<Tagged>().map { it.name } }
+
+    val tagDescription by lazy {
+        paramsClass.findAnnotationsFirstUp<Tagged>().firstNotNullOfOrNull { it.description.ifBlank { null } }
+    }
 
     val operationId by lazy {
         val segments =

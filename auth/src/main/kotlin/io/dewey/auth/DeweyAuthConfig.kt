@@ -197,12 +197,31 @@ class DeweyAuthConfigBuilder<PERMISSIONS, UPDATE_PERMISSIONS, TOKEN_PERMISSIONS>
     private val guards = mutableMapOf<String, GetPrincipal<TOKEN_PERMISSIONS>>()
     private val guardAuthHeaders = mutableMapOf<String, AuthHeaderProvider>()
 
+    // A guard that refuses access tokens lets only a password login through. Forbidden rather than unauthorized: the
+    // token is valid, it is just not allowed here, and logging in again with it would not help.
     fun configureGuard(
         guard: String,
         authHeader: AuthHeaderProvider? = null,
+        refuseAccessTokens: Boolean = false,
         getPrincipal: GetPrincipal<TOKEN_PERMISSIONS>,
     ) {
-        guards[guard] = getPrincipal
+        guards[guard] =
+            if (!refuseAccessTokens) {
+                getPrincipal
+            } else {
+                { user, accessToken, setError ->
+                    if (accessToken != null) {
+                        setError(
+                            ErrorResponse.forbidden(
+                                "An access token cannot do this, log in with your password instead",
+                            ),
+                        )
+                        null
+                    } else {
+                        getPrincipal(user, null, setError)
+                    }
+                }
+            }
         if (authHeader != null) guardAuthHeaders[guard] = authHeader
     }
 

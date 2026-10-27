@@ -23,28 +23,28 @@ fun Routing.accessTokenRouting() {
     get<Api.Auth.User.Tokens, List<AccessToken>> { accessTokens.list(deweyPrincipal().userId) }
 
     post<Api.Auth.User.Tokens, CreateAccessToken, CreatedAccessToken> { _, create ->
-        confirmPassword(create.password, "create an access token")
+        confirmPassword(create.password)
         val userId = deweyPrincipal().userId
         val accessToken = accessTokens.create(userId, create)
         CreatedAccessToken(issueAccessToken(userId, accessToken.id, accessToken.expiresAt), accessToken)
     }
 
     post<Api.Auth.User.Tokens.Id.Reveal, PasswordConfirmation, RevealedAccessToken> { route, confirmation ->
-        confirmPassword(confirmation.password, "show an access token")
+        confirmPassword(confirmation.password)
         val userId = deweyPrincipal().userId
-        val accessToken = accessTokens.get(userId, route.tokenId)
+        val accessToken = accessTokens.get(userId, route.id)
         RevealedAccessToken(issueAccessToken(userId, accessToken.id, accessToken.expiresAt))
     }
 
     // The token carries only its row id, so a change reaches every copy of it on the next request. The expiry is
     // signed into the token instead and cannot change after the fact.
     patch<Api.Auth.User.Tokens.Id, UpdateAccessToken, AccessToken> { route, update ->
-        confirmPassword(update.password, "change an access token")
-        accessTokens.update(deweyPrincipal().userId, route.tokenId, update)
+        confirmPassword(update.password)
+        accessTokens.update(deweyPrincipal().userId, route.id, update)
     }
 
     delete<Api.Auth.User.Tokens.Id, PasswordConfirmation, Unit> { route, confirmation ->
-        confirmPassword(confirmation.password, "revoke an access token")
-        accessTokens.revoke(deweyPrincipal().userId, route.tokenId)
+        confirmPassword(confirmation.password)
+        accessTokens.revoke(deweyPrincipal().userId, route.id)
     }
 }

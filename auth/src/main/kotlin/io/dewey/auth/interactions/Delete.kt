@@ -3,7 +3,6 @@ package io.dewey.auth.interactions
 import io.dewey.auth.deweyAuthConfig
 import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
-import io.dewey.auth.utils.requireLoginSession
 import io.dewey.auth.withUserMutation
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
@@ -23,7 +22,6 @@ fun RoutingContext.deleteUser(
     if (principal.userId != params.id && !principal.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can delete another user")
     }
-    principal.requireLoginSession("delete an account")
 
     withUserMutation {
         val user = config.getUserById(params.id) ?: throw ErrorResponse.userError("User not found")

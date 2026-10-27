@@ -38,7 +38,7 @@ fun Routing.seriesRouting() {
 
     get<Api.Libraries.Id.Series.Autocomplete, List<TitledId>> {
         seriesRepository
-            .search(userId = deweyPrincipal().userId, query = it.q, libraryId = it.libraryId)
+            .search(userId = deweyPrincipal().userId, query = it.query, libraryId = it.libraryId)
             .map { series -> TitledId(id = series.id, title = series.title) }
     }
 

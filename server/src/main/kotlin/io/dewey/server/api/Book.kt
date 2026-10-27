@@ -38,7 +38,7 @@ fun Routing.bookRouting() {
     }
 
     get<Api.Libraries.Id.Books.Autocomplete, List<TitledId>> { route ->
-        bookRepository.search(deweyPrincipal().userId, route.q, route.libraryId).map { TitledId(it.id, it.title) }
+        bookRepository.search(deweyPrincipal().userId, route.query, route.libraryId).map { TitledId(it.id, it.title) }
     }
 
     patch<Api.Libraries.Id.Books.Id, BookUpdate, Book> { route, patch ->

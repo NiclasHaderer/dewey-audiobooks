@@ -5,18 +5,13 @@ import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
 import io.dewey.auth.utils.generateAccessToken
 import io.dewey.auth.utils.passwordMatches
-import io.dewey.auth.utils.requireLoginSession
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-fun RoutingContext.confirmPassword(
-    password: String,
-    change: String,
-) {
+fun RoutingContext.confirmPassword(password: String) {
     val principal = deweyPrincipal<DeweyPrincipal>()
-    principal.requireLoginSession(change)
     val user = deweyAuthConfig<Any, Any>().getUserById(principal.userId)
         ?: throw ErrorResponse.notFound("User", principal.userId)
     if (!passwordMatches(password, user)) throw ErrorResponse.userError("Wrong password")

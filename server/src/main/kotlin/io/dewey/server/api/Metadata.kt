@@ -37,7 +37,7 @@ fun Routing.metadataRouting() {
 
     get<Api.Libraries.Id.Metadata.Author.Search, List<MetadataAuthor>> {
         val (metadataAgent, region, language) = agentFor(it.libraryId)
-        metadataAgent.getAuthorByName(authorName = it.q, region = region, language = language).toList()
+        metadataAgent.getAuthorByName(authorName = it.query, region = region, language = language).toList()
     }
 
     get<Api.Libraries.Id.Metadata.Book.Id, MetadataBook> {
@@ -56,7 +56,7 @@ fun Routing.metadataRouting() {
         val (metadataAgent, region, language) = agentFor(it.libraryId)
         metadataAgent
             .getBookByName(
-                bookName = it.q,
+                bookName = it.query,
                 region = region,
                 keywords = it.keywords,
                 authorName = it.authorName,
@@ -75,7 +75,7 @@ fun Routing.metadataRouting() {
     get<Api.Libraries.Id.Metadata.Series.Search, List<MetadataSeries>> {
         val (metadataAgent, region, language) = agentFor(it.libraryId)
         metadataAgent
-            .getSeriesByName(seriesName = it.q, region = region, authorName = it.authorName, language = language)
+            .getSeriesByName(seriesName = it.query, region = region, authorName = it.authorName, language = language)
             .toList()
     }
 }

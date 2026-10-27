@@ -63,15 +63,14 @@ fun Application.configureAuthentication() {
         keyPairs["dewey"] = keyPair
         activeKeyId = "dewey"
 
-        configureGuard(Guards.Normal) { user, accessToken, _ -> DeweyPrincipalImpl(user.id, accessToken) }
-
-        configureGuard(
-            Guards.Media,
-            authHeader = bearerFromHeaderOrCookie("access"),
-        ) { user, accessToken, _ -> DeweyPrincipalImpl(user.id, accessToken) }
-
-        configureGuard(Guards.Admin) { user, accessToken, setError ->
-            DeweyPrincipalImpl(user.id, accessToken).takeIf { it.permissions.isAdmin } ?: run {
+        for (guard in Guards.All) {
+            configureGuard(
+                guard,
+                authHeader = bearerFromHeaderOrCookie("access").takeIf { guard in Guards.CookieAllowed },
+                refuseAccessTokens = guard in Guards.LoginOnly,
+            ) { user, accessToken, setError ->
+                val principal = DeweyPrincipalImpl(user.id, accessToken)
+                if (guard !in Guards.AdminOnly || principal.permissions.isAdmin) return@configureGuard principal
                 val reason = if (accessToken == null) "User is not an admin" else "The access token has no admin rights"
                 setError(ErrorResponse.unauthorized(reason))
                 null

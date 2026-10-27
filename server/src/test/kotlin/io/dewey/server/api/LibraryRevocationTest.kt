@@ -70,7 +70,7 @@ class LibraryRevocationTest : DeweyTest() {
             )
             assertTrue(api.listLibraries(token).body().isEmpty(), "the library itself must not be listed")
 
-            val search = api.searchInAllLibraries(q = "Dune", headers = token).body()
+            val search = api.searchInAllLibraries(query = "Dune", headers = token).body()
             assertTrue(search.books.isEmpty(), "revoked books must not surface in search: $search")
 
             assertEquals(

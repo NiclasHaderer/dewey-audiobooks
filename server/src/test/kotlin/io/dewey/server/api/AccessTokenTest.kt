@@ -72,7 +72,7 @@ class AccessTokenTest : DeweyTest() {
         }
 
     @Test
-    fun `an admin token administers libraries but no accounts`() =
+    fun `an admin token administers libraries and lists accounts but changes none`() =
         deweyServer {
             val libId = newLibrary("lib")
             register("listener")
@@ -86,8 +86,8 @@ class AccessTokenTest : DeweyTest() {
                 api.updateLibrary(libId, PartialUpdateLibrary(name = Patch.Set("Renamed")), token.headers).status,
             )
             assertEquals(HttpStatusCode.OK, api.getUser(adminId, token.headers).status)
-            assertEquals(HttpStatusCode.Forbidden, api.getUser(listenerId, token.headers).status)
-            assertEquals(HttpStatusCode.Forbidden, api.listUsers(token.headers).status)
+            assertEquals(HttpStatusCode.OK, api.getUser(listenerId, token.headers).status)
+            assertEquals(HttpStatusCode.OK, api.listUsers(token.headers).status)
             assertEquals(HttpStatusCode.Forbidden, api.updatePermissions(listenerId, permissions, token.headers).status)
             assertEquals(
                 HttpStatusCode.Forbidden,
@@ -128,11 +128,12 @@ class AccessTokenTest : DeweyTest() {
     @Test
     fun `a token without admin rights is no admin, even for an admin`() =
         deweyServer {
+            register("listener")
+            val listenerId = userId("listener")
             val token = token(bearer(login("admin")), isAdmin = false)
 
-            val response = api.listUsers(token.headers)
-
-            assertEquals(HttpStatusCode.Unauthorized, response.status)
+            assertEquals(HttpStatusCode.Unauthorized, api.listUsers(token.headers).status)
+            assertEquals(HttpStatusCode.Forbidden, api.getUser(listenerId, token.headers).status)
         }
 
     @Test
