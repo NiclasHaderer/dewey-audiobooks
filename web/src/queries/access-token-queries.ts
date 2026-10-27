@@ -18,7 +18,7 @@ export const useUpdateAccessToken = () => {
   return useMutation({
     meta: { action: "update the access token" },
     mutationFn: ({ tokenId, update }: { tokenId: UUID; update: UpdateAccessToken }) =>
-      Api.updateAccessToken({ tokenId }, update),
+      Api.updateAccessToken({ id: tokenId }, update),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queries.accessTokens.queryKey }),
   })
 }
@@ -27,7 +27,7 @@ export const useRevealAccessToken = () =>
   useMutation({
     meta: { action: "show the access token" },
     mutationFn: ({ tokenId, password }: { tokenId: UUID; password: string }) =>
-      Api.revealAccessToken({ tokenId }, { password }),
+      Api.revealAccessToken({ id: tokenId }, { password }),
   })
 
 export const useRevokeAccessToken = () => {
@@ -35,7 +35,7 @@ export const useRevokeAccessToken = () => {
   return useMutation({
     meta: { action: "revoke the access token" },
     mutationFn: ({ tokenId, password }: { tokenId: UUID; password: string }) =>
-      Api.revokeAccessToken({ tokenId }, { password }),
+      Api.revokeAccessToken({ id: tokenId }, { password }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queries.accessTokens.queryKey }),
   })
 }

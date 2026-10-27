@@ -280,12 +280,12 @@ export const createApi = (
       )
     },
     getAuthorAutocomplete: (
-      { q, libraryId }: { q: string; libraryId: UUID },
+      { query, libraryId }: { query: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Array<NamedId>>> => {
       return _request(
-        _createUrl(`/api/libraries/${libraryId}/authors/autocomplete`, { q }),
+        _createUrl(`/api/libraries/${libraryId}/authors/autocomplete`, { query }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -328,12 +328,12 @@ export const createApi = (
       )
     },
     getBookAutocomplete: (
-      { q, libraryId }: { q: string; libraryId: UUID },
+      { query, libraryId }: { query: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Array<TitledId>>> => {
       return _request(
-        _createUrl(`/api/libraries/${libraryId}/books/autocomplete`, { q }),
+        _createUrl(`/api/libraries/${libraryId}/books/autocomplete`, { query }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -503,12 +503,12 @@ export const createApi = (
       )
     },
     getSeriesAutocomplete: (
-      { q, libraryId }: { q: string; libraryId: UUID },
+      { query, libraryId }: { query: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Array<TitledId>>> => {
       return _request(
-        _createUrl(`/api/libraries/${libraryId}/series/autocomplete`, { q }),
+        _createUrl(`/api/libraries/${libraryId}/series/autocomplete`, { query }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -857,13 +857,13 @@ export const createApi = (
       )
     },
     revealAccessToken: (
-      { tokenId }: { tokenId: UUID },
+      { id }: { id: UUID },
       body: PasswordConfirmation,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<RevealedAccessToken>> => {
       return _request(
-        `/api/auth/user/tokens/${tokenId}/reveal`,
+        `/api/auth/user/tokens/${id}/reveal`,
         "POST",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -874,13 +874,13 @@ export const createApi = (
       )
     },
     revokeAccessToken: (
-      { tokenId }: { tokenId: UUID },
+      { id }: { id: UUID },
       body: PasswordConfirmation,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Empty>> => {
       return _request(
-        `/api/auth/user/tokens/${tokenId}`,
+        `/api/auth/user/tokens/${id}`,
         "DELETE",
         "text",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -891,12 +891,12 @@ export const createApi = (
       )
     },
     searchAuthorMetadata: (
-      { q, libraryId }: { q: string; libraryId: UUID },
+      { query, libraryId }: { query: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Array<MetadataAuthor>>> => {
       return _request(
-        _createUrl(`/api/libraries/${libraryId}/metadata/author/search`, { q }),
+        _createUrl(`/api/libraries/${libraryId}/metadata/author/search`, { query }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -913,7 +913,7 @@ export const createApi = (
         language,
         narrator,
         pageSize,
-        q,
+        query,
         libraryId,
       }: {
         authorName?: string | null
@@ -921,7 +921,7 @@ export const createApi = (
         language?: MetadataLanguage | null
         narrator?: string | null
         pageSize?: MetadataSearchCount | null
-        q: string
+        query: string
         libraryId: UUID
       },
       headers: HeadersInit = {},
@@ -934,7 +934,7 @@ export const createApi = (
           language,
           narrator,
           pageSize,
-          q,
+          query,
         }),
         "GET",
         "json",
@@ -949,14 +949,14 @@ export const createApi = (
       {
         author,
         book,
-        q,
+        query,
         series,
-      }: { author?: string | null; book?: string | null; q?: string | null; series?: string | null },
+      }: { author?: string | null; book?: string | null; query?: string | null; series?: string | null },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<LibrarySearchResult>> => {
       return _request(
-        _createUrl(`/api/libraries/search`, { author, book, q, series }),
+        _createUrl(`/api/libraries/search`, { author, book, query, series }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -967,12 +967,12 @@ export const createApi = (
       )
     },
     searchSeriesMetadata: (
-      { authorName, q, libraryId }: { authorName?: string | null; q: string; libraryId: UUID },
+      { authorName, query, libraryId }: { authorName?: string | null; query: string; libraryId: UUID },
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<Array<MetadataSeries>>> => {
       return _request(
-        _createUrl(`/api/libraries/${libraryId}/metadata/series/search`, { authorName, q }),
+        _createUrl(`/api/libraries/${libraryId}/metadata/series/search`, { authorName, query }),
         "GET",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
@@ -1034,13 +1034,13 @@ export const createApi = (
       )
     },
     updateAccessToken: (
-      { tokenId }: { tokenId: UUID },
+      { id }: { id: UUID },
       body: UpdateAccessToken,
       headers: HeadersInit = {},
       interceptors: ApiInterceptor[] = []
     ): Promise<ApiResponse<AccessToken>> => {
       return _request(
-        `/api/auth/user/tokens/${tokenId}`,
+        `/api/auth/user/tokens/${id}`,
         "PATCH",
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),

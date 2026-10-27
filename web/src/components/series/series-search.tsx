@@ -15,13 +15,13 @@ export const SeriesSearch: FC<{
 }> = ({ series: _series, authors: _authors, libraryId, onSelect }) => {
   const [authors, setAuthors] = useState(_authors?.join(", "))
   const [series, setSeries] = useState(_series)
-  const [submitted, setSubmitted] = useState<{ q: string; authorName: string | undefined } | null>(null)
+  const [submitted, setSubmitted] = useState<{ query: string; authorName: string | undefined } | null>(null)
 
   const { data: result, isFetching: loading } = useSeriesMetadataSearch(libraryId, submitted)
 
   const search = () => {
     if (!series) return
-    setSubmitted({ q: series, authorName: authors })
+    setSubmitted({ query: series, authorName: authors })
   }
 
   return (

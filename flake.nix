@@ -26,6 +26,7 @@
           ktlint
           fnm
           go                 # builds the cli, gofmt formats its generated code
+          just               # runs the recipes in the justfile
         ];
 
         shellHook = ''
