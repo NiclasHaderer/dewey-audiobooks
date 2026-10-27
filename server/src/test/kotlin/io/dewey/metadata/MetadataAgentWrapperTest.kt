@@ -120,6 +120,32 @@ class MetadataAgentWrapperTest {
         }
 
     @Test
+    fun `a best match takes the book of the ASIN without searching`() =
+        runBlocking {
+            val agent =
+                FakeMetadataAgent(
+                    name = "audible",
+                    hits = listOf(searchHit("a", provider = "audible")),
+                    resolveAsin = { testBook(it, "audible") },
+                )
+
+            val match =
+                MetadataAgentWrapper(listOf(agent))
+                    .bestBookMatch("a", MetadataRegion.US, authorName = "Derek Landy", asin = "B0")
+
+            assertEquals(testId("B0", "audible"), match?.id)
+            assertEquals(0, agent.searchCalls.get())
+        }
+
+    @Test
+    fun `a best match searches when the agent does not know the ASIN`() =
+        runBlocking {
+            val match = wrapper().bestBookMatch("a", MetadataRegion.US, asin = "B0")
+
+            assertEquals("a", match?.id?.itemID)
+        }
+
+    @Test
     fun `combining fills the fields the preferred agent left empty`() =
         runBlocking {
             val preferred =

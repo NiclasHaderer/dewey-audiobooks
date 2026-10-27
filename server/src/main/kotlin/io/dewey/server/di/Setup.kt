@@ -3,7 +3,6 @@ package io.dewey.server.di
 import io.dewey.metadata.MetadataAgents
 import io.dewey.metadata.audible.AudibleMetadataAgent
 import io.dewey.metadata.audiobookdb.AudiobookDbMetadataAgent
-import io.dewey.metadata.libby.LibbyMetadataAgent
 import io.dewey.server.common.ImageDownloader
 import io.dewey.server.common.scheduling.Scheduler
 import io.dewey.server.config.DeweyConfig
@@ -41,7 +40,7 @@ fun deweyModule(config: DeweyConfig) =
     module {
         single { config }
         single<MetadataAgents> {
-            MetadataAgents(listOf(AudibleMetadataAgent(), LibbyMetadataAgent(), AudiobookDbMetadataAgent()))
+            MetadataAgents(listOf(AudibleMetadataAgent(), AudiobookDbMetadataAgent()))
         }
         single<AudioFileAnalyzers> { AudioFileAnalyzers(listOf(AudioTagScanner(), AudioFolderScanner())) }
         single { ImageDownloader() }

@@ -101,6 +101,11 @@ class AudibleMetadataAgent(
         return product.toMetadataBook(audibleRegion, imageSize)
     }
 
+    override suspend fun getBookByAsin(
+        asin: String,
+        region: MetadataRegion,
+    ): MetadataBook? = getBookByID(name, asin, region)
+
     // The catalog does not know the chapters, the content metadata does and answers without an account as well
     override suspend fun getBookChapters(
         providerId: String,

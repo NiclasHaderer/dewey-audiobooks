@@ -138,6 +138,17 @@ class AudiobookDbMetadataAgent(
         }
     }
 
+    override suspend fun getBookByAsin(
+        asin: String,
+        region: MetadataRegion,
+    ): MetadataBook? {
+        val parameters = Parameters.build { append("external", "$AUDIBLE_EXTERNAL_CATEGORY:$asin") }
+        val release =
+            http.getJson<List<AudiobookDbApiListRelease>>(apiUrl(listOf("releases"), parameters))?.firstOrNull()
+                ?: return null
+        return getBookByID(name, release.id, region)
+    }
+
     override suspend fun getBookChapters(
         providerId: String,
         bookId: String,
