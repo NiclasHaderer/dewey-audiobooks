@@ -6,12 +6,13 @@ api := "http://localhost:" + port + "/api"
 default:
     @just --list
 
-# Regenerate the Kotlin and TypeScript clients from the server's routes
+# Regenerate the Kotlin, TypeScript and Go clients from the server's routes
 generate: && format
     ./gradlew :server:generateClients
 
 format:
     ./gradlew ktlintFormat
+    gofmt -l -w cli
     cd web && npm run format
 
 build: build-server build-web
