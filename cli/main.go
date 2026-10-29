@@ -124,6 +124,22 @@ $ dewey books list <library-id> --jq '.items[].title'`,
 	root.AddCommand(authCommand(configPath, &flags, getenv))
 	root.AddCommand(topics()...)
 	root.InitDefaultCompletionCmd()
+	// cobra's help finds the root for any word, as the root takes arguments to report unknown commands, and would show
+	// the root's help for a misspelled topic and exit 0
+	root.SetHelpCommand(&cobra.Command{
+		Use:   "help [command]",
+		Short: "Help about any command",
+		RunE: func(_ *cobra.Command, args []string) error {
+			target, rest, err := root.Find(args)
+			if err != nil {
+				return err
+			}
+			if len(rest) > 0 {
+				return commands.Group(target, rest)
+			}
+			return target.Help()
+		},
+	})
 	root.SetHelpFunc(func(cmd *cobra.Command, _ []string) { _ = printHelp(cmd.OutOrStdout(), cmd) })
 	root.SetFlagErrorFunc(commands.FlagError)
 	return root

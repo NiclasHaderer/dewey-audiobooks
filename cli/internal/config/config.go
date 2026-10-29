@@ -55,7 +55,7 @@ func Load(path string) (Settings, error) {
 }
 
 // Only the user may read the file: the token in it is as good as their password. WriteFile's mode only applies to a
-// file it creates, so an existing one is chmodded.
+// file it creates, so an existing one is chmodded before the new token goes in.
 func Save(path string, settings Settings) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
@@ -64,10 +64,10 @@ func Save(path string, settings Settings) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(path, content, 0o600); err != nil {
+	if err := os.Chmod(path, 0o600); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
-	return os.Chmod(path, 0o600)
+	return os.WriteFile(path, content, 0o600)
 }
 
 // What the flags and the environment set, without the saved login
@@ -89,6 +89,9 @@ func Resolve(flags Settings, getenv func(string) string, path string) (Settings,
 		return Settings{}, err
 	}
 	settings.URL = cmp.Or(settings.URL, saved.URL)
-	settings.Token = cmp.Or(settings.Token, saved.Token)
+	// The saved token belongs to the saved server, and another one given by --url or DEWEY_URL must not see it
+	if settings.Token == "" && settings.URL == saved.URL {
+		settings.Token = saved.Token
+	}
 	return settings, nil
 }

@@ -76,6 +76,22 @@ func TestATypoInACommandGetsASuggestion(t *testing.T) {
 	}
 }
 
+func TestHelpForAnUnknownTopicFails(t *testing.T) {
+	_, err := dewey(t, nil, "", "help", "bogus")
+
+	if err == nil || !strings.Contains(err.Error(), `Unknown command "bogus"`) {
+		t.Fatalf("expected an unknown command error, got %v", err)
+	}
+}
+
+func TestHelpForACommandShowsItsHelp(t *testing.T) {
+	out, err := dewey(t, nil, "", "help", "books", "list")
+
+	if err != nil || !strings.Contains(out, "dewey books list <library-id>") {
+		t.Fatalf("expected the help of books list, got %v %q", err, out)
+	}
+}
+
 func TestAServerWithoutASchemeIsRejected(t *testing.T) {
 	_, err := dewey(t, nil, "", "--url", "localhost:8080", "--token", "t", "me", "view")
 
