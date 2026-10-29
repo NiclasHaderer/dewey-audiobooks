@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -213,7 +214,8 @@ func libraryBody(t *testing.T, name string) string {
 	return fmt.Sprintf(`{
 		"name": %q, "icon": null, "folders": [%q], "preferEmbeddedMetadata": true,
 		"metadataAgents": [], "combineMetadataAgentFields": false,
-		"fileScanners": [], "combineFileScannerFields": false, "language": "English", "region": "US"
+		"fileScanners": [{"name": "AudioFolderScanner"}], "combineFileScannerFields": false, "language": "English",
+		"region": "US"
 	}`, name, t.TempDir())
 }
 
@@ -275,14 +277,19 @@ func TestATrackDownloadsAsTheFileItWasScannedFrom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sources, err := filepath.Glob("../../test-resources/*/*/*.mp3")
+	found := false
+	err = filepath.WalkDir("../../test-resources", func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || found {
+			return err
+		}
+		content, err := os.ReadFile(path)
+		found = err == nil && bytes.Equal(content, downloaded)
+		return err
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, source := range sources {
-		if content, err := os.ReadFile(source); err == nil && bytes.Equal(content, downloaded) {
-			return
-		}
+	if !found {
+		t.Fatalf("the %d downloaded bytes match no file in test-resources", len(downloaded))
 	}
-	t.Fatalf("the %d downloaded bytes match none of %v", len(downloaded), sources)
 }

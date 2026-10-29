@@ -61,7 +61,7 @@ test-cli:
 test-cli-e2e: build-server run-cli-e2e
 
 # Runs the end-to-end tests against the server as built, like CI does with the one the server workflow uploads
-run-cli-e2e: (_with-server "server/build/install/server/bin/server" "cd cli && go test -tags e2e -count=1 ./e2e/...")
+run-cli-e2e: (_with-server "server/build/install/server/bin/server" ("cd cli && DEWEY_E2E_URL=http://localhost:" + port + " go test -tags e2e -count=1 ./e2e/..."))
 
 # Starts the server and the web dev server, seeding a user and a library on the first start
 dev: (_with-server "./gradlew :server:run" "cd web && npm run dev")

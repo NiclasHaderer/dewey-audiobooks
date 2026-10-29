@@ -63,12 +63,28 @@ func TestTheSavedLoginFillsWhatFlagsAndEnvironmentLeaveOpen(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	settings, err := Resolve(Settings{URL: "http://flag"}, func(string) string { return "" }, path)
+	settings, err := Resolve(Settings{Token: "flag-token"}, func(string) string { return "" }, path)
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if settings != (Settings{URL: "http://flag", Token: "saved-token"}) {
+	if settings != (Settings{URL: "http://saved", Token: "flag-token"}) {
+		t.Fatalf("resolved %+v", settings)
+	}
+}
+
+func TestTheSavedTokenIsNotSentToAnotherServer(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.json")
+	if err := Save(path, Settings{URL: "http://saved", Token: "saved-token"}); err != nil {
+		t.Fatal(err)
+	}
+
+	settings, err := Resolve(Settings{URL: "http://other"}, func(string) string { return "" }, path)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settings != (Settings{URL: "http://other"}) {
 		t.Fatalf("resolved %+v", settings)
 	}
 }
