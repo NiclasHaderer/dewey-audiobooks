@@ -3,15 +3,15 @@
 package models
 
 type AuthorUpdate struct {
-	Name       Patch[string]        `json:"name,omitzero"`
-	Provider   Patch[*string]       `json:"provider,omitzero"`
-	ProviderID Patch[*string]       `json:"providerID,omitzero"`
-	Biography  Patch[*string]       `json:"biography,omitzero"`
-	Image      Patch[*string]       `json:"image,omitzero"`
-	Website    Patch[*string]       `json:"website,omitzero"`
-	BornIn     Patch[*string]       `json:"bornIn,omitzero"`
-	BirthDate  Patch[*Date]         `json:"birthDate,omitzero"`
-	DeathDate  Patch[*Date]         `json:"deathDate,omitzero"`
-	Books      Patch[[]UUID]        `json:"books,omitzero"`
-	Unlock     Patch[[]AuthorField] `json:"unlock,omitzero"`
+	Name       Patch[string]            `json:"name,omitzero"`
+	Provider   Patch[*string]           `json:"provider,omitzero"`
+	ProviderID Patch[*string]           `json:"providerID,omitzero"`
+	Biography  Patch[*string]           `json:"biography,omitzero"`
+	Image      Patch[*string]           `json:"image,omitzero"`
+	Website    Patch[*string]           `json:"website,omitzero"`
+	BornIn     Patch[*string]           `json:"bornIn,omitzero"`
+	BirthDate  Patch[*Date]             `json:"birthDate,omitzero"`
+	DeathDate  Patch[*Date]             `json:"deathDate,omitzero"`
+	Books      Patch[List[UUID]]        `json:"books,omitzero"`
+	Unlock     Patch[List[AuthorField]] `json:"unlock,omitzero"`
 }

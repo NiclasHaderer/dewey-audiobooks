@@ -3,6 +3,6 @@
 package models
 
 type MetadataAgentApiModel struct {
-	Name             string           `json:"name"`
-	SupportedRegions []MetadataRegion `json:"supportedRegions"`
+	Name             string               `json:"name"`
+	SupportedRegions List[MetadataRegion] `json:"supportedRegions"`
 }

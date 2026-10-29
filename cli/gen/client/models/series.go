@@ -3,16 +3,16 @@
 package models
 
 type Series struct {
-	ID           UUID      `json:"id"`
-	LibraryID    UUID      `json:"libraryId"`
-	Authors      []NamedID `json:"authors"`
-	Title        string    `json:"title"`
-	Provider     *string   `json:"provider"`
-	ProviderID   *string   `json:"providerID"`
-	TotalBooks   *int32    `json:"totalBooks"`
-	PrimaryWorks *int32    `json:"primaryWorks"`
-	CoverID      *UUID     `json:"coverID"`
-	Description  *string   `json:"description"`
-	Genres       []string  `json:"genres"`
-	BookCoverIDs []UUID    `json:"bookCoverIDs"`
+	ID           UUID          `json:"id"`
+	LibraryID    UUID          `json:"libraryId"`
+	Authors      List[NamedID] `json:"authors"`
+	Title        string        `json:"title"`
+	Provider     *string       `json:"provider"`
+	ProviderID   *string       `json:"providerID"`
+	TotalBooks   *int32        `json:"totalBooks"`
+	PrimaryWorks *int32        `json:"primaryWorks"`
+	CoverID      *UUID         `json:"coverID"`
+	Description  *string       `json:"description"`
+	Genres       List[string]  `json:"genres"`
+	BookCoverIDs List[UUID]    `json:"bookCoverIDs"`
 }

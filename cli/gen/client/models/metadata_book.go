@@ -3,18 +3,18 @@
 package models
 
 type MetadataBook struct {
-	ID             MetadataAgentID        `json:"id"`
-	Title          *string                `json:"title"`
-	Link           *string                `json:"link"`
-	Authors        []MetadataSearchAuthor `json:"authors"`
-	Series         []MetadataBookSeries   `json:"series"`
-	ReleaseDate    *Date                  `json:"releaseDate"`
-	CoverURL       *string                `json:"coverURL"`
-	Description    *string                `json:"description"`
-	Narrators      []string               `json:"narrators"`
-	ProviderRating *float32               `json:"providerRating"`
-	Publisher      *string                `json:"publisher"`
-	Language       *MetadataLanguage      `json:"language"`
-	Isbn           *string                `json:"isbn"`
-	Asin           *string                `json:"asin"`
+	ID             MetadataAgentID          `json:"id"`
+	Title          *string                  `json:"title"`
+	Link           *string                  `json:"link"`
+	Authors        []MetadataSearchAuthor   `json:"authors"`
+	Series         List[MetadataBookSeries] `json:"series"`
+	ReleaseDate    *Date                    `json:"releaseDate"`
+	CoverURL       *string                  `json:"coverURL"`
+	Description    *string                  `json:"description"`
+	Narrators      List[string]             `json:"narrators"`
+	ProviderRating *float32                 `json:"providerRating"`
+	Publisher      *string                  `json:"publisher"`
+	Language       *MetadataLanguage        `json:"language"`
+	Isbn           *string                  `json:"isbn"`
+	Asin           *string                  `json:"asin"`
 }

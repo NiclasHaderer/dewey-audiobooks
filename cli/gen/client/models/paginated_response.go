@@ -3,8 +3,8 @@
 package models
 
 type PaginatedResponse[T any] struct {
-	Items  []T   `json:"items"`
-	Total  int64 `json:"total"`
-	Offset int64 `json:"offset"`
-	Limit  int32 `json:"limit"`
+	Items  List[T] `json:"items"`
+	Total  int64   `json:"total"`
+	Offset int64   `json:"offset"`
+	Limit  int32   `json:"limit"`
 }

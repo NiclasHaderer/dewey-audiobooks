@@ -3,7 +3,7 @@
 package models
 
 type LibrarySearchResult struct {
-	Books   []Book   `json:"books"`
-	Series  []Series `json:"series"`
-	Authors []Author `json:"authors"`
+	Books   List[Book]   `json:"books"`
+	Series  List[Series] `json:"series"`
+	Authors List[Author] `json:"authors"`
 }

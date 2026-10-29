@@ -3,6 +3,6 @@
 package models
 
 type NarratorDetailed struct {
-	Name  string `json:"name"`
-	Books []Book `json:"books"`
+	Name  string     `json:"name"`
+	Books List[Book] `json:"books"`
 }

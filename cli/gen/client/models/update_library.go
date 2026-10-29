@@ -3,14 +3,14 @@
 package models
 
 type UpdateLibrary struct {
-	Name                       string               `json:"name"`
-	Icon                       *string              `json:"icon"`
-	Folders                    []string             `json:"folders"`
-	PreferEmbeddedMetadata     bool                 `json:"preferEmbeddedMetadata"`
-	MetadataAgents             []NamedMetadataAgent `json:"metadataAgents"`
-	CombineMetadataAgentFields bool                 `json:"combineMetadataAgentFields"`
-	FileScanners               []FileScanner        `json:"fileScanners"`
-	CombineFileScannerFields   bool                 `json:"combineFileScannerFields"`
-	Language                   MetadataLanguage     `json:"language"`
-	Region                     MetadataRegion       `json:"region"`
+	Name                       string                   `json:"name"`
+	Icon                       *string                  `json:"icon"`
+	Folders                    List[string]             `json:"folders"`
+	PreferEmbeddedMetadata     bool                     `json:"preferEmbeddedMetadata"`
+	MetadataAgents             List[NamedMetadataAgent] `json:"metadataAgents"`
+	CombineMetadataAgentFields bool                     `json:"combineMetadataAgentFields"`
+	FileScanners               List[FileScanner]        `json:"fileScanners"`
+	CombineFileScannerFields   bool                     `json:"combineFileScannerFields"`
+	Language                   MetadataLanguage         `json:"language"`
+	Region                     MetadataRegion           `json:"region"`
 }

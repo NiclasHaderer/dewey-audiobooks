@@ -3,6 +3,6 @@
 package models
 
 type UserPermissions struct {
-	IsAdmin   bool                 `json:"isAdmin"`
-	Libraries []LibraryPermissions `json:"libraries"`
+	IsAdmin   bool                     `json:"isAdmin"`
+	Libraries List[LibraryPermissions] `json:"libraries"`
 }

@@ -62,6 +62,9 @@ internal const val MODELS = "models."
 private const val MODELS_DIRECTORY = "models"
 private const val TYPES_FILE = "types.go"
 
+// The Patch semantics the server's SerializationTest pins down, checked against the Go side of the wire
+private const val TYPES_TEST_FILE = "types_test.go"
+
 class GoClientGenerator(
     override val routes: List<OpenApiRoute>,
     private val webSockets: List<OpenApiRoute>,
@@ -107,10 +110,12 @@ class GoClientGenerator(
         }
         val runtime = GENERATED_HEADER + "package $packageName\n\n" + getResourceContent("/go/runtime.go")
         val types = GENERATED_HEADER + "package $MODELS_DIRECTORY\n\n" + getResourceContent("/go/$TYPES_FILE")
+        val typesTest = GENERATED_HEADER + "package $MODELS_DIRECTORY\n\n" + getResourceContent("/go/$TYPES_TEST_FILE")
         return listOf(
             ClientPart("runtime.go", runtime),
             ClientPart("client.go", client),
             ClientPart("$MODELS_DIRECTORY/$TYPES_FILE", types),
+            ClientPart("$MODELS_DIRECTORY/$TYPES_TEST_FILE", typesTest),
         ) +
             modelFiles.map { (file, declaration) ->
                 ClientPart("$MODELS_DIRECTORY/$file", declaration.goFile(MODELS_DIRECTORY))

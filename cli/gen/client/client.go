@@ -143,7 +143,7 @@ func (c *Client) GetAuthor(ctx context.Context, libraryID models.UUID, id models
 	return out, err
 }
 
-func (c *Client) GetAuthorAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.NamedID, error) {
+func (c *Client) GetAuthorAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) (models.List[models.NamedID], error) {
 	query := url.Values{}
 	query.Set("query", queryValue(queryParam))
 	r := request{
@@ -152,7 +152,7 @@ func (c *Client) GetAuthorAutocomplete(ctx context.Context, libraryID models.UUI
 		query:   query,
 		secured: true,
 	}
-	var out []models.NamedID
+	var out models.List[models.NamedID]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -182,7 +182,7 @@ func (c *Client) GetBook(ctx context.Context, libraryID models.UUID, id models.U
 	return out, err
 }
 
-func (c *Client) GetBookAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.TitledID, error) {
+func (c *Client) GetBookAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) (models.List[models.TitledID], error) {
 	query := url.Values{}
 	query.Set("query", queryValue(queryParam))
 	r := request{
@@ -191,7 +191,7 @@ func (c *Client) GetBookAutocomplete(ctx context.Context, libraryID models.UUID,
 		query:   query,
 		secured: true,
 	}
-	var out []models.TitledID
+	var out models.List[models.TitledID]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -228,7 +228,7 @@ type GetContinueListeningOptions struct {
 	Limit *int32
 }
 
-func (c *Client) GetContinueListening(ctx context.Context, opts *GetContinueListeningOptions) ([]models.Book, error) {
+func (c *Client) GetContinueListening(ctx context.Context, opts *GetContinueListeningOptions) (models.List[models.Book], error) {
 	query := url.Values{}
 	if opts != nil {
 		if opts.Limit != nil {
@@ -241,7 +241,7 @@ func (c *Client) GetContinueListening(ctx context.Context, opts *GetContinueList
 		query:   query,
 		secured: true,
 	}
-	var out []models.Book
+	var out models.List[models.Book]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -336,7 +336,7 @@ func (c *Client) GetSeries(ctx context.Context, libraryID models.UUID, id models
 	return out, err
 }
 
-func (c *Client) GetSeriesAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.TitledID, error) {
+func (c *Client) GetSeriesAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) (models.List[models.TitledID], error) {
 	query := url.Values{}
 	query.Set("query", queryValue(queryParam))
 	r := request{
@@ -345,7 +345,7 @@ func (c *Client) GetSeriesAutocomplete(ctx context.Context, libraryID models.UUI
 		query:   query,
 		secured: true,
 	}
-	var out []models.TitledID
+	var out models.List[models.TitledID]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -375,13 +375,13 @@ func (c *Client) GetUser(ctx context.Context, id models.UUID) (models.DeweyUser,
 	return out, err
 }
 
-func (c *Client) ListAccessTokens(ctx context.Context) ([]models.AccessToken, error) {
+func (c *Client) ListAccessTokens(ctx context.Context) (models.List[models.AccessToken], error) {
 	r := request{
 		method:  "GET",
 		path:    "/api/auth/user/tokens",
 		secured: true,
 	}
-	var out []models.AccessToken
+	var out models.List[models.AccessToken]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -454,13 +454,13 @@ func (c *Client) ListBooks(ctx context.Context, libraryID models.UUID, opts *Lis
 	return out, err
 }
 
-func (c *Client) ListFileScanners(ctx context.Context) ([]models.FileScanner, error) {
+func (c *Client) ListFileScanners(ctx context.Context) (models.List[models.FileScanner], error) {
 	r := request{
 		method:  "GET",
 		path:    "/api/scanners",
 		secured: true,
 	}
-	var out []models.FileScanner
+	var out models.List[models.FileScanner]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -469,7 +469,7 @@ type ListFoldersAtACertainPathOptions struct {
 	ShowHidden *bool
 }
 
-func (c *Client) ListFoldersAtACertainPath(ctx context.Context, path string, opts *ListFoldersAtACertainPathOptions) ([]models.FileSystemItem, error) {
+func (c *Client) ListFoldersAtACertainPath(ctx context.Context, path string, opts *ListFoldersAtACertainPathOptions) (models.List[models.FileSystemItem], error) {
 	query := url.Values{}
 	query.Set("path", queryValue(path))
 	if opts != nil {
@@ -483,7 +483,7 @@ func (c *Client) ListFoldersAtACertainPath(ctx context.Context, path string, opt
 		query:   query,
 		secured: true,
 	}
-	var out []models.FileSystemItem
+	var out models.List[models.FileSystemItem]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -518,24 +518,24 @@ func (c *Client) ListGenres(ctx context.Context, libraryID models.UUID, opts *Li
 	return out, err
 }
 
-func (c *Client) ListLibraries(ctx context.Context) ([]models.Library, error) {
+func (c *Client) ListLibraries(ctx context.Context) (models.List[models.Library], error) {
 	r := request{
 		method:  "GET",
 		path:    "/api/libraries",
 		secured: true,
 	}
-	var out []models.Library
+	var out models.List[models.Library]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
 
-func (c *Client) ListMetadataAgents(ctx context.Context) ([]models.MetadataAgentApiModel, error) {
+func (c *Client) ListMetadataAgents(ctx context.Context) (models.List[models.MetadataAgentApiModel], error) {
 	r := request{
 		method:  "GET",
 		path:    "/api/metadata-agents",
 		secured: true,
 	}
-	var out []models.MetadataAgentApiModel
+	var out models.List[models.MetadataAgentApiModel]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -604,24 +604,24 @@ func (c *Client) ListSeries(ctx context.Context, libraryID models.UUID, opts *Li
 	return out, err
 }
 
-func (c *Client) ListThirdPartyLicenses(ctx context.Context) ([]models.ThirdPartyLicense, error) {
+func (c *Client) ListThirdPartyLicenses(ctx context.Context) (models.List[models.ThirdPartyLicense], error) {
 	r := request{
 		method:  "GET",
 		path:    "/api/licenses",
 		secured: true,
 	}
-	var out []models.ThirdPartyLicense
+	var out models.List[models.ThirdPartyLicense]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
 
-func (c *Client) ListUsers(ctx context.Context) ([]models.DeweyUserWithPermissions[models.UserPermissions], error) {
+func (c *Client) ListUsers(ctx context.Context) (models.List[models.DeweyUserWithPermissions[models.UserPermissions]], error) {
 	r := request{
 		method:  "GET",
 		path:    "/api/auth/user",
 		secured: true,
 	}
-	var out []models.DeweyUserWithPermissions[models.UserPermissions]
+	var out models.List[models.DeweyUserWithPermissions[models.UserPermissions]]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -725,7 +725,7 @@ func (c *Client) RevokeAccessToken(ctx context.Context, id models.UUID, body mod
 	return c.json(ctx, r, nil)
 }
 
-func (c *Client) SearchAuthorMetadata(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.MetadataAuthor, error) {
+func (c *Client) SearchAuthorMetadata(ctx context.Context, libraryID models.UUID, queryParam string) (models.List[models.MetadataAuthor], error) {
 	query := url.Values{}
 	query.Set("query", queryValue(queryParam))
 	r := request{
@@ -734,7 +734,7 @@ func (c *Client) SearchAuthorMetadata(ctx context.Context, libraryID models.UUID
 		query:   query,
 		secured: true,
 	}
-	var out []models.MetadataAuthor
+	var out models.List[models.MetadataAuthor]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -747,7 +747,7 @@ type SearchBookMetadataOptions struct {
 	PageSize   *models.MetadataSearchCount
 }
 
-func (c *Client) SearchBookMetadata(ctx context.Context, libraryID models.UUID, queryParam string, opts *SearchBookMetadataOptions) ([]models.MetadataBook, error) {
+func (c *Client) SearchBookMetadata(ctx context.Context, libraryID models.UUID, queryParam string, opts *SearchBookMetadataOptions) (models.List[models.MetadataBook], error) {
 	query := url.Values{}
 	query.Set("query", queryValue(queryParam))
 	if opts != nil {
@@ -773,7 +773,7 @@ func (c *Client) SearchBookMetadata(ctx context.Context, libraryID models.UUID, 
 		query:   query,
 		secured: true,
 	}
-	var out []models.MetadataBook
+	var out models.List[models.MetadataBook]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
@@ -816,7 +816,7 @@ type SearchSeriesMetadataOptions struct {
 	AuthorName *string
 }
 
-func (c *Client) SearchSeriesMetadata(ctx context.Context, libraryID models.UUID, queryParam string, opts *SearchSeriesMetadataOptions) ([]models.MetadataSeries, error) {
+func (c *Client) SearchSeriesMetadata(ctx context.Context, libraryID models.UUID, queryParam string, opts *SearchSeriesMetadataOptions) (models.List[models.MetadataSeries], error) {
 	query := url.Values{}
 	query.Set("query", queryValue(queryParam))
 	if opts != nil {
@@ -830,7 +830,7 @@ func (c *Client) SearchSeriesMetadata(ctx context.Context, libraryID models.UUID
 		query:   query,
 		secured: true,
 	}
-	var out []models.MetadataSeries
+	var out models.List[models.MetadataSeries]
 	err := c.json(ctx, r, &out)
 	return out, err
 }
