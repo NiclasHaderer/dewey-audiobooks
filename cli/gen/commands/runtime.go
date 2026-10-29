@@ -138,7 +138,16 @@ func enumKind[T ~string](values ...T) kind[T] {
 	}}
 }
 
-// Retrying quoted lets a JSON string like a date go without quotes on the command line
+func dateKind[T ~string]() kind[T] {
+	return kind[T]{"date", func(raw string) (T, error) {
+		if _, err := time.Parse(time.DateOnly, raw); err != nil {
+			return "", errors.New("a date like 2024-01-31")
+		}
+		return T(raw), nil
+	}}
+}
+
+// Retrying quoted lets a JSON string like a date-time go without quotes on the command line
 func jsonKind[T any](name string, wants string) kind[T] {
 	return kind[T]{name, func(raw string) (T, error) {
 		var value T
@@ -401,7 +410,7 @@ func printTable(out io.Writer, output Output, rows reflect.Value) error {
 	}
 	for i := 0; i < rows.Len(); i++ {
 		for _, column := range columns {
-			cell := cellText.Replace(format(reflect.Indirect(rows.Index(i)).Field(column), output))
+			cell := cellText.Replace(cellOf(rows.Index(i), column, output))
 			// An id is what the next command takes, so a cut one is of no use
 			if uuidPattern.MatchString(cell) {
 				table.AddField(cell, tableprinter.WithTruncate(nil))
@@ -428,7 +437,7 @@ func tableColumns(rows reflect.Value, row reflect.Type, output Output) []int {
 
 func emptyInEveryRow(rows reflect.Value, field int) bool {
 	for i := 0; i < rows.Len(); i++ {
-		if format(reflect.Indirect(rows.Index(i)).Field(field), Output{}) != "" {
+		if cellOf(rows.Index(i), field, Output{}) != "" {
 			return false
 		}
 	}
@@ -550,7 +559,20 @@ func isSingleValue(t reflect.Type) bool {
 	return true
 }
 
+// A nil row of a list of pointers has no fields, so each of its cells is empty
+func cellOf(row reflect.Value, field int, output Output) string {
+	row = reflect.Indirect(row)
+	if !row.IsValid() {
+		return ""
+	}
+	return format(row.Field(field), output)
+}
+
+// The zero Value is what a nil response becomes once its pointer is followed
 func format(value reflect.Value, output Output) string {
+	if !value.IsValid() {
+		return ""
+	}
 	if value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
 		if value.IsNil() {
 			return ""
