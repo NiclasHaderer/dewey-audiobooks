@@ -16,6 +16,8 @@ import io.dewey.server.file.scanner.LibraryImportPipeline
 import io.dewey.server.file.scanner.LibraryRoots
 import io.dewey.server.file.scanner.LibraryWatcher
 import io.dewey.server.file.scanner.LibraryWatcherImpl
+import io.dewey.server.repositories.AccessTokenRepository
+import io.dewey.server.repositories.AccessTokenRepositoryImpl
 import io.dewey.server.repositories.AuthorRepository
 import io.dewey.server.repositories.AuthorServiceImpl
 import io.dewey.server.repositories.BookRepository
@@ -56,6 +58,7 @@ fun deweyModule(config: DeweyConfig) =
         single<GenreRepository> { GenreRepositoryImpl() }
         single<LibraryRepository> { LibraryRepositoryImpl() }
         single<ProgressRepository> { ProgressRepositoryImpl() }
+        single<AccessTokenRepository> { AccessTokenRepositoryImpl() }
         single { Scheduler() }
         single { DeweySchedules() }
         single { AutoMatcher() }

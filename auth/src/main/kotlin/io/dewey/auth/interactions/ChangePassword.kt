@@ -23,10 +23,9 @@ fun RoutingContext.changeUserPassword(
     val principal = deweyPrincipal<DeweyPrincipal>()
     val config = deweyAuthConfig<Any, Any>()
 
-    if (principal.userId != params.id && !config.isAdmin(principal)) {
+    if (principal.userId != params.id && !principal.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can change another user's password")
     }
-
     val user = config.getUserById(params.id) ?: throw ErrorResponse.userError("Could not find user with username")
 
     config.passwordMeetsRequirements(passwordChange.newPassword).also { (meetsRequirements, message) ->

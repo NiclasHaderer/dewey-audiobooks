@@ -91,12 +91,14 @@ class Api {
             @Resource("{id}")
             @Summary("Get user", method = "GET")
             @Summary("Delete user", method = "DELETE")
+            @Secured(Guards.NormalLogin, method = "DELETE")
             data class Id(
                 override val id: Uuid,
                 private val parent: User,
             ) : DeweyDeleteUserParams,
                 DeweyDisplayUserParams {
                 @Summary("Update username", method = "POST")
+                @Secured(Guards.NormalLogin)
                 @Resource("username")
                 data class Username(
                     private val parent: Id,
@@ -106,6 +108,7 @@ class Api {
                 }
 
                 @Summary("Update password", method = "POST")
+                @Secured(Guards.NormalLogin)
                 @Resource("password")
                 data class Password(
                     private val parent: Id,
@@ -114,7 +117,7 @@ class Api {
                         get() = parent.id
                 }
 
-                @Secured(Guards.Admin)
+                @Secured(Guards.AdminLogin)
                 @Summary("Update permissions", method = "PUT")
                 @Resource("permissions")
                 data class Permissions(
@@ -130,6 +133,33 @@ class Api {
             data class Current(
                 private val parent: User,
             ) : DeweyCurrentUserParams
+
+            @Summary("List access tokens", method = "GET")
+            @Summary("Create access token", method = "POST", status = 201)
+            @Secured(Guards.NormalLogin, method = "POST")
+            @Resource("tokens")
+            @Tagged("Access tokens")
+            data class Tokens(
+                private val parent: User,
+            ) {
+                @Summary("Update access token", method = "PATCH")
+                @Summary("Revoke access token", method = "DELETE")
+                @Secured(Guards.NormalLogin)
+                @Resource("{id}")
+                data class Id(
+                    val id: Uuid,
+                    private val parent: Tokens,
+                ) {
+                    @Summary("Reveal access token", method = "POST")
+                    @Resource("reveal")
+                    data class Reveal(
+                        private val parent: Id,
+                    ) {
+                        val id
+                            get() = parent.id
+                    }
+                }
+            }
         }
     }
 
@@ -614,8 +644,10 @@ class Api {
         }
     }
 
+    // The token is only checked at the handshake, so a socket opened with one would keep listening after the token
+    // was revoked or expired
     @Summary("Listen to events", method = "GET")
-    @Secured(Guards.Media)
+    @Secured(Guards.MediaLogin)
     @Resource("events")
     data class Events(
         private val parent: Api,
