@@ -152,7 +152,6 @@ private fun EnumDeclaration.enumType(): String {
 // An optional property is a Patch, whose omitzero tag leaves it out of the JSON while it is unset
 private fun ObjectDeclaration.structType(): String =
     buildString {
-        description?.let { append(comment(it)) }
         val parameters = if (typeParameters.isEmpty()) {
             ""
         } else {
@@ -168,7 +167,6 @@ private fun ObjectDeclaration.structType(): String =
         }
         append("type ${exported(name)}$parameters struct {\n")
         properties.sortedBy { it.name }.forEach { property ->
-            property.description?.let { append(comment(it, "\t")) }
             if (property.optional) {
                 append(
                     "\t${exported(property.name)} Patch[${property.type.go()}] `json:\"${property.name},omitzero\"`\n",
@@ -179,8 +177,3 @@ private fun ObjectDeclaration.structType(): String =
         }
         append("}\n")
     }
-
-internal fun comment(
-    text: String,
-    indent: String = "",
-): String = text.lines().joinToString("") { "$indent// ${it.trimEnd()}".trimEnd() + "\n" }

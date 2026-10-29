@@ -17,6 +17,8 @@ annotation class NotSecured
 annotation class Tagged(
     val name: String,
     val description: String = "",
+    // The section of the CLI's help that lists the tag's commands
+    val group: String = "",
 )
 
 // A SerialInfo annotation reaches the descriptor, which is where the schema generators read it from

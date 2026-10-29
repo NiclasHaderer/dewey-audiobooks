@@ -53,10 +53,14 @@ class GoRoute(
         }
 }
 
+// An optional parameter that is not nullable yet becomes a pointer, nil being "not given"
+internal fun optionalWire(type: WireType): WireType =
+    if (type is WireType.ListOf || type is WireType.MapOf || type.nullable) type else type.withNullable()
+
 // How the client package refers to the models package below it
 internal const val MODELS = "models."
 private const val MODELS_DIRECTORY = "models"
-private const val WIRE_FILE = "wire.go"
+private const val TYPES_FILE = "types.go"
 
 class GoClientGenerator(
     override val routes: List<OpenApiRoute>,
@@ -96,17 +100,17 @@ class GoClientGenerator(
         val modelFiles = model.declarations.associateBy { fileName(it.name) }
         val clashes =
             model.declarations.groupBy { fileName(it.name) }.filter { (file, models) ->
-                models.size > 1 || file == WIRE_FILE
+                models.size > 1 || file == TYPES_FILE
             }
         check(clashes.isEmpty()) {
             "${clashes.values.flatten().joinToString { it.name }} would be written to the same Go file, rename one"
         }
         val runtime = GENERATED_HEADER + "package $packageName\n\n" + getResourceContent("/go/runtime.go")
-        val wire = GENERATED_HEADER + "package $MODELS_DIRECTORY\n\n" + getResourceContent("/go/wire.go")
+        val types = GENERATED_HEADER + "package $MODELS_DIRECTORY\n\n" + getResourceContent("/go/$TYPES_FILE")
         return listOf(
             ClientPart("runtime.go", runtime),
             ClientPart("client.go", client),
-            ClientPart("$MODELS_DIRECTORY/$WIRE_FILE", wire),
+            ClientPart("$MODELS_DIRECTORY/$TYPES_FILE", types),
         ) +
             modelFiles.map { (file, declaration) ->
                 ClientPart("$MODELS_DIRECTORY/$file", declaration.goFile(MODELS_DIRECTORY))
@@ -146,14 +150,11 @@ class GoClientGenerator(
             goRoute.optionsType?.let { options ->
                 append("type $options struct {\n")
                 goRoute.optionalQuery.forEach { parameter ->
-                    parameter.description?.let { append(comment(it, "\t")) }
                     append("\t${exported(parameter.name)} ${optionalType(parameter.type)}\n")
                 }
                 append("}\n\n")
             }
 
-            append("// ${goRoute.functionName} calls ${route.method.value} ${route.fullPath}: ${route.summary}\n")
-            route.description?.let { append(comment(it)) }
             val arguments =
                 buildList {
                     add("ctx context.Context")
@@ -230,10 +231,6 @@ class GoClientGenerator(
         if (rest.isNotEmpty() || parts.isEmpty()) parts += "\"$rest\""
         return parts.joinToString(" + ")
     }
-
-    // An optional parameter that is not nullable yet becomes a pointer, nil being "not given"
-    private fun optionalWire(type: WireType): WireType =
-        if (type is WireType.ListOf || type is WireType.MapOf || type.nullable) type else type.withNullable()
 
     private fun optionalType(type: WireType): String = optionalWire(type).go(MODELS)
 

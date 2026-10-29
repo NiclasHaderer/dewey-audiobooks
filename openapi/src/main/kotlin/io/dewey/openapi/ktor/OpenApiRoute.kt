@@ -108,6 +108,10 @@ class OpenApiRoute(
         paramsClass.findAnnotationsFirstUp<Tagged>().firstNotNullOfOrNull { it.description.ifBlank { null } }
     }
 
+    val tagGroup by lazy {
+        paramsClass.findAnnotationsFirstUp<Tagged>().firstNotNullOfOrNull { it.group.ifBlank { null } }
+    }
+
     val operationId by lazy {
         val segments =
             fullPath.split("/").filter { it.isNotBlank() }.joinToString("") { segment ->
