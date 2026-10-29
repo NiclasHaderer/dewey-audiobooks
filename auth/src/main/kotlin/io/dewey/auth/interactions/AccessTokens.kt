@@ -5,17 +5,25 @@ import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
 import io.dewey.auth.utils.generateAccessToken
 import io.dewey.auth.utils.passwordMatches
+import io.dewey.auth.withUserMutation
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-fun RoutingContext.confirmPassword(password: String) {
-    val principal = deweyPrincipal<DeweyPrincipal>()
-    val user = deweyAuthConfig<Any, Any>().getUserById(principal.userId)
-        ?: throw ErrorResponse.notFound("User", principal.userId)
-    if (!passwordMatches(password, user)) throw ErrorResponse.userError("Wrong password")
-}
+// Runs under the lock a password change takes, so a token created here cannot slip in between the check and a
+// concurrent change that revokes every token of the user
+fun <T> RoutingContext.withConfirmedPassword(
+    password: String,
+    block: () -> T,
+): T =
+    withUserMutation {
+        val principal = deweyPrincipal<DeweyPrincipal>()
+        val user = deweyAuthConfig<Any, Any>().getUserById(principal.userId)
+            ?: throw ErrorResponse.notFound("User", principal.userId)
+        if (!passwordMatches(password, user)) throw ErrorResponse.userError("Wrong password")
+        block()
+    }
 
 fun RoutingContext.issueAccessToken(
     userId: Uuid,
