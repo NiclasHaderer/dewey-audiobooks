@@ -4,12 +4,11 @@ package client
 
 import (
 	"context"
-	"github.com/NiclasHaderer/dewey-audiobooks/cli/client/models"
+	"github.com/NiclasHaderer/dewey-audiobooks/cli/gen/client/models"
 	"io"
 	"net/url"
 )
 
-// AutoMatchAuthor calls POST /api/libraries/{libraryId}/authors/{id}/automatch: Auto match author
 func (c *Client) AutoMatchAuthor(ctx context.Context, libraryID models.UUID, id models.UUID) (models.Author, error) {
 	r := request{
 		method:  "POST",
@@ -21,7 +20,6 @@ func (c *Client) AutoMatchAuthor(ctx context.Context, libraryID models.UUID, id 
 	return out, err
 }
 
-// AutoMatchBook calls POST /api/libraries/{libraryId}/books/{id}/automatch: Auto match book
 func (c *Client) AutoMatchBook(ctx context.Context, libraryID models.UUID, id models.UUID) (models.Book, error) {
 	r := request{
 		method:  "POST",
@@ -33,7 +31,6 @@ func (c *Client) AutoMatchBook(ctx context.Context, libraryID models.UUID, id mo
 	return out, err
 }
 
-// AutoMatchSeries calls POST /api/libraries/{libraryId}/series/{id}/automatch: Auto match series
 func (c *Client) AutoMatchSeries(ctx context.Context, libraryID models.UUID, id models.UUID) (models.Series, error) {
 	r := request{
 		method:  "POST",
@@ -45,7 +42,6 @@ func (c *Client) AutoMatchSeries(ctx context.Context, libraryID models.UUID, id 
 	return out, err
 }
 
-// CreateAccessToken calls POST /api/auth/user/tokens: Create access token
 func (c *Client) CreateAccessToken(ctx context.Context, body models.CreateAccessToken) (models.CreatedAccessToken, error) {
 	r := request{
 		method:  "POST",
@@ -59,7 +55,6 @@ func (c *Client) CreateAccessToken(ctx context.Context, body models.CreateAccess
 	return out, err
 }
 
-// CreateAuthor calls POST /api/libraries/{libraryId}/authors: Create author
 func (c *Client) CreateAuthor(ctx context.Context, libraryID models.UUID, body models.AuthorCreate) (models.AuthorDetailed, error) {
 	r := request{
 		method:  "POST",
@@ -73,7 +68,6 @@ func (c *Client) CreateAuthor(ctx context.Context, libraryID models.UUID, body m
 	return out, err
 }
 
-// CreateLibrary calls POST /api/libraries: Create library
 func (c *Client) CreateLibrary(ctx context.Context, body models.UpdateLibrary) (models.Library, error) {
 	r := request{
 		method:  "POST",
@@ -87,7 +81,6 @@ func (c *Client) CreateLibrary(ctx context.Context, body models.UpdateLibrary) (
 	return out, err
 }
 
-// CreateSeries calls POST /api/libraries/{libraryId}/series: Create series
 func (c *Client) CreateSeries(ctx context.Context, libraryID models.UUID, body models.SeriesCreate) (models.SeriesDetailed, error) {
 	r := request{
 		method:  "POST",
@@ -101,7 +94,6 @@ func (c *Client) CreateSeries(ctx context.Context, libraryID models.UUID, body m
 	return out, err
 }
 
-// DeleteLibrary calls DELETE /api/libraries/{libraryId}: Delete library
 func (c *Client) DeleteLibrary(ctx context.Context, libraryID models.UUID) error {
 	r := request{
 		method:  "DELETE",
@@ -111,7 +103,6 @@ func (c *Client) DeleteLibrary(ctx context.Context, libraryID models.UUID) error
 	return c.json(ctx, r, nil)
 }
 
-// DeleteUser calls DELETE /api/auth/user/{id}: Delete user
 func (c *Client) DeleteUser(ctx context.Context, id models.UUID) error {
 	r := request{
 		method:  "DELETE",
@@ -121,7 +112,6 @@ func (c *Client) DeleteUser(ctx context.Context, id models.UUID) error {
 	return c.json(ctx, r, nil)
 }
 
-// GetApiVersion calls GET /api/version: Get api version
 func (c *Client) GetApiVersion(ctx context.Context) (models.ApiVersion, error) {
 	r := request{
 		method:  "GET",
@@ -133,7 +123,6 @@ func (c *Client) GetApiVersion(ctx context.Context) (models.ApiVersion, error) {
 	return out, err
 }
 
-// GetAudioFile calls GET /api/stream/audio/{id}: Get audio file
 func (c *Client) GetAudioFile(ctx context.Context, id models.UUID) (io.ReadCloser, error) {
 	r := request{
 		method:  "GET",
@@ -143,7 +132,6 @@ func (c *Client) GetAudioFile(ctx context.Context, id models.UUID) (io.ReadClose
 	return c.stream(ctx, r)
 }
 
-// GetAuthor calls GET /api/libraries/{libraryId}/authors/{id}: Get author
 func (c *Client) GetAuthor(ctx context.Context, libraryID models.UUID, id models.UUID) (models.AuthorDetailed, error) {
 	r := request{
 		method:  "GET",
@@ -155,10 +143,9 @@ func (c *Client) GetAuthor(ctx context.Context, libraryID models.UUID, id models
 	return out, err
 }
 
-// GetAuthorAutocomplete calls GET /api/libraries/{libraryId}/authors/autocomplete: Get author autocomplete
-func (c *Client) GetAuthorAutocomplete(ctx context.Context, libraryID models.UUID, q string) ([]models.NamedID, error) {
+func (c *Client) GetAuthorAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.NamedID, error) {
 	query := url.Values{}
-	query.Set("q", queryValue(q))
+	query.Set("query", queryValue(queryParam))
 	r := request{
 		method:  "GET",
 		path:    "/api/libraries/" + pathValue(libraryID) + "/authors/autocomplete",
@@ -170,7 +157,6 @@ func (c *Client) GetAuthorAutocomplete(ctx context.Context, libraryID models.UUI
 	return out, err
 }
 
-// GetAuthorMetadata calls GET /api/libraries/{libraryId}/metadata/author/{id}: Get author metadata
 func (c *Client) GetAuthorMetadata(ctx context.Context, libraryID models.UUID, id string, provider string) (models.MetadataAuthor, error) {
 	query := url.Values{}
 	query.Set("provider", queryValue(provider))
@@ -185,7 +171,6 @@ func (c *Client) GetAuthorMetadata(ctx context.Context, libraryID models.UUID, i
 	return out, err
 }
 
-// GetBook calls GET /api/libraries/{libraryId}/books/{id}: Get book
 func (c *Client) GetBook(ctx context.Context, libraryID models.UUID, id models.UUID) (models.BookDetailed, error) {
 	r := request{
 		method:  "GET",
@@ -197,10 +182,9 @@ func (c *Client) GetBook(ctx context.Context, libraryID models.UUID, id models.U
 	return out, err
 }
 
-// GetBookAutocomplete calls GET /api/libraries/{libraryId}/books/autocomplete: Get book autocomplete
-func (c *Client) GetBookAutocomplete(ctx context.Context, libraryID models.UUID, q string) ([]models.TitledID, error) {
+func (c *Client) GetBookAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.TitledID, error) {
 	query := url.Values{}
-	query.Set("q", queryValue(q))
+	query.Set("query", queryValue(queryParam))
 	r := request{
 		method:  "GET",
 		path:    "/api/libraries/" + pathValue(libraryID) + "/books/autocomplete",
@@ -212,7 +196,6 @@ func (c *Client) GetBookAutocomplete(ctx context.Context, libraryID models.UUID,
 	return out, err
 }
 
-// GetBookChapterMetadata calls GET /api/libraries/{libraryId}/metadata/book/{id}/chapters: Get book chapter metadata
 func (c *Client) GetBookChapterMetadata(ctx context.Context, libraryID models.UUID, id string, provider string) (models.MetadataChapters, error) {
 	query := url.Values{}
 	query.Set("provider", queryValue(provider))
@@ -227,7 +210,6 @@ func (c *Client) GetBookChapterMetadata(ctx context.Context, libraryID models.UU
 	return out, err
 }
 
-// GetBookMetadata calls GET /api/libraries/{libraryId}/metadata/book/{id}: Get book metadata
 func (c *Client) GetBookMetadata(ctx context.Context, libraryID models.UUID, id string, provider string) (models.MetadataBook, error) {
 	query := url.Values{}
 	query.Set("provider", queryValue(provider))
@@ -246,7 +228,6 @@ type GetContinueListeningOptions struct {
 	Limit *int32
 }
 
-// GetContinueListening calls GET /api/me/continue-listening: Get continue listening
 func (c *Client) GetContinueListening(ctx context.Context, opts *GetContinueListeningOptions) ([]models.Book, error) {
 	query := url.Values{}
 	if opts != nil {
@@ -265,7 +246,6 @@ func (c *Client) GetContinueListening(ctx context.Context, opts *GetContinueList
 	return out, err
 }
 
-// GetCurrentUser calls GET /api/auth/user/current: Get current user
 func (c *Client) GetCurrentUser(ctx context.Context) (models.DeweyUserWithPermissions[models.UserPermissions], error) {
 	r := request{
 		method:  "GET",
@@ -277,7 +257,6 @@ func (c *Client) GetCurrentUser(ctx context.Context) (models.DeweyUserWithPermis
 	return out, err
 }
 
-// GetGenre calls GET /api/libraries/{libraryId}/genres/{name}: Get genre
 func (c *Client) GetGenre(ctx context.Context, libraryID models.UUID, name string) (models.GenreDetailed, error) {
 	r := request{
 		method:  "GET",
@@ -289,7 +268,6 @@ func (c *Client) GetGenre(ctx context.Context, libraryID models.UUID, name strin
 	return out, err
 }
 
-// GetImageFile calls GET /api/stream/images/{id}: Get image file
 func (c *Client) GetImageFile(ctx context.Context, id models.UUID) (io.ReadCloser, error) {
 	r := request{
 		method:  "GET",
@@ -299,7 +277,6 @@ func (c *Client) GetImageFile(ctx context.Context, id models.UUID) (io.ReadClose
 	return c.stream(ctx, r)
 }
 
-// GetLibrary calls GET /api/libraries/{libraryId}: Get library
 func (c *Client) GetLibrary(ctx context.Context, libraryID models.UUID) (models.Library, error) {
 	r := request{
 		method:  "GET",
@@ -316,7 +293,6 @@ type GetListeningHistoryOptions struct {
 	Offset *int64
 }
 
-// GetListeningHistory calls GET /api/me/history: Get listening history
 func (c *Client) GetListeningHistory(ctx context.Context, opts *GetListeningHistoryOptions) (models.PaginatedResponse[models.ListeningHistoryEntry], error) {
 	query := url.Values{}
 	if opts != nil {
@@ -338,7 +314,6 @@ func (c *Client) GetListeningHistory(ctx context.Context, opts *GetListeningHist
 	return out, err
 }
 
-// GetNarrator calls GET /api/libraries/{libraryId}/narrators/{name}: Get narrator
 func (c *Client) GetNarrator(ctx context.Context, libraryID models.UUID, name string) (models.NarratorDetailed, error) {
 	r := request{
 		method:  "GET",
@@ -350,7 +325,6 @@ func (c *Client) GetNarrator(ctx context.Context, libraryID models.UUID, name st
 	return out, err
 }
 
-// GetSeries calls GET /api/libraries/{libraryId}/series/{id}: Get series
 func (c *Client) GetSeries(ctx context.Context, libraryID models.UUID, id models.UUID) (models.SeriesDetailed, error) {
 	r := request{
 		method:  "GET",
@@ -362,10 +336,9 @@ func (c *Client) GetSeries(ctx context.Context, libraryID models.UUID, id models
 	return out, err
 }
 
-// GetSeriesAutocomplete calls GET /api/libraries/{libraryId}/series/autocomplete: Get series autocomplete
-func (c *Client) GetSeriesAutocomplete(ctx context.Context, libraryID models.UUID, q string) ([]models.TitledID, error) {
+func (c *Client) GetSeriesAutocomplete(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.TitledID, error) {
 	query := url.Values{}
-	query.Set("q", queryValue(q))
+	query.Set("query", queryValue(queryParam))
 	r := request{
 		method:  "GET",
 		path:    "/api/libraries/" + pathValue(libraryID) + "/series/autocomplete",
@@ -377,7 +350,6 @@ func (c *Client) GetSeriesAutocomplete(ctx context.Context, libraryID models.UUI
 	return out, err
 }
 
-// GetSeriesMetadata calls GET /api/libraries/{libraryId}/metadata/series/{id}: Get series metadata
 func (c *Client) GetSeriesMetadata(ctx context.Context, libraryID models.UUID, id string, provider string) (models.MetadataSeries, error) {
 	query := url.Values{}
 	query.Set("provider", queryValue(provider))
@@ -392,7 +364,6 @@ func (c *Client) GetSeriesMetadata(ctx context.Context, libraryID models.UUID, i
 	return out, err
 }
 
-// GetUser calls GET /api/auth/user/{id}: Get user
 func (c *Client) GetUser(ctx context.Context, id models.UUID) (models.DeweyUser, error) {
 	r := request{
 		method:  "GET",
@@ -404,7 +375,6 @@ func (c *Client) GetUser(ctx context.Context, id models.UUID) (models.DeweyUser,
 	return out, err
 }
 
-// ListAccessTokens calls GET /api/auth/user/tokens: List access tokens
 func (c *Client) ListAccessTokens(ctx context.Context) ([]models.AccessToken, error) {
 	r := request{
 		method:  "GET",
@@ -423,7 +393,6 @@ type ListAuthorsOptions struct {
 	ShowInvisible *bool
 }
 
-// ListAuthors calls GET /api/libraries/{libraryId}/authors: List authors
 func (c *Client) ListAuthors(ctx context.Context, libraryID models.UUID, opts *ListAuthorsOptions) (models.PaginatedResponse[models.Author], error) {
 	query := url.Values{}
 	if opts != nil {
@@ -458,7 +427,6 @@ type ListBooksOptions struct {
 	ShowInvisible *bool
 }
 
-// ListBooks calls GET /api/libraries/{libraryId}/books: List books
 func (c *Client) ListBooks(ctx context.Context, libraryID models.UUID, opts *ListBooksOptions) (models.PaginatedResponse[models.Book], error) {
 	query := url.Values{}
 	if opts != nil {
@@ -486,7 +454,6 @@ func (c *Client) ListBooks(ctx context.Context, libraryID models.UUID, opts *Lis
 	return out, err
 }
 
-// ListFileScanners calls GET /api/scanners: List file scanners
 func (c *Client) ListFileScanners(ctx context.Context) ([]models.FileScanner, error) {
 	r := request{
 		method:  "GET",
@@ -502,7 +469,6 @@ type ListFoldersAtACertainPathOptions struct {
 	ShowHidden *bool
 }
 
-// ListFoldersAtACertainPath calls GET /api/fs: List folders at a certain path
 func (c *Client) ListFoldersAtACertainPath(ctx context.Context, path string, opts *ListFoldersAtACertainPathOptions) ([]models.FileSystemItem, error) {
 	query := url.Values{}
 	query.Set("path", queryValue(path))
@@ -528,7 +494,6 @@ type ListGenresOptions struct {
 	Order  *models.Order
 }
 
-// ListGenres calls GET /api/libraries/{libraryId}/genres: List genres
 func (c *Client) ListGenres(ctx context.Context, libraryID models.UUID, opts *ListGenresOptions) (models.PaginatedResponse[models.Genre], error) {
 	query := url.Values{}
 	if opts != nil {
@@ -553,7 +518,6 @@ func (c *Client) ListGenres(ctx context.Context, libraryID models.UUID, opts *Li
 	return out, err
 }
 
-// ListLibraries calls GET /api/libraries: List libraries
 func (c *Client) ListLibraries(ctx context.Context) ([]models.Library, error) {
 	r := request{
 		method:  "GET",
@@ -565,7 +529,6 @@ func (c *Client) ListLibraries(ctx context.Context) ([]models.Library, error) {
 	return out, err
 }
 
-// ListMetadataAgents calls GET /api/metadata-agents: List metadata agents
 func (c *Client) ListMetadataAgents(ctx context.Context) ([]models.MetadataAgentApiModel, error) {
 	r := request{
 		method:  "GET",
@@ -583,7 +546,6 @@ type ListNarratorsOptions struct {
 	Order  *models.Order
 }
 
-// ListNarrators calls GET /api/libraries/{libraryId}/narrators: List narrators
 func (c *Client) ListNarrators(ctx context.Context, libraryID models.UUID, opts *ListNarratorsOptions) (models.PaginatedResponse[models.Narrator], error) {
 	query := url.Values{}
 	if opts != nil {
@@ -615,7 +577,6 @@ type ListSeriesOptions struct {
 	ShowInvisible *bool
 }
 
-// ListSeries calls GET /api/libraries/{libraryId}/series: List series
 func (c *Client) ListSeries(ctx context.Context, libraryID models.UUID, opts *ListSeriesOptions) (models.PaginatedResponse[models.Series], error) {
 	query := url.Values{}
 	if opts != nil {
@@ -643,7 +604,6 @@ func (c *Client) ListSeries(ctx context.Context, libraryID models.UUID, opts *Li
 	return out, err
 }
 
-// ListThirdPartyLicenses calls GET /api/licenses: List third party licenses
 func (c *Client) ListThirdPartyLicenses(ctx context.Context) ([]models.ThirdPartyLicense, error) {
 	r := request{
 		method:  "GET",
@@ -655,7 +615,6 @@ func (c *Client) ListThirdPartyLicenses(ctx context.Context) ([]models.ThirdPart
 	return out, err
 }
 
-// ListUsers calls GET /api/auth/user: List users
 func (c *Client) ListUsers(ctx context.Context) ([]models.DeweyUserWithPermissions[models.UserPermissions], error) {
 	r := request{
 		method:  "GET",
@@ -667,7 +626,6 @@ func (c *Client) ListUsers(ctx context.Context) ([]models.DeweyUserWithPermissio
 	return out, err
 }
 
-// LoginUser calls POST /api/auth/login: Login user
 func (c *Client) LoginUser(ctx context.Context, body models.DeweyLoginUser) (models.DeweyAccessToken, error) {
 	r := request{
 		method:  "POST",
@@ -681,7 +639,6 @@ func (c *Client) LoginUser(ctx context.Context, body models.DeweyLoginUser) (mod
 	return out, err
 }
 
-// LogoutUser calls POST /api/auth/logout: Logout user
 func (c *Client) LogoutUser(ctx context.Context) error {
 	r := request{
 		method:  "POST",
@@ -691,7 +648,6 @@ func (c *Client) LogoutUser(ctx context.Context) error {
 	return c.json(ctx, r, nil)
 }
 
-// PingServer calls POST /api/ping: Ping server
 func (c *Client) PingServer(ctx context.Context) error {
 	r := request{
 		method:  "POST",
@@ -701,7 +657,6 @@ func (c *Client) PingServer(ctx context.Context) error {
 	return c.json(ctx, r, nil)
 }
 
-// RefreshAccessToken calls POST /api/auth/user/refresh: Refresh access token
 func (c *Client) RefreshAccessToken(ctx context.Context) (models.DeweyAccessToken, error) {
 	r := request{
 		method:  "POST",
@@ -713,7 +668,6 @@ func (c *Client) RefreshAccessToken(ctx context.Context) (models.DeweyAccessToke
 	return out, err
 }
 
-// RegisterUser calls POST /api/auth/register: Register user
 func (c *Client) RegisterUser(ctx context.Context, body models.DeweyRegisterUser) (models.DeweyUser, error) {
 	r := request{
 		method:  "POST",
@@ -727,7 +681,6 @@ func (c *Client) RegisterUser(ctx context.Context, body models.DeweyRegisterUser
 	return out, err
 }
 
-// RescanLibrary calls POST /api/libraries/{libraryId}/rescan: Rescan library
 func (c *Client) RescanLibrary(ctx context.Context, libraryID models.UUID) error {
 	r := request{
 		method:  "POST",
@@ -737,7 +690,6 @@ func (c *Client) RescanLibrary(ctx context.Context, libraryID models.UUID) error
 	return c.json(ctx, r, nil)
 }
 
-// RetrieveJwks calls GET /api/auth/jwks.json: Retrieve Jwks
 func (c *Client) RetrieveJwks(ctx context.Context) (models.DeweyJWKs, error) {
 	r := request{
 		method:  "GET",
@@ -749,11 +701,10 @@ func (c *Client) RetrieveJwks(ctx context.Context) (models.DeweyJWKs, error) {
 	return out, err
 }
 
-// RevealAccessToken calls POST /api/auth/user/tokens/{tokenId}/reveal: Reveal access token
-func (c *Client) RevealAccessToken(ctx context.Context, tokenID models.UUID, body models.PasswordConfirmation) (models.RevealedAccessToken, error) {
+func (c *Client) RevealAccessToken(ctx context.Context, id models.UUID, body models.PasswordConfirmation) (models.RevealedAccessToken, error) {
 	r := request{
 		method:  "POST",
-		path:    "/api/auth/user/tokens/" + pathValue(tokenID) + "/reveal",
+		path:    "/api/auth/user/tokens/" + pathValue(id) + "/reveal",
 		body:    body,
 		hasBody: true,
 		secured: true,
@@ -763,11 +714,10 @@ func (c *Client) RevealAccessToken(ctx context.Context, tokenID models.UUID, bod
 	return out, err
 }
 
-// RevokeAccessToken calls DELETE /api/auth/user/tokens/{tokenId}: Revoke access token
-func (c *Client) RevokeAccessToken(ctx context.Context, tokenID models.UUID, body models.PasswordConfirmation) error {
+func (c *Client) RevokeAccessToken(ctx context.Context, id models.UUID, body models.PasswordConfirmation) error {
 	r := request{
 		method:  "DELETE",
-		path:    "/api/auth/user/tokens/" + pathValue(tokenID),
+		path:    "/api/auth/user/tokens/" + pathValue(id),
 		body:    body,
 		hasBody: true,
 		secured: true,
@@ -775,10 +725,9 @@ func (c *Client) RevokeAccessToken(ctx context.Context, tokenID models.UUID, bod
 	return c.json(ctx, r, nil)
 }
 
-// SearchAuthorMetadata calls GET /api/libraries/{libraryId}/metadata/author/search: Search author metadata
-func (c *Client) SearchAuthorMetadata(ctx context.Context, libraryID models.UUID, q string) ([]models.MetadataAuthor, error) {
+func (c *Client) SearchAuthorMetadata(ctx context.Context, libraryID models.UUID, queryParam string) ([]models.MetadataAuthor, error) {
 	query := url.Values{}
-	query.Set("q", queryValue(q))
+	query.Set("query", queryValue(queryParam))
 	r := request{
 		method:  "GET",
 		path:    "/api/libraries/" + pathValue(libraryID) + "/metadata/author/search",
@@ -798,10 +747,9 @@ type SearchBookMetadataOptions struct {
 	PageSize   *models.MetadataSearchCount
 }
 
-// SearchBookMetadata calls GET /api/libraries/{libraryId}/metadata/book/search: Search book metadata
-func (c *Client) SearchBookMetadata(ctx context.Context, libraryID models.UUID, q string, opts *SearchBookMetadataOptions) ([]models.MetadataBook, error) {
+func (c *Client) SearchBookMetadata(ctx context.Context, libraryID models.UUID, queryParam string, opts *SearchBookMetadataOptions) ([]models.MetadataBook, error) {
 	query := url.Values{}
-	query.Set("q", queryValue(q))
+	query.Set("query", queryValue(queryParam))
 	if opts != nil {
 		if opts.AuthorName != nil {
 			query.Set("authorName", queryValue(*opts.AuthorName))
@@ -833,11 +781,10 @@ func (c *Client) SearchBookMetadata(ctx context.Context, libraryID models.UUID, 
 type SearchInAllLibrariesOptions struct {
 	Author *string
 	Book   *string
-	Q      *string
+	Query  *string
 	Series *string
 }
 
-// SearchInAllLibraries calls GET /api/libraries/search: Search in all libraries
 func (c *Client) SearchInAllLibraries(ctx context.Context, opts *SearchInAllLibrariesOptions) (models.LibrarySearchResult, error) {
 	query := url.Values{}
 	if opts != nil {
@@ -847,8 +794,8 @@ func (c *Client) SearchInAllLibraries(ctx context.Context, opts *SearchInAllLibr
 		if opts.Book != nil {
 			query.Set("book", queryValue(*opts.Book))
 		}
-		if opts.Q != nil {
-			query.Set("q", queryValue(*opts.Q))
+		if opts.Query != nil {
+			query.Set("query", queryValue(*opts.Query))
 		}
 		if opts.Series != nil {
 			query.Set("series", queryValue(*opts.Series))
@@ -869,10 +816,9 @@ type SearchSeriesMetadataOptions struct {
 	AuthorName *string
 }
 
-// SearchSeriesMetadata calls GET /api/libraries/{libraryId}/metadata/series/search: Search series metadata
-func (c *Client) SearchSeriesMetadata(ctx context.Context, libraryID models.UUID, q string, opts *SearchSeriesMetadataOptions) ([]models.MetadataSeries, error) {
+func (c *Client) SearchSeriesMetadata(ctx context.Context, libraryID models.UUID, queryParam string, opts *SearchSeriesMetadataOptions) ([]models.MetadataSeries, error) {
 	query := url.Values{}
-	query.Set("q", queryValue(q))
+	query.Set("query", queryValue(queryParam))
 	if opts != nil {
 		if opts.AuthorName != nil {
 			query.Set("authorName", queryValue(*opts.AuthorName))
@@ -889,7 +835,6 @@ func (c *Client) SearchSeriesMetadata(ctx context.Context, libraryID models.UUID
 	return out, err
 }
 
-// SetBookDismissed calls PUT /api/libraries/{libraryId}/books/{id}/progress/dismissed: Set book dismissed
 func (c *Client) SetBookDismissed(ctx context.Context, libraryID models.UUID, id models.UUID, body models.SetDismissed) error {
 	r := request{
 		method:  "PUT",
@@ -901,7 +846,6 @@ func (c *Client) SetBookDismissed(ctx context.Context, libraryID models.UUID, id
 	return c.json(ctx, r, nil)
 }
 
-// SetBookFinished calls PUT /api/libraries/{libraryId}/books/{id}/progress/finished: Set book finished
 func (c *Client) SetBookFinished(ctx context.Context, libraryID models.UUID, id models.UUID, body models.SetFinished) error {
 	r := request{
 		method:  "PUT",
@@ -913,7 +857,6 @@ func (c *Client) SetBookFinished(ctx context.Context, libraryID models.UUID, id 
 	return c.json(ctx, r, nil)
 }
 
-// SetBookProgress calls PUT /api/libraries/{libraryId}/books/{id}/progress: Set book progress
 func (c *Client) SetBookProgress(ctx context.Context, libraryID models.UUID, id models.UUID, body models.ProgressUpdate) error {
 	r := request{
 		method:  "PUT",
@@ -925,11 +868,10 @@ func (c *Client) SetBookProgress(ctx context.Context, libraryID models.UUID, id 
 	return c.json(ctx, r, nil)
 }
 
-// UpdateAccessToken calls PATCH /api/auth/user/tokens/{tokenId}: Update access token
-func (c *Client) UpdateAccessToken(ctx context.Context, tokenID models.UUID, body models.UpdateAccessToken) (models.AccessToken, error) {
+func (c *Client) UpdateAccessToken(ctx context.Context, id models.UUID, body models.UpdateAccessToken) (models.AccessToken, error) {
 	r := request{
 		method:  "PATCH",
-		path:    "/api/auth/user/tokens/" + pathValue(tokenID),
+		path:    "/api/auth/user/tokens/" + pathValue(id),
 		body:    body,
 		hasBody: true,
 		secured: true,
@@ -939,7 +881,6 @@ func (c *Client) UpdateAccessToken(ctx context.Context, tokenID models.UUID, bod
 	return out, err
 }
 
-// UpdateAuthor calls PATCH /api/libraries/{libraryId}/authors/{id}: Update author
 func (c *Client) UpdateAuthor(ctx context.Context, libraryID models.UUID, id models.UUID, body models.AuthorUpdate) (models.Author, error) {
 	r := request{
 		method:  "PATCH",
@@ -953,7 +894,6 @@ func (c *Client) UpdateAuthor(ctx context.Context, libraryID models.UUID, id mod
 	return out, err
 }
 
-// UpdateBook calls PATCH /api/libraries/{libraryId}/books/{id}: Update book
 func (c *Client) UpdateBook(ctx context.Context, libraryID models.UUID, id models.UUID, body models.BookUpdate) (models.Book, error) {
 	r := request{
 		method:  "PATCH",
@@ -967,7 +907,6 @@ func (c *Client) UpdateBook(ctx context.Context, libraryID models.UUID, id model
 	return out, err
 }
 
-// UpdateLibrary calls PATCH /api/libraries/{libraryId}: Update library
 func (c *Client) UpdateLibrary(ctx context.Context, libraryID models.UUID, body models.PartialUpdateLibrary) (models.Library, error) {
 	r := request{
 		method:  "PATCH",
@@ -981,7 +920,6 @@ func (c *Client) UpdateLibrary(ctx context.Context, libraryID models.UUID, body 
 	return out, err
 }
 
-// UpdatePassword calls POST /api/auth/user/{id}/password: Update password
 func (c *Client) UpdatePassword(ctx context.Context, id models.UUID, body models.DeweyChangePassword) error {
 	r := request{
 		method:  "POST",
@@ -993,7 +931,6 @@ func (c *Client) UpdatePassword(ctx context.Context, id models.UUID, body models
 	return c.json(ctx, r, nil)
 }
 
-// UpdatePermissions calls PUT /api/auth/user/{id}/permissions: Update permissions
 func (c *Client) UpdatePermissions(ctx context.Context, id models.UUID, body models.DeweyModifyPermissions[models.UpdateUserPermissions]) (models.DeweyUser, error) {
 	r := request{
 		method:  "PUT",
@@ -1007,7 +944,6 @@ func (c *Client) UpdatePermissions(ctx context.Context, id models.UUID, body mod
 	return out, err
 }
 
-// UpdateSeries calls PATCH /api/libraries/{libraryId}/series/{id}: Update series
 func (c *Client) UpdateSeries(ctx context.Context, libraryID models.UUID, id models.UUID, body models.SeriesUpdate) (models.Series, error) {
 	r := request{
 		method:  "PATCH",
@@ -1021,7 +957,6 @@ func (c *Client) UpdateSeries(ctx context.Context, libraryID models.UUID, id mod
 	return out, err
 }
 
-// UpdateUsername calls POST /api/auth/user/{id}/username: Update username
 func (c *Client) UpdateUsername(ctx context.Context, id models.UUID, body models.DeweyRenameUser) (models.DeweyUser, error) {
 	r := request{
 		method:  "POST",
