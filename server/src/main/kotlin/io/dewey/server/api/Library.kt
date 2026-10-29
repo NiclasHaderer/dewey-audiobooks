@@ -51,7 +51,7 @@ fun Routing.libraryRouting() {
 
         val query =
             it.query ?: throw ErrorResponse.notImplemented(
-                "This is still under construction. Currently only the parameter 'q' is supported",
+                "This is still under construction. Currently only the parameter 'query' is supported",
             )
 
         SearchRepository.everywhere(query, libsToSearch, deweyPrincipal().userId)
