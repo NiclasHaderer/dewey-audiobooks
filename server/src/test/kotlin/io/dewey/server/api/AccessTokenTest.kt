@@ -241,7 +241,7 @@ class AccessTokenTest : DeweyTest() {
                 )
 
             assertEquals(HttpStatusCode.OK, api.getLibrary(allowed, token.headers).status)
-            assertEquals(HttpStatusCode.Forbidden, api.getLibrary(other, token.headers).status)
+            assertEquals(HttpStatusCode.NotFound, api.getLibrary(other, token.headers).status)
         }
 
     @Test
@@ -254,7 +254,7 @@ class AccessTokenTest : DeweyTest() {
 
             revoke("listener", libId)
 
-            assertEquals(HttpStatusCode.Forbidden, api.getLibrary(libId, token.headers).status)
+            assertEquals(HttpStatusCode.NotFound, api.getLibrary(libId, token.headers).status)
         }
 
     @Test

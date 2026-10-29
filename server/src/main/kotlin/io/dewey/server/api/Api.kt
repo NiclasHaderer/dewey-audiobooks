@@ -47,9 +47,9 @@ class Api {
         "List folders at a certain path",
         method = "GET",
         command = "list",
-        description = "List the folders at a path on the server, to choose a library's folders from",
+        description = "List the folders at a path on the server",
     )
-    @Tagged("Filesystem", description = "Browse the server's folders")
+    @Tagged("Filesystem", description = "Browse the server's folders", group = "Server")
     data class FileSystem(
         @Description("The folder on the server to list")
         val path: String,
@@ -59,7 +59,7 @@ class Api {
     )
 
     @Resource("auth")
-    @Tagged("Sessions", description = "Log in with a password, the way the web app does")
+    @Tagged("Sessions", description = "Log in with a password, like the web app", group = "Account")
     data class Auth(
         private val parent: Api,
     ) {
@@ -105,7 +105,7 @@ class Api {
 
         @Secured(Guards.Normal)
         @Resource("user")
-        @Tagged("Users", description = "View accounts")
+        @Tagged("Users", description = "User accounts", group = "Account")
         data class User(
             private val parent: Auth,
         ) {
@@ -183,8 +183,7 @@ class Api {
                 "Get current user",
                 method = "GET",
                 command = "view",
-                description =
-                    "View your account, including whether you are an admin and which libraries you can read or write",
+                description = "View your account and permissions",
             )
             @Resource("current")
             @Tagged("Me")
@@ -205,7 +204,7 @@ class Api {
             )
             @Secured(Guards.NormalLogin, method = "POST")
             @Resource("tokens")
-            @Tagged("Access tokens", description = "See the access tokens that scripts and this CLI log in with")
+            @Tagged("Access tokens", description = "Access tokens for scripts and this CLI", group = "Account")
             data class Tokens(
                 private val parent: User,
             ) {
@@ -246,7 +245,7 @@ class Api {
 
     @Secured(Guards.Normal)
     @Resource("me")
-    @Tagged("Me", description = "See your account and what you listen to")
+    @Tagged("Me", description = "Your account and listening", group = "Account")
     data class Me(
         private val parent: Api,
     ) {
@@ -280,7 +279,7 @@ class Api {
     }
 
     @Summary("Ping server", method = "POST", command = "ping", description = "Check that the server is up")
-    @Tagged("Server", description = "Check the server's status, version and licenses")
+    @Tagged("Server", description = "Server status, version and licenses", group = "Server")
     @Resource("ping")
     data class Ping(
         private val parent: Api,
@@ -298,7 +297,7 @@ class Api {
         "List third party licenses",
         method = "GET",
         command = "licenses",
-        description = "List the licenses of the software the server is built on",
+        description = "List the server's third-party licenses",
     )
     @Tagged("Server")
     @Resource("licenses")
@@ -311,9 +310,9 @@ class Api {
         "List file scanners",
         method = "GET",
         command = "file-scanners",
-        description = "List the file scanners a library can use to read its books",
+        description = "List the file scanners",
     )
-    @Tagged("Scanners", description = "List the file scanners and metadata agents a library can use")
+    @Tagged("Scanners", description = "File scanners and metadata agents", group = "Server")
     @Resource("scanners")
     data class Scanners(
         private val parent: Api,
@@ -324,7 +323,7 @@ class Api {
         "List metadata agents",
         method = "GET",
         command = "metadata-agents",
-        description = "List the metadata agents, like Audible, to match books, authors and series with",
+        description = "List the metadata agents, like Audible",
     )
     @Tagged("Scanners")
     @Resource("metadata-agents")
@@ -341,7 +340,7 @@ class Api {
         description = "Create a library from folders on the server and scan them (admins only)",
     )
     @Resource("libraries")
-    @Tagged("Libraries", description = "Manage libraries, the folders the server scans for audiobooks")
+    @Tagged("Libraries", description = "Libraries, the folders the server scans for audiobooks", group = "Library")
     data class Libraries(
         private val parent: Api,
     ) {
@@ -392,7 +391,7 @@ class Api {
                 "Rescan library",
                 method = "POST",
                 status = 202,
-                description = "Scan the folders of a library again, in the background",
+                description = "Rescan a library in the background",
             )
             @Resource("rescan")
             data class Rescan(
@@ -403,7 +402,7 @@ class Api {
             }
 
             @Resource("books")
-            @Tagged("Books", description = "Work with the books of a library and your progress in them")
+            @Tagged("Books", description = "Books and your progress in them", group = "Library")
             data class Books(
                 private val parent: Libraries.Id,
             ) {
@@ -531,12 +530,12 @@ class Api {
             }
 
             @Resource("authors")
-            @Tagged("Authors", description = "Work with the authors of a library")
+            @Tagged("Authors", description = "Authors in a library", group = "Library")
             @Summary(
                 "Create author",
                 method = "POST",
                 status = 201,
-                description = "Create an author by hand, to link books to",
+                description = "Create an author",
             )
             data class Authors(
                 private val parent: Libraries.Id,
@@ -611,7 +610,7 @@ class Api {
             }
 
             @Resource("narrators")
-            @Tagged("Narrators", description = "Work with the narrators of a library")
+            @Tagged("Narrators", description = "Narrators in a library", group = "Library")
             data class Narrators(
                 private val parent: Id,
             ) {
@@ -650,7 +649,7 @@ class Api {
             }
 
             @Resource("genres")
-            @Tagged("Genres", description = "Work with the genres of a library")
+            @Tagged("Genres", description = "Genres in a library", group = "Library")
             data class Genres(
                 private val parent: Id,
             ) {
@@ -684,12 +683,12 @@ class Api {
             }
 
             @Resource("series")
-            @Tagged("Series", description = "Work with the series of a library")
+            @Tagged("Series", description = "Series in a library", group = "Library")
             @Summary(
                 "Create series",
                 method = "POST",
                 status = 201,
-                description = "Create a series by hand, to link books to",
+                description = "Create a series",
             )
             data class Series(
                 private val parent: Libraries.Id,
@@ -765,7 +764,11 @@ class Api {
 
             @Secured(Guards.Normal)
             @Resource("metadata")
-            @Tagged("Metadata", description = "Look up books, authors and series at the metadata agents")
+            @Tagged(
+                "Metadata",
+                description = "Look up books, authors and series at the metadata agents",
+                group = "Library",
+            )
             data class Metadata(
                 private val parent: Id,
             ) {
@@ -780,7 +783,7 @@ class Api {
                         "Get author metadata",
                         method = "GET",
                         command = "author",
-                        description = "View an author from a metadata agent, by the agent's id for it",
+                        description = "View an author from a metadata agent",
                     )
                     @Resource("{id}")
                     data class Id(
@@ -818,7 +821,7 @@ class Api {
                         "Get book metadata",
                         method = "GET",
                         command = "book",
-                        description = "View a book from a metadata agent, by the agent's id for it",
+                        description = "View a book from a metadata agent",
                     )
                     @Resource("{id}")
                     data class Id(
@@ -834,7 +837,7 @@ class Api {
                             "Get book chapter metadata",
                             method = "GET",
                             command = "chapters",
-                            description = "View the chapters of a book from a metadata agent, by the agent's id for it",
+                            description = "View the chapters of a book from a metadata agent",
                         )
                         @Resource("chapters")
                         data class Chapters(
@@ -884,7 +887,7 @@ class Api {
                         "Get series metadata",
                         method = "GET",
                         command = "series",
-                        description = "View a series from a metadata agent, by the agent's id for it",
+                        description = "View a series from a metadata agent",
                     )
                     @Resource("{id}")
                     data class Id(
@@ -930,7 +933,7 @@ class Api {
 
     @Secured(Guards.Media)
     @Resource("stream")
-    @Tagged("Files", description = "Download audio and images")
+    @Tagged("Files", description = "Download audio and images", group = "Library")
     data class Files(
         private val parent: Api,
     ) {

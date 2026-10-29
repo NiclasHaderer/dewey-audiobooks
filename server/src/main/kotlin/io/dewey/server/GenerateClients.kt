@@ -31,13 +31,13 @@ fun main() {
             )
             generateGoClient(
                 packageName = "client",
-                importPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/client",
-                savePath = "cli/client",
+                importPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/gen/client",
+                savePath = "cli/gen/client",
             )
             generateGoCli(
                 packageName = "commands",
-                clientImportPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/client",
-                savePath = "cli/commands",
+                clientImportPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/gen/client",
+                savePath = "cli/gen/commands",
                 loginOnlyGuards = Guards.LoginOnly,
             )
             generateOpenApiSpec(Path.of("gen/openapi.yaml"))

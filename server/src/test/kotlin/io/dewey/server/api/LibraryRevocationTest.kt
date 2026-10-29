@@ -55,10 +55,10 @@ class LibraryRevocationTest : DeweyTest() {
             revoke("listener", libId)
 
             // Same token, no new login
-            assertEquals(HttpStatusCode.Forbidden, api.listBooks(libId, headers = token).status)
-            assertEquals(HttpStatusCode.Forbidden, api.getBook(bookId, libId, token).status)
-            assertEquals(HttpStatusCode.Forbidden, api.getLibrary(libId, token).status)
-            assertEquals(HttpStatusCode.Forbidden, api.getAudioFile(trackId, token).status)
+            assertEquals(HttpStatusCode.NotFound, api.listBooks(libId, headers = token).status)
+            assertEquals(HttpStatusCode.NotFound, api.getBook(bookId, libId, token).status)
+            assertEquals(HttpStatusCode.NotFound, api.getLibrary(libId, token).status)
+            assertEquals(HttpStatusCode.NotFound, api.getAudioFile(trackId, token).status)
 
             assertTrue(api.getContinueListening(headers = token).body().isEmpty())
             assertTrue(
@@ -74,7 +74,7 @@ class LibraryRevocationTest : DeweyTest() {
             assertTrue(search.books.isEmpty(), "revoked books must not surface in search: $search")
 
             assertEquals(
-                HttpStatusCode.Forbidden,
+                HttpStatusCode.NotFound,
                 api.setBookProgress(bookId, libId, ProgressUpdate(positionMs = 99000), token).status,
             )
         }
