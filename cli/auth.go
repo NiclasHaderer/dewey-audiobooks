@@ -20,7 +20,8 @@ func authCommand(configPath string, flags *config.Settings, getenv func(string) 
 		Long: `Log in to a server.
 
 dewey logs in with an access token, which you create under Settings > Access tokens in the web app.`,
-		RunE: commands.Group,
+		GroupID: "account",
+		RunE:    commands.Group,
 	}
 	auth.AddCommand(loginCommand(configPath, flags), statusCommand(configPath, flags, getenv), logoutCommand(configPath))
 	return auth
