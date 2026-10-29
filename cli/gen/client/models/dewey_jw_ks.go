@@ -3,5 +3,5 @@
 package models
 
 type DeweyJWKs struct {
-	Keys []Jwk `json:"keys"`
+	Keys List[Jwk] `json:"keys"`
 }

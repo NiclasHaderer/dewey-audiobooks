@@ -1,0 +1,123 @@
+import (
+	"encoding/json"
+	"reflect"
+	"testing"
+)
+
+type wire struct {
+	Required Patch[string]  `json:"required,omitzero"`
+	Nullable Patch[*string] `json:"nullable,omitzero"`
+	Plain    *string        `json:"plain"`
+}
+
+type tagged struct {
+	Tags Patch[List[string]] `json:"tags,omitzero"`
+}
+
+type mark struct {
+	Title string `json:"title"`
+}
+
+type marked struct {
+	Marks Patch[List[mark]] `json:"marks,omitzero"`
+}
+
+func set[T any](value T) Patch[T] { return Patch[T]{Set: true, Value: value} }
+
+func text(value string) *string { return &value }
+
+func read[T any](t *testing.T, raw string) T {
+	t.Helper()
+	var value T
+	if err := json.Unmarshal([]byte(raw), &value); err != nil {
+		t.Fatalf("reading %s: %v", raw, err)
+	}
+	return value
+}
+
+func write(t *testing.T, value any) string {
+	t.Helper()
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(encoded)
+}
+
+func TestAMissingKeyReadsAsAbsent(t *testing.T) {
+	if got := read[wire](t, `{"plain": null}`); got != (wire{}) {
+		t.Fatalf("read %+v", got)
+	}
+}
+
+func TestANullReadsAsNullWhereTheFieldMayBeNull(t *testing.T) {
+	got := read[wire](t, `{"nullable": null, "plain": null}`)
+
+	if !got.Nullable.Set || got.Nullable.Value != nil {
+		t.Fatalf("read %+v", got.Nullable)
+	}
+}
+
+func TestANullIsRejectedWhereTheFieldMayNotBeNull(t *testing.T) {
+	if err := json.Unmarshal([]byte(`{"required": null, "plain": null}`), new(wire)); err == nil {
+		t.Error("read a null string without an error")
+	}
+	if err := json.Unmarshal([]byte(`{"tags": null}`), new(tagged)); err == nil {
+		t.Error("read a null list without an error")
+	}
+}
+
+func TestAMisspelledFieldInsideAPatchIsRejected(t *testing.T) {
+	if err := json.Unmarshal([]byte(`{"marks": [{"titel": "x"}]}`), new(marked)); err == nil {
+		t.Fatal("read a misspelled field without an error")
+	}
+}
+
+func TestAValueReadsAsSet(t *testing.T) {
+	got := read[wire](t, `{"required": "a", "nullable": "b", "plain": "c"}`)
+
+	if got.Required != set("a") || *got.Nullable.Value != "b" || *got.Plain != "c" {
+		t.Fatalf("read %+v", got)
+	}
+}
+
+func TestAnAbsentPatchIsLeftOutAndEveryNullIsWritten(t *testing.T) {
+	cases := []struct {
+		value wire
+		want  string
+	}{
+		{wire{}, `{"plain":null}`},
+		{wire{Nullable: set[*string](nil)}, `{"nullable":null,"plain":null}`},
+		{wire{Required: set("a"), Nullable: set(text("b")), Plain: text("c")}, `{"required":"a","nullable":"b","plain":"c"}`},
+	}
+	for _, c := range cases {
+		if got := write(t, c.value); got != c.want {
+			t.Errorf("wrote %s, want %s", got, c.want)
+		}
+	}
+}
+
+func TestAnEmptyListIsWrittenAsAList(t *testing.T) {
+	if got := write(t, tagged{Tags: set[List[string]](nil)}); got != `{"tags":[]}` {
+		t.Fatalf("wrote %s", got)
+	}
+}
+
+func TestEveryStateSurvivesARoundTrip(t *testing.T) {
+	for _, state := range []wire{
+		{},
+		{Nullable: set[*string](nil)},
+		{Required: set("a"), Nullable: set(text("b")), Plain: text("c")},
+		{Required: set("a"), Nullable: set[*string](nil), Plain: text("c")},
+	} {
+		if got := read[wire](t, write(t, state)); !reflect.DeepEqual(got, state) {
+			t.Errorf("%+v came back as %+v", state, got)
+		}
+	}
+}
+
+func TestAPatchReadsItsValueWithTheTypeArgument(t *testing.T) {
+	if got := read[tagged](t, `{"tags": ["x"]}`); !reflect.DeepEqual(got.Tags, set(List[string]{"x"})) {
+		t.Fatalf("read %+v", got.Tags)
+	}
+}

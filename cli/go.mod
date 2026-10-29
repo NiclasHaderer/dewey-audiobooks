@@ -1,3 +1,3 @@
 module github.com/NiclasHaderer/dewey-audiobooks/cli
 
-go 1.26.7
+go 1.26

@@ -3,16 +3,16 @@
 package models
 
 type Library struct {
-	ID                         UUID                 `json:"id"`
-	Name                       string               `json:"name"`
-	Icon                       *string              `json:"icon"`
-	PreferEmbeddedMetadata     bool                 `json:"preferEmbeddedMetadata"`
-	Folders                    []string             `json:"folders"`
-	MetadataAgents             []NamedMetadataAgent `json:"metadataAgents"`
-	CombineMetadataAgentFields bool                 `json:"combineMetadataAgentFields"`
-	FileScanners               []FileScanner        `json:"fileScanners"`
-	CombineFileScannerFields   bool                 `json:"combineFileScannerFields"`
-	Language                   MetadataLanguage     `json:"language"`
-	Region                     MetadataRegion       `json:"region"`
-	BookCount                  int64                `json:"bookCount"`
+	ID                         UUID                     `json:"id"`
+	Name                       string                   `json:"name"`
+	Icon                       *string                  `json:"icon"`
+	PreferEmbeddedMetadata     bool                     `json:"preferEmbeddedMetadata"`
+	Folders                    List[string]             `json:"folders"`
+	MetadataAgents             List[NamedMetadataAgent] `json:"metadataAgents"`
+	CombineMetadataAgentFields bool                     `json:"combineMetadataAgentFields"`
+	FileScanners               List[FileScanner]        `json:"fileScanners"`
+	CombineFileScannerFields   bool                     `json:"combineFileScannerFields"`
+	Language                   MetadataLanguage         `json:"language"`
+	Region                     MetadataRegion           `json:"region"`
+	BookCount                  int64                    `json:"bookCount"`
 }

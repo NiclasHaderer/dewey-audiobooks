@@ -39,6 +39,7 @@ class GoGenerationTest {
                 "models/pair.go",
                 "models/set_route.go",
                 "models/types.go",
+                "models/types_test.go",
                 "runtime.go",
             ),
             generated.keys.sorted(),
@@ -69,7 +70,7 @@ class GoGenerationTest {
                 """
                 type MapRoute struct {
                     Name bool `json:"name"`
-                    SomeParam map[string]UUID `json:"someParam"`
+                    SomeParam Map[string, UUID] `json:"someParam"`
                     Note Patch[*string] `json:"note,omitzero"`
                     Label Patch[string] `json:"label,omitzero"`
                     Lookup Patch[map[string]UUID] `json:"lookup,omitzero"`
@@ -86,7 +87,7 @@ class GoGenerationTest {
             words(generated.getValue("client.go")),
             words(
                 """
-                func (c *Client) V5(ctx context.Context, path models.UUID, name string, someParam []int32, body models.GenericRoute2[models.Date, models.UUID]) (models.GenericRoute3[time.Time], error) {
+                func (c *Client) V5(ctx context.Context, path models.UUID, name string, someParam models.List[int32], body models.GenericRoute2[models.Date, models.UUID]) (models.GenericRoute3[time.Time], error) {
                     query := url.Values{}
                     query.Set("name", queryValue(name))
                     for _, item := range someParam {

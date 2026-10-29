@@ -3,6 +3,6 @@
 package models
 
 type MetadataChapters struct {
-	RuntimeMs int64         `json:"runtimeMs"`
-	Chapters  []ChapterMark `json:"chapters"`
+	RuntimeMs int64             `json:"runtimeMs"`
+	Chapters  List[ChapterMark] `json:"chapters"`
 }

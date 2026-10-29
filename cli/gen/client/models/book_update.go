@@ -4,7 +4,7 @@ package models
 
 type BookUpdate struct {
 	Title          Patch[string]            `json:"title,omitzero"`
-	Authors        Patch[[]UUID]            `json:"authors,omitzero"`
+	Authors        Patch[List[UUID]]        `json:"authors,omitzero"`
 	Series         Patch[[]UUID]            `json:"series,omitzero"`
 	Provider       Patch[*string]           `json:"provider,omitzero"`
 	ProviderID     Patch[*string]           `json:"providerID,omitzero"`
@@ -18,6 +18,6 @@ type BookUpdate struct {
 	Isbn           Patch[*string]           `json:"isbn,omitzero"`
 	Asin           Patch[*string]           `json:"asin,omitzero"`
 	Cover          Patch[*string]           `json:"cover,omitzero"`
-	Chapters       Patch[[]ChapterMark]     `json:"chapters,omitzero"`
-	Unlock         Patch[[]BookField]       `json:"unlock,omitzero"`
+	Chapters       Patch[List[ChapterMark]] `json:"chapters,omitzero"`
+	Unlock         Patch[List[BookField]]   `json:"unlock,omitzero"`
 }

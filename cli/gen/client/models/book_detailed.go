@@ -5,8 +5,8 @@ package models
 type BookDetailed struct {
 	ID             UUID              `json:"id"`
 	LibraryID      UUID              `json:"libraryId"`
-	Authors        []NamedID         `json:"authors"`
-	Series         []TitledID        `json:"series"`
+	Authors        List[NamedID]     `json:"authors"`
+	Series         List[TitledID]    `json:"series"`
 	Title          string            `json:"title"`
 	Provider       *string           `json:"provider"`
 	ProviderID     *string           `json:"providerID"`
@@ -15,15 +15,15 @@ type BookDetailed struct {
 	Publisher      *string           `json:"publisher"`
 	Language       *MetadataLanguage `json:"language"`
 	Description    *string           `json:"description"`
-	Narrators      []string          `json:"narrators"`
+	Narrators      List[string]      `json:"narrators"`
 	Isbn           *string           `json:"isbn"`
 	Asin           *string           `json:"asin"`
 	CoverID        *UUID             `json:"coverID"`
-	Genres         []string          `json:"genres"`
+	Genres         List[string]      `json:"genres"`
 	DurationMs     int64             `json:"durationMs"`
 	PositionMs     int64             `json:"positionMs"`
 	Status         PlayStatus        `json:"status"`
-	Tracks         []Track           `json:"tracks"`
-	Chapters       []Chapter         `json:"chapters"`
-	Locked         []BookField       `json:"locked"`
+	Tracks         List[Track]       `json:"tracks"`
+	Chapters       List[Chapter]     `json:"chapters"`
+	Locked         List[BookField]   `json:"locked"`
 }

@@ -57,13 +57,38 @@ internal fun parameterName(name: String): String {
     return if (camel in GO_KEYWORDS || camel in RESERVED_PARAMETERS) "${camel}Param" else camel
 }
 
-private val RESERVED_PARAMETERS = setOf("ctx", "body", "opts", "c", "query", "out", "err", "request")
+private val RESERVED_PARAMETERS =
+    setOf(
+        "ctx",
+        "body",
+        "opts",
+        "c",
+        "query",
+        "out",
+        "err",
+        "r",
+        "item",
+        "request",
+        "url",
+        "time",
+        "models",
+        "pathValue",
+        "queryValue",
+    )
 
-/** The models live in a package of their own, which [models] names wherever they are referred to from outside it. */
+/**
+ * The models live in a package of their own, which [models] names wherever they are referred to from outside it. A
+ * nullable list or map is a plain slice or map, whose nil is null. One that may not be null is a List or a Map, whose
+ * nil is [] or {}, and a Patch of one refuses a null, as the server does.
+ */
 internal fun WireType.go(models: String = ""): String {
     val base = goBase(models)
-    // A slice and a map already say nothing with nil, a pointer to them would only add a second way to say it
-    return if (nullable && this !is WireType.ListOf && this !is WireType.MapOf) "*$base" else base
+    return when {
+        this is WireType.ListOf -> if (nullable) base else "${models}List[${element.go(models)}]"
+        this is WireType.MapOf -> if (nullable) base else "${models}Map[${key.goBase(models)}, ${value.go(models)}]"
+        nullable -> "*$base"
+        else -> base
+    }
 }
 
 private fun WireType.goBase(models: String): String =
