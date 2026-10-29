@@ -14,51 +14,51 @@ func Register(root *cobra.Command, api API) {
 	root.AddGroup(&cobra.Group{ID: "account", Title: "ACCOUNT COMMANDS"})
 	root.AddGroup(&cobra.Group{ID: "library", Title: "LIBRARY COMMANDS"})
 	root.AddGroup(&cobra.Group{ID: "server", Title: "SERVER COMMANDS"})
-	accessTokens := &cobra.Command{Use: "access-tokens", Short: "Access tokens for scripts and this CLI", GroupID: "account", RunE: Group}
-	accessTokens.AddCommand(listAccessTokensCommand(api))
-	root.AddCommand(accessTokens)
-	authors := &cobra.Command{Use: "authors", Short: "Authors in a library", GroupID: "library", RunE: Group}
-	authors.AddCommand(autoMatchAuthorCommand(api), createAuthorCommand(api), getAuthorCommand(api), getAuthorAutocompleteCommand(api), listAuthorsCommand(api), updateAuthorCommand(api))
-	root.AddCommand(authors)
-	books := &cobra.Command{Use: "books", Short: "Books and your progress in them", GroupID: "library", RunE: Group}
-	books.AddCommand(autoMatchBookCommand(api), getBookCommand(api), getBookAutocompleteCommand(api), listBooksCommand(api), setBookDismissedCommand(api), setBookFinishedCommand(api), setBookProgressCommand(api), updateBookCommand(api))
-	root.AddCommand(books)
-	files := &cobra.Command{Use: "files", Short: "Download audio and images", GroupID: "library", RunE: Group}
-	files.AddCommand(getAudioFileCommand(api), getImageFileCommand(api))
-	root.AddCommand(files)
-	filesystem := &cobra.Command{Use: "filesystem", Short: "Browse the server's folders", GroupID: "server", RunE: Group}
-	filesystem.AddCommand(listFoldersAtACertainPathCommand(api))
-	root.AddCommand(filesystem)
-	genres := &cobra.Command{Use: "genres", Short: "Genres in a library", GroupID: "library", RunE: Group}
-	genres.AddCommand(getGenreCommand(api), listGenresCommand(api))
-	root.AddCommand(genres)
-	libraries := &cobra.Command{Use: "libraries", Short: "Libraries, the folders the server scans for audiobooks", GroupID: "library", RunE: Group}
-	libraries.AddCommand(createLibraryCommand(api), deleteLibraryCommand(api), getLibraryCommand(api), listLibrariesCommand(api), rescanLibraryCommand(api), searchInAllLibrariesCommand(api), updateLibraryCommand(api))
-	root.AddCommand(libraries)
-	me := &cobra.Command{Use: "me", Short: "Your account and listening", GroupID: "account", RunE: Group}
-	me.AddCommand(getContinueListeningCommand(api), getCurrentUserCommand(api), getListeningHistoryCommand(api))
-	root.AddCommand(me)
-	metadata := &cobra.Command{Use: "metadata", Short: "Look up books, authors and series at the metadata agents", GroupID: "library", RunE: Group}
-	metadata.AddCommand(getAuthorMetadataCommand(api), getBookChapterMetadataCommand(api), getBookMetadataCommand(api), getSeriesMetadataCommand(api), searchAuthorMetadataCommand(api), searchBookMetadataCommand(api), searchSeriesMetadataCommand(api))
-	root.AddCommand(metadata)
-	narrators := &cobra.Command{Use: "narrators", Short: "Narrators in a library", GroupID: "library", RunE: Group}
-	narrators.AddCommand(getNarratorCommand(api), listNarratorsCommand(api))
-	root.AddCommand(narrators)
-	scanners := &cobra.Command{Use: "scanners", Short: "File scanners and metadata agents", GroupID: "server", RunE: Group}
-	scanners.AddCommand(listFileScannersCommand(api), listMetadataAgentsCommand(api))
-	root.AddCommand(scanners)
-	series := &cobra.Command{Use: "series", Short: "Series in a library", GroupID: "library", RunE: Group}
-	series.AddCommand(autoMatchSeriesCommand(api), createSeriesCommand(api), getSeriesCommand(api), getSeriesAutocompleteCommand(api), listSeriesCommand(api), updateSeriesCommand(api))
-	root.AddCommand(series)
-	server := &cobra.Command{Use: "server", Short: "Server status, version and licenses", GroupID: "server", RunE: Group}
-	server.AddCommand(getApiVersionCommand(api), listThirdPartyLicensesCommand(api), pingServerCommand(api))
-	root.AddCommand(server)
-	sessions := &cobra.Command{Use: "sessions", Short: "Log in with a password, like the web app", GroupID: "account", RunE: Group}
-	sessions.AddCommand(loginUserCommand(api), registerUserCommand(api), retrieveJwksCommand(api))
-	root.AddCommand(sessions)
-	users := &cobra.Command{Use: "users", Short: "User accounts", GroupID: "account", RunE: Group}
-	users.AddCommand(getUserCommand(api), listUsersCommand(api))
-	root.AddCommand(users)
+	accessTokensGroup := &cobra.Command{Use: "access-tokens", Short: "Access tokens for scripts and this CLI", GroupID: "account", RunE: Group}
+	accessTokensGroup.AddCommand(listAccessTokensCommand(api))
+	root.AddCommand(accessTokensGroup)
+	authorsGroup := &cobra.Command{Use: "authors", Short: "Authors in a library", GroupID: "library", RunE: Group}
+	authorsGroup.AddCommand(autoMatchAuthorCommand(api), createAuthorCommand(api), getAuthorCommand(api), getAuthorAutocompleteCommand(api), listAuthorsCommand(api), updateAuthorCommand(api))
+	root.AddCommand(authorsGroup)
+	booksGroup := &cobra.Command{Use: "books", Short: "Books and your progress in them", GroupID: "library", RunE: Group}
+	booksGroup.AddCommand(autoMatchBookCommand(api), getBookCommand(api), getBookAutocompleteCommand(api), listBooksCommand(api), setBookDismissedCommand(api), setBookFinishedCommand(api), setBookProgressCommand(api), updateBookCommand(api))
+	root.AddCommand(booksGroup)
+	filesGroup := &cobra.Command{Use: "files", Short: "Download audio and images", GroupID: "library", RunE: Group}
+	filesGroup.AddCommand(getAudioFileCommand(api), getImageFileCommand(api))
+	root.AddCommand(filesGroup)
+	filesystemGroup := &cobra.Command{Use: "filesystem", Short: "Browse the server's folders", GroupID: "server", RunE: Group}
+	filesystemGroup.AddCommand(listFoldersAtACertainPathCommand(api))
+	root.AddCommand(filesystemGroup)
+	genresGroup := &cobra.Command{Use: "genres", Short: "Genres in a library", GroupID: "library", RunE: Group}
+	genresGroup.AddCommand(getGenreCommand(api), listGenresCommand(api))
+	root.AddCommand(genresGroup)
+	librariesGroup := &cobra.Command{Use: "libraries", Short: "Libraries, the folders the server scans for audiobooks", GroupID: "library", RunE: Group}
+	librariesGroup.AddCommand(createLibraryCommand(api), deleteLibraryCommand(api), getLibraryCommand(api), listLibrariesCommand(api), rescanLibraryCommand(api), searchInAllLibrariesCommand(api), updateLibraryCommand(api))
+	root.AddCommand(librariesGroup)
+	meGroup := &cobra.Command{Use: "me", Short: "Your account and listening", GroupID: "account", RunE: Group}
+	meGroup.AddCommand(getContinueListeningCommand(api), getCurrentUserCommand(api), getListeningHistoryCommand(api))
+	root.AddCommand(meGroup)
+	metadataGroup := &cobra.Command{Use: "metadata", Short: "Look up books, authors and series at the metadata agents", GroupID: "library", RunE: Group}
+	metadataGroup.AddCommand(getAuthorMetadataCommand(api), getBookChapterMetadataCommand(api), getBookMetadataCommand(api), getSeriesMetadataCommand(api), searchAuthorMetadataCommand(api), searchBookMetadataCommand(api), searchSeriesMetadataCommand(api))
+	root.AddCommand(metadataGroup)
+	narratorsGroup := &cobra.Command{Use: "narrators", Short: "Narrators in a library", GroupID: "library", RunE: Group}
+	narratorsGroup.AddCommand(getNarratorCommand(api), listNarratorsCommand(api))
+	root.AddCommand(narratorsGroup)
+	scannersGroup := &cobra.Command{Use: "scanners", Short: "File scanners and metadata agents", GroupID: "server", RunE: Group}
+	scannersGroup.AddCommand(listFileScannersCommand(api), listMetadataAgentsCommand(api))
+	root.AddCommand(scannersGroup)
+	seriesGroup := &cobra.Command{Use: "series", Short: "Series in a library", GroupID: "library", RunE: Group}
+	seriesGroup.AddCommand(autoMatchSeriesCommand(api), createSeriesCommand(api), getSeriesCommand(api), getSeriesAutocompleteCommand(api), listSeriesCommand(api), updateSeriesCommand(api))
+	root.AddCommand(seriesGroup)
+	serverGroup := &cobra.Command{Use: "server", Short: "Server status, version and licenses", GroupID: "server", RunE: Group}
+	serverGroup.AddCommand(getApiVersionCommand(api), listThirdPartyLicensesCommand(api), pingServerCommand(api))
+	root.AddCommand(serverGroup)
+	sessionsGroup := &cobra.Command{Use: "sessions", Short: "Log in with a password, like the web app", GroupID: "account", RunE: Group}
+	sessionsGroup.AddCommand(loginUserCommand(api), registerUserCommand(api), retrieveJwksCommand(api))
+	root.AddCommand(sessionsGroup)
+	usersGroup := &cobra.Command{Use: "users", Short: "User accounts", GroupID: "account", RunE: Group}
+	usersGroup.AddCommand(getUserCommand(api), listUsersCommand(api))
+	root.AddCommand(usersGroup)
 }
 
 func autoMatchAuthorCommand(api API) *cobra.Command {

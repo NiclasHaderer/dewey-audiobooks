@@ -25,7 +25,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
-@Summary("List shelves", method = "GET")
+@Summary("List shelves", method = "GET", description = "List the shelves, the one used most recently first. In time.")
 @Tagged("Shelves", description = "Shelves of books", group = "Library")
 @Resource("shelves")
 class ShelvesRoute
@@ -149,7 +149,11 @@ class GoCliGenerationTest {
         val commands = generated.getValue("commands.go")
 
         assertContains(commands, "root.AddGroup(&cobra.Group{ID: \"library\", Title: \"LIBRARY COMMANDS\"})")
-        assertContains(commands, "Use: \"shelves\", Short: \"Shelves of books\", GroupID: \"library\"")
+        assertContains(
+            commands,
+            "shelvesGroup := &cobra.Command{Use: \"shelves\", Short: \"Shelves of books\", GroupID: \"library\"",
+        )
+        assertFalse("\"time\"" in commands, "a help text that mentions time. needs no import")
     }
 
     @Test

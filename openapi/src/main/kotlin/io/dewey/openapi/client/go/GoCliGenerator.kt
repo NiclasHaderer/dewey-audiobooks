@@ -65,9 +65,26 @@ private val GoRoute.positional get() = pathParameters + requiredQuery
 // The root command owns these, so a generated flag of the same name would shadow them
 private val RESERVED_FLAGS = setOf("body", "output", "json", "jq", "help", "url", "token")
 
-// Names the generated command function uses itself, which a parameter cannot take
+// Names the generated command function uses itself or imports, which a parameter cannot take
 private val RESERVED_LOCALS =
-    setOf("cmd", "args", "flags", "api", "c", "err", "out", "opts", "requestBody", "stream", "flag", "arg")
+    setOf(
+        "cmd",
+        "args",
+        "flags",
+        "api",
+        "c",
+        "err",
+        "out",
+        "opts",
+        "requestBody",
+        "stream",
+        "flag",
+        "arg",
+        "client",
+        "models",
+        "time",
+        "cobra",
+    )
 
 /**
  * The JSON a command reads and prints, spelled out for whoever calls it: a person or an agent that has nothing but the
@@ -278,18 +295,29 @@ class GoCliGenerator(
 
     override fun generateClient(): List<ClientPart> {
         val runtime = GENERATED_HEADER + "package $packageName\n\n" + getResourceContent("/go/commands/runtime.go")
-        return listOf(ClientPart("runtime.go", runtime), ClientPart("commands.go", commandsFile()))
+        val runtimeTest =
+            GENERATED_HEADER + "package $packageName\n\n" + getResourceContent("/go/commands/runtime_test.go")
+        return listOf(
+            ClientPart("runtime.go", runtime),
+            ClientPart("runtime_test.go", runtimeTest),
+            ClientPart("commands.go", commandsFile()),
+        )
     }
 
     private fun commandsFile(): String {
         val functions = commands.map { (name, route) -> command(name, route) }
+        // Read off the types the commands spell out, as the help texts in them may mention anything
+        val parameters = commands.flatMap { (_, route) -> route.positional + route.optionalQuery }
+        val typed =
+            parameters.map { kind(it) } +
+                commands.mapNotNull { (_, route) -> (route.requestBody as? Body.Json)?.type?.go(MODELS) }
         val imports =
             buildList {
-                if (functions.any { "time." in it }) add("time")
+                if (parameters.any { it.type.usesTime() }) add("time")
                 add("")
                 add("github.com/spf13/cobra")
                 add(clientImportPath)
-                if (functions.any { MODELS in it }) add("$clientImportPath/models")
+                if (typed.any { MODELS in it }) add("$clientImportPath/models")
             }.dropWhile { it.isEmpty() }
         return buildString {
             append(GENERATED_HEADER)
@@ -316,7 +344,8 @@ class GoCliGenerator(
                 if (group == null) {
                     append("\troot.AddCommand($adds)\n")
                 } else {
-                    val variable = parameterName(group)
+                    // Suffixed, so a group named like a parameter of Register or an import cannot shadow it
+                    val variable = parameterName(group) + "Group"
                     // One route of the group describing its tag is enough
                     val short =
                         members.firstNotNullOfOrNull { it.second.route.tagDescription }
@@ -489,7 +518,7 @@ class GoCliGenerator(
                     ScalarKind.BOOLEAN -> "boolKind"
                     ScalarKind.BYTE, ScalarKind.SHORT, ScalarKind.INT, ScalarKind.LONG -> "intKind[$go]()"
                     ScalarKind.FLOAT, ScalarKind.DOUBLE -> "numberKind[$go]()"
-                    ScalarKind.DATE -> "jsonKind[$go](\"date\", \"a date like 2024-01-31\")"
+                    ScalarKind.DATE -> "dateKind[$go]()"
                     ScalarKind.DATE_TIME -> "jsonKind[$go](\"time\", \"a date-time like 2024-01-31T12:00:00Z\")"
                 }
             }
