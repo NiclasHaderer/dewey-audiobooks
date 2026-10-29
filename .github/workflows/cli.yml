@@ -1,0 +1,46 @@
+name: CLI
+
+on:
+  workflow_call:
+
+jobs:
+  e2e:
+    name: Lint and test
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - name: Set up just
+        uses: extractions/setup-just@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+          cache-dependency-path: cli/go.sum
+
+      - name: Lint
+        run: just lint-cli
+
+      - name: Run the unit tests
+        run: just test-cli
+
+      - name: Download the server
+        uses: actions/download-artifact@v8
+        with:
+          name: server
+          path: server/build/install/server
+
+      # Artifacts drop the executable bit
+      - name: Make the server executable
+        run: chmod +x server/build/install/server/bin/server
+
+      - name: Run the end-to-end tests
+        run: just run-cli-e2e
