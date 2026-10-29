@@ -67,7 +67,13 @@ class OpenApiRoute(
         paramsClass.findAnnotations<Summary>().firstOrNull { it.method == this.method.value }
     }
 
-    val description by lazy { paramsClass.findAnnotation<Description>()?.description }
+    val description by lazy {
+        operation?.description?.ifBlank { null } ?: paramsClass.findAnnotation<Description>()?.description
+    }
+
+    val command by lazy { operation?.command?.ifBlank { null } }
+
+    val inCli by lazy { operation?.cli ?: true }
 
     val summary by lazy { operation?.summary }
 
@@ -99,6 +105,14 @@ class OpenApiRoute(
     }
 
     val tags by lazy { paramsClass.findAnnotationsFirstUp<Tagged>().map { it.name } }
+
+    val tagDescription by lazy {
+        paramsClass.findAnnotationsFirstUp<Tagged>().firstNotNullOfOrNull { it.description.ifBlank { null } }
+    }
+
+    val tagGroup by lazy {
+        paramsClass.findAnnotationsFirstUp<Tagged>().firstNotNullOfOrNull { it.group.ifBlank { null } }
+    }
 
     val operationId by lazy {
         val segments =

@@ -16,6 +16,9 @@ annotation class NotSecured
 @Target(AnnotationTarget.CLASS)
 annotation class Tagged(
     val name: String,
+    val description: String = "",
+    // The section of the CLI's help that lists the tag's commands
+    val group: String = "",
 )
 
 // A SerialInfo annotation reaches the descriptor, which is where the schema generators read it from
@@ -32,6 +35,10 @@ annotation class Summary(
     val summary: String,
     val method: String,
     val status: Int = INFER_STATUS,
+    val description: String = "",
+    val command: String = "",
+    // False for a route the CLI cannot call, like one that only works with the web app's cookie
+    val cli: Boolean = true,
 ) {
     companion object {
         const val INFER_STATUS = 0

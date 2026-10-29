@@ -1,5 +1,6 @@
 package io.dewey.server
 
+import io.dewey.openapi.client.go.generateGoCli
 import io.dewey.openapi.client.go.generateGoClient
 import io.dewey.openapi.client.kotlin.KtErrorHandling
 import io.dewey.openapi.client.kotlin.generateKotlinClient
@@ -7,6 +8,7 @@ import io.dewey.openapi.client.typescript.generateTsClient
 import io.dewey.openapi.ktor.plugins.generateOpenApiSpec
 import io.dewey.server.config.DeweyConfig
 import io.dewey.server.di.setupDependencyInjection
+import io.dewey.server.plugins.auth.Guards
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import org.koin.core.context.stopKoin
@@ -31,6 +33,12 @@ fun main() {
                 packageName = "client",
                 importPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/gen/client",
                 savePath = "cli/gen/client",
+            )
+            generateGoCli(
+                packageName = "commands",
+                clientImportPath = "github.com/NiclasHaderer/dewey-audiobooks/cli/gen/client",
+                savePath = "cli/gen/commands",
+                loginOnlyGuards = Guards.LoginOnly,
             )
             generateOpenApiSpec(Path.of("gen/openapi.yaml"))
         }.apply {
