@@ -13,8 +13,6 @@ type Patch[T any] struct {
 	Value T
 }
 
-func PatchOf[T any](value T) Patch[T] { return Patch[T]{Set: true, Value: value} }
-
 func (p Patch[T]) IsZero() bool { return !p.Set }
 
 func (p Patch[T]) MarshalJSON() ([]byte, error) { return json.Marshal(p.Value) }

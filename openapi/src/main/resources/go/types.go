@@ -1,0 +1,19 @@
+import "encoding/json"
+
+type UUID = string
+
+type Date string
+
+type Patch[T any] struct {
+	Set   bool
+	Value T
+}
+
+func (p Patch[T]) IsZero() bool { return !p.Set }
+
+func (p Patch[T]) MarshalJSON() ([]byte, error) { return json.Marshal(p.Value) }
+
+func (p *Patch[T]) UnmarshalJSON(data []byte) error {
+	p.Set = true
+	return json.Unmarshal(data, &p.Value)
+}

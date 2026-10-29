@@ -13,7 +13,7 @@ import (
 type Client struct {
 	BaseURL    string
 	HTTPClient *http.Client
-	// Called before every request to a route that needs a logged in user, typically to set the Authorization header
+	// Called only for routes that need a login
 	Authorize func(request *http.Request) error
 }
 
@@ -21,14 +21,13 @@ func New(baseURL string) *Client {
 	return &Client{BaseURL: strings.TrimSuffix(baseURL, "/"), HTTPClient: http.DefaultClient}
 }
 
-// APIError is an answer of the server outside of 2xx, with the error body it sent
 type APIError struct {
 	Status  int             `json:"status"`
 	Message string          `json:"error"`
 	Details json.RawMessage `json:"details,omitempty"`
 }
 
-func (e *APIError) Error() string { return fmt.Sprintf("%d: %s", e.Status, e.Message) }
+func (e *APIError) Error() string { return fmt.Sprintf("%s (HTTP %d)", e.Message, e.Status) }
 
 type request struct {
 	method  string
@@ -97,7 +96,6 @@ func (c *Client) send(ctx context.Context, r request) (*http.Response, error) {
 	return nil, apiError
 }
 
-// A nil out reads the answer to the end and drops it
 func (c *Client) json(ctx context.Context, r request, out any) error {
 	response, err := c.send(ctx, r)
 	if err != nil {

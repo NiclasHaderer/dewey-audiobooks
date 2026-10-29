@@ -4,6 +4,7 @@ package commands
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +18,6 @@ import (
 	"time"
 
 	"github.com/cli/go-gh/v2/pkg/jq"
-	"github.com/cli/go-gh/v2/pkg/jsonpretty"
 	"github.com/cli/go-gh/v2/pkg/tableprinter"
 	"github.com/cli/go-gh/v2/pkg/term"
 	"github.com/cli/go-gh/v2/pkg/text"
@@ -57,7 +57,7 @@ func Args(names ...string) cobra.PositionalArgs {
 		}
 		var missing []string
 		for _, name := range names[min(len(given), len(names)):] {
-			missing = append(missing, placeholders([]string{name}))
+			missing = append(missing, "<"+name+">")
 		}
 		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 			if _, required := flag.Annotations[cobra.BashCompOneRequiredFlag]; required && !flag.Changed {
@@ -207,28 +207,19 @@ func FlagError(_ *cobra.Command, err error) error {
 	return UsageError(err.Error())
 }
 
-func openBody(cmd *cobra.Command, raw string) (io.ReadCloser, error) {
+func readBody(cmd *cobra.Command, raw string) ([]byte, error) {
 	switch {
 	case raw == "-":
-		return io.NopCloser(cmd.InOrStdin()), nil
+		return io.ReadAll(cmd.InOrStdin())
 	case strings.HasPrefix(raw, "@"):
-		file, err := os.Open(raw[1:])
+		content, err := os.ReadFile(raw[1:])
 		if err != nil {
 			return nil, fmt.Errorf("body: %w", err)
 		}
-		return file, nil
+		return content, nil
 	default:
-		return io.NopCloser(strings.NewReader(raw)), nil
+		return []byte(raw), nil
 	}
-}
-
-func readBody(cmd *cobra.Command, raw string) ([]byte, error) {
-	body, err := openBody(cmd, raw)
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	return io.ReadAll(body)
 }
 
 // Unknown fields fail, so a misspelled one is not silently dropped
@@ -590,49 +581,10 @@ func printFields(cmd *cobra.Command, value any, fields []string, filter string) 
 		return err
 	}
 	if len(fields) > 0 {
-		if encoded, err = pickFields(encoded, fields); err != nil {
-			return err
-		}
+		pick := "{" + strings.Join(fields, ", ") + "}"
+		filter = fmt.Sprintf(`if type == "array" then map(%s) else %s end | %s`, pick, pick, cmp.Or(filter, "."))
 	}
-	return printJSON(cmd, encoded, filter)
-}
-
-func printJSON(cmd *cobra.Command, encoded []byte, filter string) error {
-	output := outputOf(cmd)
-	if filter != "" {
-		return jq.EvaluateFormatted(bytes.NewReader(encoded), cmd.OutOrStdout(), filter, "  ", output.Color)
-	}
-	return jsonpretty.Format(cmd.OutOrStdout(), bytes.NewReader(encoded), "  ", output.Color)
-}
-
-func pickFields(encoded []byte, chosen []string) ([]byte, error) {
-	decoder := json.NewDecoder(bytes.NewReader(encoded))
-	decoder.UseNumber()
-	var generic any
-	if err := decoder.Decode(&generic); err != nil {
-		return nil, err
-	}
-	pick := func(row any) any {
-		object, ok := row.(map[string]any)
-		if !ok {
-			return row
-		}
-		picked := map[string]any{}
-		for _, name := range chosen {
-			if value, ok := object[name]; ok {
-				picked[name] = value
-			}
-		}
-		return picked
-	}
-	if rows, ok := generic.([]any); ok {
-		for i, row := range rows {
-			rows[i] = pick(row)
-		}
-	} else {
-		generic = pick(generic)
-	}
-	return json.Marshal(generic)
+	return jq.EvaluateFormatted(bytes.NewReader(encoded), cmd.OutOrStdout(), filter, "  ", outputOf(cmd).Color)
 }
 
 const outputUsage = "Write the response to this `file` instead of stdout"

@@ -1,6 +1,6 @@
 module github.com/NiclasHaderer/dewey-audiobooks/cli
 
- go 1.26.7
+go 1.26.7
 
 require (
 	github.com/cli/go-gh/v2 v2.17.0

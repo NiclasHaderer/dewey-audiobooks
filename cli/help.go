@@ -116,9 +116,6 @@ func commandSections(cmd *cobra.Command, section func(title string, body string)
 func listed(commands []*cobra.Command) []*cobra.Command {
 	var shown []*cobra.Command
 	for _, command := range commands {
-		if command.Hidden || command.Name() == "help" {
-			continue
-		}
 		if command.IsAvailableCommand() || command.IsAdditionalHelpTopicCommand() {
 			shown = append(shown, command)
 		}
