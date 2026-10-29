@@ -36,7 +36,7 @@ fun Routing.authorRouting() {
     get<Api.Libraries.Id.Authors.Id, AuthorDetailed> { authorService.get(deweyPrincipal().userId, it.id, it.libraryId) }
 
     get<Api.Libraries.Id.Authors.Autocomplete, List<NamedId>> {
-        authorService.search(deweyPrincipal().userId, it.q, it.libraryId).map { NamedId(it.id, it.name) }
+        authorService.search(deweyPrincipal().userId, it.query, it.libraryId).map { NamedId(it.id, it.name) }
     }
 
     patch<Api.Libraries.Id.Authors.Id, AuthorUpdate, Author> { id, patchAuthor ->

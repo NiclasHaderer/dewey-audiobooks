@@ -98,7 +98,7 @@ interface DeweyClient {
     ): OpenApiHttpResponse<AuthorDetailed>
 
     suspend fun getAuthorAutocomplete(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers = Headers.Empty,
         onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
@@ -123,7 +123,7 @@ interface DeweyClient {
     ): OpenApiHttpResponse<BookDetailed>
 
     suspend fun getBookAutocomplete(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers = Headers.Empty,
         onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
@@ -208,7 +208,7 @@ interface DeweyClient {
     ): OpenApiHttpResponse<SeriesDetailed>
 
     suspend fun getSeriesAutocomplete(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers = Headers.Empty,
         onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
@@ -373,7 +373,7 @@ interface DeweyClient {
     ): OpenApiHttpResponse<DeweyJWKs>
 
     suspend fun searchAuthorMetadata(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers = Headers.Empty,
         onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
@@ -381,7 +381,7 @@ interface DeweyClient {
     ): OpenApiHttpResponse<List<MetadataAuthor>>
 
     suspend fun searchBookMetadata(
-        q: String,
+        query: String,
         libraryId: Uuid,
         authorName: String? = null,
         keywords: String? = null,
@@ -396,7 +396,7 @@ interface DeweyClient {
     suspend fun searchInAllLibraries(
         author: String? = null,
         book: String? = null,
-        q: String? = null,
+        query: String? = null,
         series: String? = null,
         headers: Headers = Headers.Empty,
         onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
@@ -404,7 +404,7 @@ interface DeweyClient {
     ): OpenApiHttpResponse<LibrarySearchResult>
 
     suspend fun searchSeriesMetadata(
-        q: String,
+        query: String,
         libraryId: Uuid,
         authorName: String? = null,
         headers: Headers = Headers.Empty,

@@ -36,19 +36,19 @@ class TsGenerationTest {
             mapOf(
                 "models/index.ts" to
                     listOf(
-                        "GenericRoute",
-                        "GenericRoute2",
-                        "GenericRoute3",
-                        "ListRoute",
-                        "MapRoute",
-                        "Pair",
-                        "SetRoute",
-                        "UUID",
+                        "generic-route",
+                        "generic-route2",
+                        "generic-route3",
+                        "list-route",
+                        "map-route",
+                        "pair",
+                        "set-route",
+                        "uuid",
                     ).joinToString("") { "export * from \"./$it\";\n" },
-                "models/GenericRoute.ts" to
+                "models/generic-route.ts" to
                     """
-                    import type {Pair} from "./Pair";
-                    import type {UUID} from "./UUID";
+                    import type {Pair} from "./pair";
+                    import type {UUID} from "./uuid";
 
                     export interface GenericRoute<T extends NonNullable<unknown>> {
                       name: Pair<string, UUID>;
@@ -56,7 +56,7 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/GenericRoute2.ts" to
+                "models/generic-route2.ts" to
                     """
                     export interface GenericRoute2<T, U> {
                       name: string;
@@ -65,9 +65,9 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/GenericRoute3.ts" to
+                "models/generic-route3.ts" to
                     """
-                    import type {GenericRoute2} from "./GenericRoute2";
+                    import type {GenericRoute2} from "./generic-route2";
 
                     export interface GenericRoute3<T> {
                       name: string;
@@ -76,9 +76,9 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/ListRoute.ts" to
+                "models/list-route.ts" to
                     """
-                    import type {UUID} from "./UUID";
+                    import type {UUID} from "./uuid";
 
                     export interface ListRoute {
                       name: string;
@@ -86,9 +86,9 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/MapRoute.ts" to
+                "models/map-route.ts" to
                     """
-                    import type {UUID} from "./UUID";
+                    import type {UUID} from "./uuid";
 
                     export interface MapRoute {
                       hint: string | null;
@@ -100,7 +100,7 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/Pair.ts" to
+                "models/pair.ts" to
                     """
                     export interface Pair<A, B> {
                       first: A;
@@ -108,9 +108,9 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/SetRoute.ts" to
+                "models/set-route.ts" to
                     """
-                    import type {UUID} from "./UUID";
+                    import type {UUID} from "./uuid";
 
                     export interface SetRoute {
                       name: number;
@@ -118,7 +118,7 @@ class TsGenerationTest {
                     }
 
                     """.trimIndent(),
-                "models/UUID.ts" to
+                "models/uuid.ts" to
                     $$"""
                     export type UUID = `${string}-${string}-${string}-${string}-${string}`
 

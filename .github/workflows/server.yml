@@ -116,14 +116,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set up just
+        uses: extractions/setup-just@v3
+
       - name: Build TagLib
         if: steps.native-cache.outputs.cache-hit != 'true'
-        run: ./gradlew :taglib:buildNativeHost
+        run: just build-taglib
 
       - name: Test the TagLib bindings
         if: matrix.target != 'linux-arm64'
-        run: ./gradlew :taglib:test -x :taglib:buildNativeHost
+        run: just test-taglib -x :taglib:buildNativeHost
+
+      - name: Lint
+        if: matrix.target == 'linux-arm64'
+        run: just lint-server
 
       - name: Test everything
         if: matrix.target == 'linux-arm64'
-        run: ./gradlew check -x :taglib:buildNativeHost -PskipLiveTests
+        run: just test-server -x :taglib:buildNativeHost -PskipLiveTests

@@ -14,13 +14,13 @@ export const AuthorSearch: FC<{
   onSelect: (result: MetadataAuthor) => void
 }> = ({ onSelect, authorSearch, libraryId }) => {
   const [author, setAuthor] = useState(authorSearch)
-  const [submitted, setSubmitted] = useState<{ q: string } | null>(null)
+  const [submitted, setSubmitted] = useState<{ query: string } | null>(null)
 
   const { data: result, isFetching: loading } = useAuthorMetadataSearch(libraryId, submitted)
 
   const search = () => {
     if (!author) return
-    setSubmitted({ q: author })
+    setSubmitted({ query: author })
   }
 
   return (
