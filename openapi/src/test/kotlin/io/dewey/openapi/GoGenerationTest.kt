@@ -2,12 +2,6 @@ package io.dewey.openapi
 
 import io.dewey.openapi.client.go.generateGoClient
 import io.ktor.server.testing.testApplication
-import org.junit.jupiter.api.Assumptions.assumeTrue
-import java.io.File
-import java.nio.file.Files
-import java.util.concurrent.TimeUnit
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -44,7 +38,7 @@ class GoGenerationTest {
                 "models/map_route.go",
                 "models/pair.go",
                 "models/set_route.go",
-                "models/wire.go",
+                "models/types.go",
                 "runtime.go",
             ),
             generated.keys.sorted(),
@@ -114,34 +108,5 @@ class GoGenerationTest {
     @Test
     fun `the event socket is left out`() {
         assertFalse("Listen" in generated.getValue("client.go"))
-    }
-
-    @Test
-    fun `the generated client compiles`() {
-        val path = System.getenv("PATH").orEmpty().split(':')
-        val go = path.map { File(it, "go") }.firstOrNull { it.canExecute() }
-        // CI builds the server without a Go toolchain, the cli workflow compiles the real client instead
-        assumeTrue(go != null, "no Go toolchain on the PATH")
-        val module = Files.createTempDirectory("go-client")
-        try {
-            module.resolve("go.mod").writeText("module example.com/generated\n\ngo 1.24\n")
-            val packageDir = module.resolve("client").createDirectories()
-            generated.forEach { (name, content) ->
-                val file = packageDir.resolve(name)
-                file.parent.createDirectories()
-                file.writeText(content)
-            }
-            val process =
-                ProcessBuilder(go!!.path, "vet", "./...")
-                    .directory(module.toFile())
-                    .redirectErrorStream(true)
-                    .apply { environment()["GOFLAGS"] = "-mod=mod" }
-                    .start()
-            val output = process.inputStream.bufferedReader().readText()
-            process.waitFor(2, TimeUnit.MINUTES)
-            assertEquals(0, process.exitValue(), output)
-        } finally {
-            module.toFile().deleteRecursively()
-        }
     }
 }
