@@ -160,7 +160,7 @@ export const queries = {
       queryKey: ["library-search", q] as const,
       queryFn: async ({ client }) => {
         try {
-          return await Api.searchInAllLibraries({ q })
+          return await Api.searchInAllLibraries({ query: q })
         } catch (error) {
           if (isNetworkError(error)) return cachedLibrarySearch(client, q)
           throw error
@@ -170,19 +170,19 @@ export const queries = {
     }),
 
   metadataSearch: {
-    authors: (libraryId: UUID, params: { q: string }) =>
+    authors: (libraryId: UUID, params: { query: string }) =>
       queryOptions({
         queryKey: metadataSearchKey("authors", libraryId, params),
         queryFn: () => Api.searchAuthorMetadata({ ...params, libraryId }),
         meta: { action: "search for author metadata", persist: false },
       }),
-    books: (libraryId: UUID, params: { q: string; authorName?: string }) =>
+    books: (libraryId: UUID, params: { query: string; authorName?: string }) =>
       queryOptions({
         queryKey: metadataSearchKey("books", libraryId, params),
         queryFn: () => Api.searchBookMetadata({ ...params, libraryId }),
         meta: { action: "search for book metadata", persist: false },
       }),
-    series: (libraryId: UUID, params: { q: string; authorName?: string }) =>
+    series: (libraryId: UUID, params: { query: string; authorName?: string }) =>
       queryOptions({
         queryKey: metadataSearchKey("series", libraryId, params),
         queryFn: () => Api.searchSeriesMetadata({ ...params, libraryId }),

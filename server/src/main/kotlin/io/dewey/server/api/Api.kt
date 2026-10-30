@@ -204,16 +204,16 @@ class Api {
         @Summary("Search in all libraries", method = "GET")
         @Resource("search")
         data class Search(
-            val q: String? = null,
+            val query: String? = null,
             val author: String? = null,
             val book: String? = null,
             val series: String? = null,
             private val parent: Libraries,
         ) {
             init {
-                if (q == null && author == null && book == null && series == null) {
+                if (query == null && author == null && book == null && series == null) {
                     throw ErrorResponse.userError(
-                        "At least one of the following parameters must be provided: q, author, book, series",
+                        "Provide at least one of query, author, book or series",
                     )
                 }
             }
@@ -264,7 +264,7 @@ class Api {
                 @Summary("Get book autocomplete", method = "GET")
                 @Resource("autocomplete")
                 data class Autocomplete(
-                    val q: String,
+                    val query: String,
                     private val parent: Books,
                 ) {
                     val libraryId
@@ -356,7 +356,7 @@ class Api {
                 @Summary("Get author autocomplete", method = "GET")
                 @Resource("autocomplete")
                 data class Autocomplete(
-                    val q: String,
+                    val query: String,
                     private val parent: Authors,
                 ) {
                     val libraryId
@@ -474,7 +474,7 @@ class Api {
                 @Summary("Get series autocomplete", method = "GET")
                 @Resource("autocomplete")
                 data class Autocomplete(
-                    val q: String,
+                    val query: String,
                     private val parent: Series,
                 ) {
                     val libraryId
@@ -532,7 +532,7 @@ class Api {
                     @Summary("Search author metadata", method = "GET")
                     @Resource("search")
                     data class Search(
-                        val q: String,
+                        val query: String,
                         private val parent: Author,
                     ) {
                         val libraryId
@@ -571,7 +571,7 @@ class Api {
                     @Summary("Search book metadata", method = "GET")
                     @Resource("search")
                     data class Search(
-                        val q: String,
+                        val query: String,
                         val keywords: String? = null,
                         val authorName: String? = null,
                         val narrator: String? = null,
@@ -602,7 +602,7 @@ class Api {
                     @Summary("Search series metadata", method = "GET")
                     @Resource("search")
                     data class Search(
-                        val q: String,
+                        val query: String,
                         val authorName: String? = null,
                         private val parent: Series,
                     ) {

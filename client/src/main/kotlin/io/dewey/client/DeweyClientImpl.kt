@@ -275,7 +275,7 @@ abstract class DeweyClientImpl(
         }
 
     override suspend fun getAuthorAutocomplete(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers,
         onBeforeRequest: OnBeforeRequest<Unit>,
@@ -290,7 +290,7 @@ abstract class DeweyClientImpl(
                     body = Unit,
                     shouldLogin = true,
                     securitySchema = "normal",
-                    queryParameters = mapOf("q" to q),
+                    queryParameters = mapOf("query" to query),
                 ),
                 typeInfo<Unit>(),
                 typeInfo<List<NamedId>>(),
@@ -350,7 +350,7 @@ abstract class DeweyClientImpl(
         }
 
     override suspend fun getBookAutocomplete(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers,
         onBeforeRequest: OnBeforeRequest<Unit>,
@@ -365,7 +365,7 @@ abstract class DeweyClientImpl(
                     body = Unit,
                     shouldLogin = true,
                     securitySchema = "normal",
-                    queryParameters = mapOf("q" to q),
+                    queryParameters = mapOf("query" to query),
                 ),
                 typeInfo<Unit>(),
                 typeInfo<List<TitledId>>(),
@@ -616,7 +616,7 @@ abstract class DeweyClientImpl(
         }
 
     override suspend fun getSeriesAutocomplete(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers,
         onBeforeRequest: OnBeforeRequest<Unit>,
@@ -631,7 +631,7 @@ abstract class DeweyClientImpl(
                     body = Unit,
                     shouldLogin = true,
                     securitySchema = "normal",
-                    queryParameters = mapOf("q" to q),
+                    queryParameters = mapOf("query" to query),
                 ),
                 typeInfo<Unit>(),
                 typeInfo<List<TitledId>>(),
@@ -1155,7 +1155,7 @@ abstract class DeweyClientImpl(
         }
 
     override suspend fun searchAuthorMetadata(
-        q: String,
+        query: String,
         libraryId: Uuid,
         headers: Headers,
         onBeforeRequest: OnBeforeRequest<Unit>,
@@ -1170,7 +1170,7 @@ abstract class DeweyClientImpl(
                     body = Unit,
                     shouldLogin = true,
                     securitySchema = "normal",
-                    queryParameters = mapOf("q" to q),
+                    queryParameters = mapOf("query" to query),
                 ),
                 typeInfo<Unit>(),
                 typeInfo<List<MetadataAuthor>>(),
@@ -1180,7 +1180,7 @@ abstract class DeweyClientImpl(
         }
 
     override suspend fun searchBookMetadata(
-        q: String,
+        query: String,
         libraryId: Uuid,
         authorName: String?,
         keywords: String?,
@@ -1206,7 +1206,7 @@ abstract class DeweyClientImpl(
                         "language" to language,
                         "narrator" to narrator,
                         "pageSize" to pageSize,
-                        "q" to q,
+                        "query" to query,
                     ),
                 ),
                 typeInfo<Unit>(),
@@ -1219,7 +1219,7 @@ abstract class DeweyClientImpl(
     override suspend fun searchInAllLibraries(
         author: String?,
         book: String?,
-        q: String?,
+        query: String?,
         series: String?,
         headers: Headers,
         onBeforeRequest: OnBeforeRequest<Unit>,
@@ -1234,7 +1234,7 @@ abstract class DeweyClientImpl(
                     body = Unit,
                     shouldLogin = true,
                     securitySchema = "normal",
-                    queryParameters = mapOf("author" to author, "book" to book, "q" to q, "series" to series),
+                    queryParameters = mapOf("author" to author, "book" to book, "query" to query, "series" to series),
                 ),
                 typeInfo<Unit>(),
                 typeInfo<LibrarySearchResult>(),
@@ -1244,7 +1244,7 @@ abstract class DeweyClientImpl(
         }
 
     override suspend fun searchSeriesMetadata(
-        q: String,
+        query: String,
         libraryId: Uuid,
         authorName: String?,
         headers: Headers,
@@ -1260,7 +1260,7 @@ abstract class DeweyClientImpl(
                     body = Unit,
                     shouldLogin = true,
                     securitySchema = "normal",
-                    queryParameters = mapOf("authorName" to authorName, "q" to q),
+                    queryParameters = mapOf("authorName" to authorName, "query" to query),
                 ),
                 typeInfo<Unit>(),
                 typeInfo<List<MetadataSeries>>(),

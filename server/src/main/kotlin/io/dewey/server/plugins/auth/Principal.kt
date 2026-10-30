@@ -75,7 +75,7 @@ fun RoutingContext.assertLibraryPermissions(vararg libraryIds: Uuid) {
     libraryIds.forEach { libId ->
         val library =
             principal.permissions.libraries.firstOrNull { allowedLib -> allowedLib.id == libId }
-                ?: throw ErrorResponse.forbidden("You do not have access to library $libId")
+                ?: throw ErrorResponse.notFound("Library", libId)
 
         if (isWrite && library.permissions != LibraryPermissionLevel.READ_WRITE) {
             throw ErrorResponse.forbidden("You only have read access to library $libId")

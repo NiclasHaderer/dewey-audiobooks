@@ -3,10 +3,6 @@ name: Web
 on:
   workflow_call:
 
-defaults:
-  run:
-    working-directory: web
-
 jobs:
   build:
     name: Lint and build
@@ -22,14 +18,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Set up just
+        uses: extractions/setup-just@v3
+
       - name: Install dependencies
+        working-directory: web
         run: npm ci
 
-      - name: Generate routes
-        run: npm run build-routes
-
       - name: Lint
-        run: npm run lint
+        run: just lint-web
 
       - name: Build
-        run: npm run build
+        run: just build-web

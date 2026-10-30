@@ -15,13 +15,13 @@ export const BookSearch: FC<{
 }> = ({ book: _book, authors: _authors, libraryId, onSelect }) => {
   const [authors, setAuthors] = useState(_authors?.join(", "))
   const [book, setBook] = useState(_book)
-  const [submitted, setSubmitted] = useState<{ q: string; authorName: string | undefined } | null>(null)
+  const [submitted, setSubmitted] = useState<{ query: string; authorName: string | undefined } | null>(null)
 
   const { data: result, isFetching: loading } = useBookMetadataSearch(libraryId, submitted)
 
   const search = () => {
     if (!book) return
-    setSubmitted({ q: book, authorName: authors })
+    setSubmitted({ query: book, authorName: authors })
   }
 
   return (

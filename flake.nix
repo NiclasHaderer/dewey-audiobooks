@@ -25,6 +25,7 @@
           actionlint
           ktlint
           fnm
+          just               # runs the recipes in the justfile
         ];
 
         shellHook = ''
