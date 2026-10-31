@@ -10,7 +10,7 @@ type JwtPayload = {
   exp: number
   iss: string
   sub: UUID
-  type: "access"
+  type: "session-access"
 }
 
 export interface Jwt {

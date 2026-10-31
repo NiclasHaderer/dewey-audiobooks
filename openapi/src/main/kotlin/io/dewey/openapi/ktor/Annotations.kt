@@ -4,8 +4,10 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
 
 @Target(AnnotationTarget.CLASS)
+@Repeatable
 annotation class Secured(
     val name: String,
+    val method: String = "",
 )
 
 @Target(AnnotationTarget.CLASS)

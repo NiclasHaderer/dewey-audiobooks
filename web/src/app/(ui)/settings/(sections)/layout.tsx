@@ -3,7 +3,7 @@ import { SettingsIcon } from "lucide-react"
 import { FC, ReactNode, useEffect } from "react"
 import { useLocation } from "wouter"
 import { CollapsibleLabel } from "@dewey/components/menu/collapsible-label"
-import { accountItem, adminItems, adminPaths, licensesItem } from "@dewey/components/menu/settings-nav"
+import { adminItems, adminPaths, licensesItem, userItems } from "@dewey/components/menu/settings-nav"
 import { SideMenu } from "@dewey/components/menu/side-menu"
 import { useBreakpoint } from "@dewey/hooks/use-media-query"
 import { useCurrentUser } from "@dewey/queries/current-user-queries"
@@ -24,7 +24,7 @@ export const SettingsLayout: FC<{ children: ReactNode }> = ({ children }) => {
   // Wait until we know who the user is before rendering the (partly admin-only) nav.
   if (!user) return null
 
-  const navItems = isAdmin ? [accountItem, ...adminItems] : [accountItem]
+  const navItems = isAdmin ? [...userItems, ...adminItems] : userItems
 
   return (
     <div className="flex min-h-0 grow overflow-hidden max-md:-mb-(--bottom-height)">

@@ -21,9 +21,10 @@ fun Routing.eventRouting() {
     val changeEvents by inject<ChangeEvents>()
 
     webSocket<Api.Events, Unit, ChangeEventBatch> {
-        val userId =
-            call.principal<DeweyPrincipalImpl>()?.userId
+        val principal =
+            call.principal<DeweyPrincipalImpl>()
                 ?: throw ErrorResponse.internalError("Could not get principal of the event socket")
+        val userId = principal.userId
 
         val forwarding =
             launch {

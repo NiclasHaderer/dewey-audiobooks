@@ -16,7 +16,7 @@ fun RoutingContext.refreshAccessToken(
 ): DeweyAccessToken {
     val refreshToken = call.request.cookies[REFRESH_COOKIE] ?: throw ErrorResponse.unauthorized("No refresh token")
     val config = deweyAuthConfig<Any, Any>()
-    val user = validateJwt(config, refreshToken, DeweyJwtTypes.Refresh)
+    val user = validateJwt(config, refreshToken, DeweyJwtTypes.SessionRefresh)
 
     val pair = generateJwtPairForUser(user, config)
     call.appendAuthCookies(pair, config)

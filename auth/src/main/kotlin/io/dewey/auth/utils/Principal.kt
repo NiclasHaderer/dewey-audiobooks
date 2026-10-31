@@ -6,8 +6,14 @@ import io.ktor.server.auth.principal
 import io.ktor.server.routing.RoutingContext
 import kotlin.uuid.Uuid
 
-interface DeweyPrincipal : Principal {
+interface DeweyPermissions {
+    val isAdmin: Boolean
+}
+
+interface DeweyPrincipal {
     val userId: Uuid
+    val isAccessToken: Boolean
+    val permissions: DeweyPermissions
 }
 
 inline fun <reified TYPE : DeweyPrincipal> RoutingContext.deweyPrincipal(): TYPE =

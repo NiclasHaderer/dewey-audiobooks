@@ -88,6 +88,29 @@ abstract class DeweyClientImpl(
             )
         }
 
+    override suspend fun createAccessToken(
+        body: CreateAccessToken,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<CreateAccessToken>,
+        onAfterRequest: OnAfterRequest<CreateAccessToken, CreatedAccessToken>,
+    ): OpenApiHttpResponse<CreatedAccessToken> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens",
+                    method = HttpMethod("POST"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal-login",
+                ),
+                typeInfo<CreateAccessToken>(),
+                typeInfo<CreatedAccessToken>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
     override suspend fun createAuthor(
         libraryId: Uuid,
         body: AuthorCreate,
@@ -196,7 +219,7 @@ abstract class DeweyClientImpl(
                     headers = headers,
                     body = Unit,
                     shouldLogin = true,
-                    securitySchema = "normal",
+                    securitySchema = "normal-login",
                 ),
                 typeInfo<Unit>(),
                 typeInfo<Unit>(),
@@ -689,6 +712,28 @@ abstract class DeweyClientImpl(
             )
         }
 
+    override suspend fun listAccessTokens(
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<Unit>,
+        onAfterRequest: OnAfterRequest<Unit, List<AccessToken>>,
+    ): OpenApiHttpResponse<List<AccessToken>> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens",
+                    method = HttpMethod("GET"),
+                    headers = headers,
+                    body = Unit,
+                    shouldLogin = true,
+                    securitySchema = "normal",
+                ),
+                typeInfo<Unit>(),
+                typeInfo<List<AccessToken>>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
     override suspend fun listAuthors(
         libraryId: Uuid,
         limit: Int?,
@@ -989,7 +1034,7 @@ abstract class DeweyClientImpl(
                     headers = headers,
                     body = Unit,
                     shouldLogin = true,
-                    securitySchema = "media",
+                    securitySchema = "media-login",
                 ),
                 typeInfo<Unit>(),
                 typeInfo<ChangeEventBatch>(),
@@ -1149,6 +1194,54 @@ abstract class DeweyClientImpl(
                 ),
                 typeInfo<Unit>(),
                 typeInfo<DeweyJWKs>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
+    override suspend fun revealAccessToken(
+        id: Uuid,
+        body: PasswordConfirmation,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation>,
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, RevealedAccessToken>,
+    ): OpenApiHttpResponse<RevealedAccessToken> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens/$id/reveal",
+                    method = HttpMethod("POST"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal-login",
+                ),
+                typeInfo<PasswordConfirmation>(),
+                typeInfo<RevealedAccessToken>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
+    override suspend fun revokeAccessToken(
+        id: Uuid,
+        body: PasswordConfirmation,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation>,
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, Unit>,
+    ): OpenApiHttpResponse<Unit> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens/$id",
+                    method = HttpMethod("DELETE"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal-login",
+                ),
+                typeInfo<PasswordConfirmation>(),
+                typeInfo<Unit>(),
                 onBeforeRequest = onBeforeRequest,
                 onAfterRequest = onAfterRequest,
             )
@@ -1344,6 +1437,30 @@ abstract class DeweyClientImpl(
             )
         }
 
+    override suspend fun updateAccessToken(
+        id: Uuid,
+        body: UpdateAccessToken,
+        headers: Headers,
+        onBeforeRequest: OnBeforeRequest<UpdateAccessToken>,
+        onAfterRequest: OnAfterRequest<UpdateAccessToken, AccessToken>,
+    ): OpenApiHttpResponse<AccessToken> =
+        run {
+            makeRequest(
+                RequestMetadata(
+                    path = "/api/auth/user/tokens/$id",
+                    method = HttpMethod("PATCH"),
+                    headers = headers,
+                    body = body,
+                    shouldLogin = true,
+                    securitySchema = "normal-login",
+                ),
+                typeInfo<UpdateAccessToken>(),
+                typeInfo<AccessToken>(),
+                onBeforeRequest = onBeforeRequest,
+                onAfterRequest = onAfterRequest,
+            )
+        }
+
     override suspend fun updateAuthor(
         id: Uuid,
         libraryId: Uuid,
@@ -1433,7 +1550,7 @@ abstract class DeweyClientImpl(
                     headers = headers,
                     body = body,
                     shouldLogin = true,
-                    securitySchema = "normal",
+                    securitySchema = "normal-login",
                 ),
                 typeInfo<DeweyChangePassword>(),
                 typeInfo<Unit>(),
@@ -1457,7 +1574,7 @@ abstract class DeweyClientImpl(
                     headers = headers,
                     body = body,
                     shouldLogin = true,
-                    securitySchema = "admin",
+                    securitySchema = "admin-login",
                 ),
                 typeInfo<DeweyModifyPermissions<UpdateUserPermissions>>(),
                 typeInfo<DeweyUser>(),
@@ -1506,7 +1623,7 @@ abstract class DeweyClientImpl(
                     headers = headers,
                     body = body,
                     shouldLogin = true,
-                    securitySchema = "normal",
+                    securitySchema = "normal-login",
                 ),
                 typeInfo<DeweyRenameUser>(),
                 typeInfo<DeweyUser>(),

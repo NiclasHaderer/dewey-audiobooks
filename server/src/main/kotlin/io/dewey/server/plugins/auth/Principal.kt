@@ -1,6 +1,8 @@
 package io.dewey.server.plugins.auth
 
+import io.dewey.auth.DeweyAccessToken
 import io.dewey.auth.utils.DeweyPrincipal
+import io.dewey.models.AccessTokenPermissions
 import io.dewey.models.LibraryPermissionLevel
 import io.dewey.models.LibraryPermissions
 import io.dewey.models.UserPermissions
@@ -20,8 +22,29 @@ import kotlin.uuid.Uuid
 
 class DeweyPrincipalImpl(
     override val userId: Uuid,
+    accessToken: DeweyAccessToken<AccessTokenPermissions>?,
 ) : DeweyPrincipal {
-    val permissions: UserPermissions = resolveUserPermissions(userId)
+    override val isAccessToken: Boolean = accessToken != null
+
+    /** What a request may do: the user's permissions, narrowed by the access token it was made with. */
+    override val permissions: UserPermissions =
+        resolveUserPermissions(userId).let { user -> accessToken?.let { user.limitedTo(it.permissions) } ?: user }
+
+    val readableLibraries: Set<Uuid> get() = permissions.libraries.mapTo(mutableSetOf()) { it.id }
+}
+
+// A level above the user's drops to the user's, a library the user cannot reach stays out
+internal fun UserPermissions.limitedTo(token: AccessTokenPermissions): UserPermissions {
+    val allowed = token.libraries?.associate { it.id to it.permissions }
+    return UserPermissions(
+        isAdmin = isAdmin && token.isAdmin,
+        libraries =
+            libraries.mapNotNull { library ->
+                if (allowed == null) return@mapNotNull library
+                val level = allowed[library.id] ?: return@mapNotNull null
+                library.copy(permissions = minOf(level, library.permissions))
+            },
+    )
 }
 
 fun resolveUserPermissions(userId: Uuid): UserPermissions =

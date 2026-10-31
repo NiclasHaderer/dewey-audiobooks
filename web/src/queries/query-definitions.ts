@@ -113,6 +113,11 @@ export const queries = {
     queryFn: () => Api.listUsers(),
     meta: { action: "load users" },
   }),
+  accessTokens: queryOptions({
+    queryKey: ["access-tokens"] as const,
+    queryFn: () => Api.listAccessTokens(),
+    meta: { action: "load your access tokens", persist: false },
+  }),
   libraries: queryOptions({
     queryKey: ["libraries"] as const,
     queryFn: () => Api.listLibraries(),

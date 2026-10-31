@@ -11,56 +11,55 @@ import io.dewey.openapi.ktor.errors.ErrorResponse
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.util.Date
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 fun generateJwtPairForUser(
     user: DeweyDatabaseUser,
-    config: DeweyAuthConfig<*, *>,
-): DeweyJwtPair =
-    DeweyJwtPair(
-        accessToken = generateAccessTokenForUser(user, config),
-        refreshToken = generateRefreshTokenForUser(user, config),
+    config: DeweyAuthConfig<*, *, *>,
+): DeweyJwtPair {
+    val now = Clock.System.now()
+    return DeweyJwtPair(
+        accessToken =
+            signJwt(user, DeweyJwtTypes.SessionAccess, now + config.accessTokenExpiryTime.milliseconds, config),
+        refreshToken =
+            signJwt(user, DeweyJwtTypes.SessionRefresh, now + config.refreshTokenExpiryTime.milliseconds, config),
     )
+}
 
-internal fun generateAccessTokenForUser(
+private const val ACCESS_TOKEN_ID_CLAIM = "tid"
+
+// An access token carries the id of the row that can revoke it
+internal fun signJwt(
     user: DeweyDatabaseUser,
-    config: DeweyAuthConfig<*, *>,
+    type: DeweyJwtTypes,
+    expiresAt: Instant?,
+    config: DeweyAuthConfig<*, *, *>,
+    accessTokenId: Uuid? = null,
 ): String {
     val keyPair = config.keyPairs[config.activeKeyId]!!
-    val issuer = config.issuer
-
     return JWT
         .create()
-        .withIssuer(issuer)
+        .withIssuer(config.issuer)
         .withKeyId(config.activeKeyId)
         .withClaim("sub", user.id.toString())
-        .withClaim("type", DeweyJwtTypes.Access.type)
+        .withClaim("type", type.type)
         .withClaim("ver", user.tokenVersion)
-        .withExpiresAt(Date(System.currentTimeMillis() + config.accessTokenExpiryTime))
+        .apply { if (accessTokenId != null) withClaim(ACCESS_TOKEN_ID_CLAIM, accessTokenId.toString()) }
+        .apply { if (expiresAt != null) withExpiresAt(Date(expiresAt.toEpochMilliseconds())) }
         .sign(Algorithm.RSA256(keyPair.public as RSAPublicKey, keyPair.private as RSAPrivateKey))
 }
 
-internal fun generateRefreshTokenForUser(
-    user: DeweyDatabaseUser,
-    config: DeweyAuthConfig<*, *>,
-): String {
-    val issuer = config.issuer
-    val keyPair = config.keyPairs[config.activeKeyId]!!
-
-    val refreshAge = System.currentTimeMillis() + config.refreshTokenExpiryTime
-    return JWT
-        .create()
-        .withIssuer(issuer)
-        .withKeyId(config.activeKeyId)
-        .withClaim("type", DeweyJwtTypes.Refresh.type)
-        .withClaim("sub", user.id.toString())
-        .withClaim("ver", user.tokenVersion)
-        .withExpiresAt(Date(refreshAge))
-        .sign(Algorithm.RSA256(keyPair.public as RSAPublicKey, keyPair.private as RSAPrivateKey))
+// Null for every other type of token
+internal fun accessTokenId(payload: Payload): Uuid? {
+    if (payload.getClaim("type").asString() != DeweyJwtTypes.AccessToken.type) return null
+    return payload.getClaim(ACCESS_TOKEN_ID_CLAIM).asString()?.let { runCatching { Uuid.parse(it) }.getOrNull() }
 }
 
 fun validateJwt(
-    authConfig: DeweyAuthConfig<*, *>,
+    authConfig: DeweyAuthConfig<*, *, *>,
     token: String,
     type: DeweyJwtTypes,
 ): DeweyDatabaseUser {
@@ -80,7 +79,7 @@ fun validateJwt(
 
 // The user named by a signature-verified token, or null if the type is wrong, the user is gone, or the token
 // predates a password change.
-internal fun DeweyAuthConfig<*, *>.userForToken(
+internal fun DeweyAuthConfig<*, *, *>.userForToken(
     payload: Payload,
     type: DeweyJwtTypes,
 ): DeweyDatabaseUser? {
