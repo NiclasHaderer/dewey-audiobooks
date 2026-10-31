@@ -22,7 +22,7 @@ fun RoutingContext.renameUser(
     val principal = deweyPrincipal<DeweyPrincipal>()
     val config = deweyAuthConfig<Any, Any>()
 
-    if (principal.userId != params.id && !principal.isAdmin) {
+    if (principal.userId != params.id && !principal.permissions.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can rename another user")
     }
 

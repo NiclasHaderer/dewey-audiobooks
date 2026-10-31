@@ -22,7 +22,7 @@ fun <UPDATE_PERMISSIONS> RoutingContext.modifyUserPermissions(
     val principal = deweyPrincipal<DeweyPrincipal>()
     val config = deweyAuthConfig<Any, UPDATE_PERMISSIONS>()
 
-    if (!principal.isAdmin) {
+    if (!principal.permissions.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can modify permissions")
     }
 

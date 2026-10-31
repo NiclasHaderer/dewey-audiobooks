@@ -1,10 +1,11 @@
 package io.dewey.auth.interactions
 
 import io.dewey.auth.deweyAuthConfig
+import io.dewey.auth.models.DeweyJwtTypes
 import io.dewey.auth.utils.DeweyPrincipal
 import io.dewey.auth.utils.deweyPrincipal
-import io.dewey.auth.utils.generateAccessToken
 import io.dewey.auth.utils.passwordMatches
+import io.dewey.auth.utils.signJwt
 import io.dewey.auth.withUserMutation
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.ktor.server.routing.RoutingContext
@@ -32,5 +33,5 @@ fun RoutingContext.issueAccessToken(
 ): String {
     val config = deweyAuthConfig<Any, Any>()
     val user = config.getUserById(userId) ?: throw ErrorResponse.notFound("User", userId)
-    return generateAccessToken(user, tokenId, expiresAt, config)
+    return signJwt(user, DeweyJwtTypes.AccessToken, expiresAt, config, tokenId)
 }

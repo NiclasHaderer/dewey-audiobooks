@@ -71,7 +71,8 @@ fun Application.configureAuthentication() {
             ) { user, accessToken, setError ->
                 val principal = DeweyPrincipalImpl(user.id, accessToken)
                 if (guard !in Guards.AdminOnly || principal.permissions.isAdmin) return@configureGuard principal
-                val reason = if (accessToken == null) "User is not an admin" else "The access token has no admin rights"
+                val reason =
+                    if (principal.isAccessToken) "The access token has no admin rights" else "User is not an admin"
                 setError(ErrorResponse.unauthorized(reason))
                 null
             }

@@ -23,7 +23,7 @@ fun Routing.libraryRouting() {
     val libraryRepository by inject<LibraryRepository>()
 
     get<Api.Libraries, List<Library>> {
-        val allowed = deweyPrincipal().permissions.libraries.mapTo(mutableSetOf()) { it.id }
+        val allowed = deweyPrincipal().readableLibraries
         libraryRepository.getAll().filter { it.id in allowed }
     }
 

@@ -24,13 +24,11 @@ class DeweyPrincipalImpl(
     override val userId: Uuid,
     accessToken: DeweyAccessToken<AccessTokenPermissions>?,
 ) : DeweyPrincipal {
-    override val accessTokenId: Uuid? = accessToken?.id
+    override val isAccessToken: Boolean = accessToken != null
 
     /** What a request may do: the user's permissions, narrowed by the access token it was made with. */
-    val permissions: UserPermissions =
+    override val permissions: UserPermissions =
         resolveUserPermissions(userId).let { user -> accessToken?.let { user.limitedTo(it.permissions) } ?: user }
-
-    override val isAdmin: Boolean get() = permissions.isAdmin
 
     val readableLibraries: Set<Uuid> get() = permissions.libraries.mapTo(mutableSetOf()) { it.id }
 }
