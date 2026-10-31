@@ -1,2 +1,3 @@
+cli/gen/** linguist-generated
 client/src/main/kotlin/io/dewey/client/** linguist-generated
 web/src/client/generated/** linguist-generated
