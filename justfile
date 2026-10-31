@@ -6,7 +6,7 @@ api := "http://localhost:" + port + "/api"
 default:
     @just --list
 
-# Regenerate the Kotlin, TypeScript and Go clients from the server's routes
+# Regenerate the Kotlin, TypeScript and Go clients and the CLI commands from the server's routes
 generate: && format
     ./gradlew :server:generateClients
 
@@ -15,7 +15,7 @@ format:
     gofmt -l -w cli
     cd web && npm run format
 
-build: build-server build-web
+build: build-server build-web build-cli
 
 build-server *gradle_args:
     ./gradlew :server:installDist {{ gradle_args }}
@@ -26,7 +26,16 @@ build-web:
 build-taglib:
     ./gradlew :taglib:buildNativeHost
 
-lint: lint-server lint-web
+build-cli:
+    cd cli && go build -o ../build/dewey .
+
+[no-cd]
+[no-exit-message]
+[positional-arguments]
+cli *args: build-cli
+    @"{{ justfile_directory() }}/build/dewey" "$@"
+
+lint: lint-server lint-web lint-cli
 
 lint-server:
     ./gradlew ktlintCheck
@@ -34,13 +43,25 @@ lint-server:
 lint-web:
     cd web && npm run build-routes && npm run typecheck && npm run lint
 
-test: test-server
+lint-cli:
+    cd cli && go vet ./... && go vet -tags e2e ./...
+
+test: test-server test-cli
 
 test-server *gradle_args:
     ./gradlew check {{ gradle_args }}
 
 test-taglib *gradle_args:
     ./gradlew :taglib:test {{ gradle_args }}
+
+test-cli:
+    cd cli && go test ./...
+
+# Builds and starts the server, runs the CLI against it and stops it again
+test-cli-e2e: build-server run-cli-e2e
+
+# Runs the end-to-end tests against the server as built, like CI does with the one the server workflow uploads
+run-cli-e2e: (_with-server "server/build/install/server/bin/server" ("cd cli && DEWEY_E2E_URL=http://localhost:" + port + " go test -tags e2e -count=1 ./e2e/..."))
 
 # Starts the server and the web dev server, seeding a user and a library on the first start
 dev: (_with-server "./gradlew :server:run" "cd web && npm run dev")
