@@ -2,27 +2,22 @@ package io.dewey.openapi
 
 import io.dewey.openapi.client.kotlin.KtErrorHandling
 import io.dewey.openapi.client.kotlin.generateKotlinClient
-import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class KotlinGenerationTest {
     private val generated =
-        mutableMapOf<String, String>().also { generated ->
-            testApplication {
-                application {
-                    testRoutes()
-                    generateKotlinClient(
-                        apiClientPackageName = "io.dewey.test",
-                        apiClientName = "TestClient",
-                        savePath = "",
-                        fileWriter = { file, content -> generated[file.path] = content },
-                        cleanDistPackage = false,
-                        errorHandling = KtErrorHandling.Exception,
-                    )
-                }
-            }
+        generatedFiles { fileWriter ->
+            testRoutes()
+            generateKotlinClient(
+                apiClientPackageName = "io.dewey.test",
+                apiClientName = "TestClient",
+                savePath = "",
+                fileWriter = fileWriter,
+                cleanDistPackage = false,
+                errorHandling = KtErrorHandling.Exception,
+            )
         }
 
     @Test

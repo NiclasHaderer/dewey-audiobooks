@@ -1,7 +1,6 @@
 package io.dewey.openapi
 
 import io.dewey.openapi.client.go.generateGoClient
-import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -9,19 +8,15 @@ import kotlin.test.assertFalse
 
 class GoGenerationTest {
     private val generated =
-        mutableMapOf<String, String>().also { generated ->
-            testApplication {
-                application {
-                    testRoutes()
-                    generateGoClient(
-                        packageName = "client",
-                        importPath = "example.com/generated/client",
-                        savePath = "",
-                        fileWriter = { file, content -> generated[file.path] = content },
-                        cleanDistPackage = false,
-                    )
-                }
-            }
+        generatedFiles { fileWriter ->
+            testRoutes()
+            generateGoClient(
+                packageName = "client",
+                importPath = "example.com/generated/client",
+                savePath = "",
+                fileWriter = fileWriter,
+                cleanDistPackage = false,
+            )
         }
 
     private fun words(text: String) = text.trim().replace("\\s+".toRegex(), " ")

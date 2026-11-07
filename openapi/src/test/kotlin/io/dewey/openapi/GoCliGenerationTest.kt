@@ -3,61 +3,25 @@ package io.dewey.openapi
 import io.dewey.openapi.client.go.CommandName
 import io.dewey.openapi.client.go.commandName
 import io.dewey.openapi.client.go.generateGoCli
-import io.dewey.openapi.ktor.Secured
-import io.dewey.openapi.ktor.Summary
-import io.dewey.openapi.ktor.Tagged
-import io.dewey.openapi.ktor.get
-import io.dewey.openapi.ktor.plugins.OpenAPIRouting
-import io.dewey.openapi.ktor.post
-import io.ktor.resources.Resource
-import io.ktor.server.application.install
-import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.UserIdPrincipal
-import io.ktor.server.auth.bearer
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.dataconversion.DataConversion
-import io.ktor.server.resources.Resources
-import io.ktor.server.routing.routing
-import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
-@Summary("List shelves", method = "GET", description = "List the shelves, the one used most recently first. In time.")
-@Tagged("Shelves", description = "Shelves of books", group = "Library")
-@Resource("shelves")
-class ShelvesRoute
-
-@Summary("List cookies", method = "GET")
-@Summary("Refresh cookie", method = "POST", cli = false)
-@Resource("cookies")
-class CookiesRoute
-
-@Summary("List keys", method = "GET")
-@Summary("Rotate keys", method = "POST")
-@Secured("login", method = "POST")
-@Resource("keys")
-class KeysRoute
-
 class GoCliGenerationTest {
     private val commands =
-        mutableMapOf<String, String>()
-            .also { generated ->
-                testApplication {
-                    application {
-                        testRoutes()
-                        generateGoCli(
-                            packageName = "commands",
-                            clientImportPath = "example.com/generated/client",
-                            savePath = "",
-                            fileWriter = { file, content -> generated[file.path] = content },
-                            cleanDistPackage = false,
-                        )
-                    }
-                }
-            }.getValue("commands.go")
+        generatedFiles { fileWriter ->
+            testRoutes()
+            generateGoCli(
+                packageName = "commands",
+                clientImportPath = "example.com/generated/client",
+                savePath = "",
+                loginOnlyGuards = setOf("login"),
+                fileWriter = fileWriter,
+                cleanDistPackage = false,
+            )
+        }.getValue("commands.go")
 
     @Test
     fun `the help spells out the body and the output with their generic arguments filled in`() {
@@ -71,83 +35,18 @@ class GoCliGenerationTest {
 
     @Test
     fun `a route behind a guard that refuses access tokens has no command`() {
-        val generated = mutableMapOf<String, String>()
-        testApplication {
-            application {
-                install(Resources)
-                install(DataConversion)
-                install(ContentNegotiation)
-                install(Authentication) { bearer("login") { authenticate { UserIdPrincipal(it.token) } } }
-                install(OpenAPIRouting)
-                routing {
-                    get<KeysRoute, List<String>> { emptyList() }
-                    post<KeysRoute, Unit, Unit> { _, _ -> }
-                }
-                generateGoCli(
-                    packageName = "commands",
-                    clientImportPath = "example.com/generated/client",
-                    savePath = "",
-                    loginOnlyGuards = setOf("login"),
-                    fileWriter = { file, content -> generated[file.path] = content },
-                    cleanDistPackage = false,
-                )
-            }
-        }
-        val commands = generated.getValue("commands.go")
-
         assertContains(commands, "listKeysCommand(api)")
         assertFalse("rotateKeysCommand" in commands)
     }
 
     @Test
     fun `a route left out of the cli has no command`() {
-        val generated = mutableMapOf<String, String>()
-        testApplication {
-            application {
-                install(Resources)
-                install(DataConversion)
-                install(ContentNegotiation)
-                install(OpenAPIRouting)
-                routing {
-                    get<CookiesRoute, List<String>> { emptyList() }
-                    post<CookiesRoute, Unit, Unit> { _, _ -> }
-                }
-                generateGoCli(
-                    packageName = "commands",
-                    clientImportPath = "example.com/generated/client",
-                    savePath = "",
-                    fileWriter = { file, content -> generated[file.path] = content },
-                    cleanDistPackage = false,
-                )
-            }
-        }
-        val commands = generated.getValue("commands.go")
-
         assertContains(commands, "listCookiesCommand(api)")
         assertFalse("refreshCookieCommand" in commands)
     }
 
     @Test
     fun `the group of a tag is the help section of its commands`() {
-        val generated = mutableMapOf<String, String>()
-        testApplication {
-            application {
-                install(Resources)
-                install(DataConversion)
-                install(ContentNegotiation)
-                install(OpenAPIRouting)
-                routing { get<ShelvesRoute, List<String>> { emptyList() } }
-                generateGoCli(
-                    packageName = "commands",
-                    clientImportPath = "example.com/generated/client",
-                    savePath = "",
-                    fileWriter = { file, content -> generated[file.path] = content },
-                    cleanDistPackage = false,
-                )
-            }
-        }
-        val commands = generated.getValue("commands.go")
-
         assertContains(commands, "root.AddGroup(&cobra.Group{ID: \"library\", Title: \"LIBRARY COMMANDS\"})")
         assertContains(
             commands,

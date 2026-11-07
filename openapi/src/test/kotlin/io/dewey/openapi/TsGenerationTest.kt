@@ -2,11 +2,6 @@ package io.dewey.openapi
 
 import io.dewey.openapi.client.typescript.generateTsClient
 import io.dewey.openapi.ktor.get
-import io.dewey.openapi.ktor.plugins.OpenAPIRouting
-import io.ktor.server.application.install
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.dataconversion.DataConversion
-import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.SerialName
@@ -19,23 +14,21 @@ import kotlin.test.assertFailsWith
 class TsGenerationTest {
     @Test
     fun testSomething() {
-        val generatedStuff = mutableMapOf<String, String>()
-        testApplication {
-            application {
+        val generatedStuff =
+            generatedFiles { fileWriter ->
                 testRoutes()
                 generateTsClient(
                     dist = "",
-                    fileWriter = { file, content -> generatedStuff[file.path] = content },
+                    fileWriter = fileWriter,
                     apiFactoryName = "createTestApi",
-                    // The writer above keeps everything in memory, so there is no dist to clean.
                     cleanDistPackage = false,
                 )
             }
-        }
         val models =
             mapOf(
                 "models/index.ts" to
                     listOf(
+                        "empty",
                         "generic-route",
                         "generic-route2",
                         "generic-route3",
@@ -45,6 +38,7 @@ class TsGenerationTest {
                         "set-route",
                         "uuid",
                     ).joinToString("") { "export * from \"./$it\";\n" },
+                "models/empty.ts" to "export type Empty = \"\"\n",
                 "models/generic-route.ts" to
                     """
                     import type {Pair} from "./pair";
@@ -130,7 +124,7 @@ class TsGenerationTest {
         val apiClient =
             $$"""
             import {ApiCallData, ApiInterceptor, ApiResponse, ApiSocket, ApiSocketData, ApiSocketInterceptor, _request, _createUrl, _mergeHeaders, _socket} from "./client";
-            import type {GenericRoute, GenericRoute2, GenericRoute3, ListRoute, MapRoute, SetRoute, UUID} from "./models";
+            import type {Empty, GenericRoute, GenericRoute2, GenericRoute3, ListRoute, MapRoute, SetRoute, UUID} from "./models";
 
             export const createTestApi = (
               defaultHeaders: HeadersInit = {},
@@ -142,8 +136,23 @@ class TsGenerationTest {
               const defaultHeadersImpl = new Headers(defaultHeaders)
               return {
                 apiVersion: "1.2.3",
+                listCookies: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Array<string>>> => {
+                  return _request(`/cookies`, "GET", "json", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
+                },
+                listKeys: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Array<string>>> => {
+                  return _request(`/keys`, "GET", "json", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
+                },
+                listShelves: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Array<string>>> => {
+                  return _request(`/shelves`, "GET", "json", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
+                },
                 listen: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, interceptors: ApiSocketInterceptor[] = []): Promise<ApiSocket<never, ListRoute>> => {
                   return _socket(_createUrl(`/${path}/listen`, {name, someParam}), [...defaultSocketInterceptors, ...interceptors], socketExecutor, false);
+                },
+                refreshCookie: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Empty>> => {
+                  return _request(`/cookies`, "POST", "text", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
+                },
+                rotateKeys: (headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<Empty>> => {
+                  return _request(`/keys`, "POST", "text", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, true);
                 },
                 v1: ({name, someParam, path}: {name: string,someParam: Array<number>,path: UUID}, headers: HeadersInit = {}, interceptors: ApiInterceptor[] = []): Promise<ApiResponse<ListRoute>> => {
                   return _request(_createUrl(`/${path}/V1`, {name, someParam}), "GET", "json", _mergeHeaders(defaultHeadersImpl, headers), undefined, [...defaultInterceptors, ...interceptors], executor, false);
@@ -174,10 +183,7 @@ class TsGenerationTest {
         lateinit var error: IllegalStateException
         testApplication {
             application {
-                install(Resources)
-                install(DataConversion)
-                install(ContentNegotiation)
-                install(OpenAPIRouting) { info { version = "1.2.3" } }
+                openApi()
                 routing { get<Routes.V1, UuidClash> { TODO() } }
                 error =
                     assertFailsWith<IllegalStateException> {

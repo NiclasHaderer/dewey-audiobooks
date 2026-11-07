@@ -8,8 +8,6 @@ import io.dewey.openapi.ktor.Tagged
 import io.dewey.openapi.ktor.delete
 import io.dewey.openapi.ktor.get
 import io.dewey.openapi.ktor.patch
-import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
-import io.dewey.openapi.ktor.plugins.OpenAPIRouting
 import io.dewey.openapi.ktor.plugins.generateOpenApiSpec
 import io.dewey.openapi.ktor.post
 import io.ktor.resources.Resource
@@ -18,12 +16,8 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.bearer
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.dataconversion.DataConversion
-import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
-import io.swagger.v3.oas.models.OpenAPI
 import kotlinx.serialization.Serializable
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.readText
@@ -105,11 +99,8 @@ class SpecApi {
 }
 
 private fun Application.specRoutes() {
-    install(Resources)
-    install(DataConversion)
-    install(ContentNegotiation)
     install(Authentication) { bearer("bearer") { authenticate { UserIdPrincipal("test") } } }
-    install(OpenAPIRouting) {
+    openApi {
         components {
             securitySchemes {
                 http("bearer") {
@@ -128,22 +119,8 @@ private fun Application.specRoutes() {
     }
 }
 
-private fun generateApi(): OpenAPI {
-    lateinit var api: OpenAPI
-    testApplication {
-        application {
-            specRoutes()
-            val config = attributes[OpenAPIConfigurationKey]
-            config.addRoutesToSpec()
-            api = config.schemaHolder.api
-        }
-        client.httpGet("/")
-    }
-    return api
-}
-
 class SchemaGenerationTest {
-    private val api = generateApi()
+    private val api = openApiSpec { specRoutes() }
 
     private val listItems get() = api.paths["/spec/items"]!!.get
     private val deleteItem get() = api.paths["/spec/items/{id}"]!!.delete
