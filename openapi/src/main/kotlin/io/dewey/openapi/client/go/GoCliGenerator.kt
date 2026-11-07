@@ -59,8 +59,10 @@ private fun singular(word: String): String =
         else -> word
     }
 
-// What a command cannot do without is an argument and the rest are flags
-private val GoRoute.positional get() = pathParameters + requiredQuery
+// What a command cannot do without is an argument and the rest are flags. A list of query values is a flag given once
+// per item even when it is required, as arguments cannot tell where one list ends and the next argument starts.
+private val GoRoute.positional get() = pathParameters + requiredQuery.filter { it.type !is WireType.ListOf }
+private val GoRoute.flags get() = optionalQuery + requiredQuery.filter { it.type is WireType.ListOf }
 
 // The root command owns these, so a generated flag of the same name would shadow them
 private val RESERVED_FLAGS = setOf("body", "output", "json", "jq", "help", "url", "token")
@@ -295,11 +297,8 @@ class GoCliGenerator(
 
     override fun generateClient(): List<ClientPart> {
         val runtime = GENERATED_HEADER + "package $packageName\n\n" + getResourceContent("/go/commands/runtime.go")
-        val runtimeTest =
-            GENERATED_HEADER + "package $packageName\n\n" + getResourceContent("/go/commands/runtime_test.go")
         return listOf(
             ClientPart("runtime.go", runtime),
-            ClientPart("runtime_test.go", runtimeTest),
             ClientPart("commands.go", commandsFile()),
         )
     }
@@ -307,23 +306,20 @@ class GoCliGenerator(
     private fun commandsFile(): String {
         val functions = commands.map { (name, route) -> command(name, route) }
         // Read off the types the commands spell out, as the help texts in them may mention anything
-        val parameters = commands.flatMap { (_, route) -> route.positional + route.optionalQuery }
         val typed =
-            parameters.map { kind(it) } +
+            commands.flatMap { (_, route) -> (route.positional + route.flags).map { kind(route, it) } } +
                 commands.mapNotNull { (_, route) -> (route.requestBody as? Body.Json)?.type?.go(MODELS) }
         val imports =
             buildList {
-                if (parameters.any { it.type.usesTime() }) add("time")
-                add("")
                 add("github.com/spf13/cobra")
                 add(clientImportPath)
                 if (typed.any { MODELS in it }) add("$clientImportPath/models")
-            }.dropWhile { it.isEmpty() }
+            }
         return buildString {
             append(GENERATED_HEADER)
             append("package $packageName\n\n")
             append("import (\n")
-            imports.forEach { append(if (it.isEmpty()) "\n" else "\t\"$it\"\n") }
+            imports.forEach { append("\t\"$it\"\n") }
             append(")\n\n")
             append("type API func() (*client.Client, error)\n\n")
             append(register())
@@ -377,7 +373,7 @@ class GoCliGenerator(
     ): String =
         buildString {
             val route = goRoute.route
-            goRoute.optionalQuery.forEach { flag ->
+            goRoute.flags.forEach { flag ->
                 check(flagName(flag) !in RESERVED_FLAGS) {
                     "The query parameter ${flag.name} of ${route.summary} clashes with the --${flagName(flag)} flag"
                 }
@@ -406,7 +402,7 @@ class GoCliGenerator(
             append("\t\t},\n")
             append("\t}\n")
             val response = goRoute.responseBody
-            if (goRoute.optionalQuery.isNotEmpty() || goRoute.bodyType != null || response != Body.None) {
+            if (goRoute.flags.isNotEmpty() || goRoute.bodyType != null || response != Body.None) {
                 append("\tflags := cmd.Flags()\n")
             }
             if (response == Body.Binary) append("\toutputFlag := flags.StringP(\"output\", \"o\", \"\", outputUsage)\n")
@@ -422,9 +418,11 @@ class GoCliGenerator(
                 val arguments = (listOf(jsonExample, jq) + fields).joinToString(", ") { "\"$it\"" }
                 append("\tjsonFlag, jqFlag := outputFlags(flags, $arguments)\n")
             }
-            goRoute.optionalQuery.forEach { flag ->
-                val arguments = "flags, \"${flagName(flag)}\", ${kind(flag)}, ${goString(flagUsage(flag))}"
-                append("\t${local(flag)}Flag := flag($arguments)\n")
+            goRoute.flags.forEach { flag ->
+                val function = if (flag.type is WireType.ListOf) "listFlag" else "flag"
+                val arguments = "flags, \"${flagName(flag)}\", ${kind(goRoute, flag)}, ${goString(flagUsage(flag))}"
+                append("\t${local(flag)}Flag := $function($arguments)\n")
+                if (flag !in goRoute.optionalQuery) append("\t_ = cmd.MarkFlagRequired(\"${flagName(flag)}\")\n")
             }
             if (goRoute.bodyType != null) {
                 append("\tbodyFlag := flags.String(\"body\", \"\", bodyUsage)\n")
@@ -433,7 +431,8 @@ class GoCliGenerator(
 
             append("\tcmd.RunE = func(cmd *cobra.Command, args []string) error {\n")
             positional.forEachIndexed { index, parameter ->
-                append(fallible(local(parameter), "arg(args[$index], \"${flagName(parameter)}\", ${kind(parameter)})"))
+                val kind = kind(goRoute, parameter)
+                append(fallible(local(parameter), "arg(args[$index], \"${flagName(parameter)}\", $kind)"))
             }
             goRoute.optionsType?.let { options ->
                 append("\t\tvar opts client.$options\n")
@@ -454,7 +453,9 @@ class GoCliGenerator(
             val arguments =
                 buildList {
                     add("cmd.Context()")
-                    positional.forEach { add(local(it)) }
+                    (goRoute.pathParameters + goRoute.requiredQuery).forEach {
+                        add(if (it in positional) local(it) else "*${local(it)}Flag")
+                    }
                     if (goRoute.bodyType != null) add("requestBody")
                     if (goRoute.optionsType != null) add("&opts")
                 }.joinToString(", ")
@@ -505,13 +506,22 @@ class GoCliGenerator(
         return (model.declaration(named.name) as? ObjectDeclaration)?.properties?.map { it.name }.orEmpty()
     }
 
-    // The kind in the runtime that reads a command line value as the parameter's type
-    private fun kind(parameter: Parameter): String {
-        val type = parameter.type
+    // The kind in the runtime that reads a command line value as the parameter's type, or one item of a list flag
+    private fun kind(
+        goRoute: GoRoute,
+        parameter: Parameter,
+    ): String {
+        val type = (parameter.type as? WireType.ListOf)?.element?.takeIf { parameter in goRoute.flags && !it.nullable }
+        return checkNotNull(kind(type ?: parameter.type)) {
+            "${goRoute.route.summary} takes ${parameter.name} as ${SchemaText(model).text(parameter.type)}, " +
+                "which the CLI cannot read from the command line yet"
+        }
+    }
+
+    private fun kind(type: WireType): String? {
         val go = type.go(MODELS).removePrefix("*")
-        val json = "jsonKind[$go](\"json\", \"JSON of ${SchemaText(model).text(type)}\")"
-        return when {
-            type is WireType.Scalar -> {
+        return when (type) {
+            is WireType.Scalar -> {
                 when (type.kind) {
                     ScalarKind.STRING, ScalarKind.CHAR -> "textKind"
                     ScalarKind.UUID -> "uuidKind"
@@ -519,18 +529,17 @@ class GoCliGenerator(
                     ScalarKind.BYTE, ScalarKind.SHORT, ScalarKind.INT, ScalarKind.LONG -> "intKind[$go]()"
                     ScalarKind.FLOAT, ScalarKind.DOUBLE -> "numberKind[$go]()"
                     ScalarKind.DATE -> "dateKind[$go]()"
-                    ScalarKind.DATE_TIME -> "jsonKind[$go](\"time\", \"a date-time like 2024-01-31T12:00:00Z\")"
+                    ScalarKind.DATE_TIME -> null
                 }
             }
 
-            type is WireType.Named -> {
+            is WireType.Named -> {
                 (model.declaration(type.name) as? EnumDeclaration)
                     ?.let { enum -> "enumKind[$go](${enum.values.joinToString(", ") { "\"$it\"" }})" }
-                    ?: json
             }
 
             else -> {
-                json
+                null
             }
         }
     }

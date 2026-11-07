@@ -3,11 +3,22 @@ package io.dewey.openapi
 import io.dewey.openapi.client.go.CommandName
 import io.dewey.openapi.client.go.commandName
 import io.dewey.openapi.client.go.generateGoCli
+import io.dewey.openapi.ktor.Summary
+import io.dewey.openapi.ktor.get
+import io.ktor.resources.Resource
+import io.ktor.server.routing.routing
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.time.Instant
+
+@Summary("List timed", method = "GET")
+@Resource("timed")
+class TimedRoute(
+    val since: Instant,
+)
 
 class GoCliGenerationTest {
     private val commands =
@@ -52,7 +63,35 @@ class GoCliGenerationTest {
             commands,
             "shelvesGroup := &cobra.Command{Use: \"shelves\", Short: \"Shelves of books\", GroupID: \"library\"",
         )
-        assertFalse("\"time\"" in commands, "a help text that mentions time. needs no import")
+    }
+
+    @Test
+    fun `a list of query values is a flag given once per item, required when the route requires it`() {
+        val v5 = commands.substringAfter("func v5Command").substringBefore("\n}\n")
+
+        assertContains(v5, "Use:     \"v5 <path> <name>\"")
+        assertContains(v5, "someParamFlag := listFlag(flags, \"some-param\", intKind[int32]()")
+        assertContains(v5, "_ = cmd.MarkFlagRequired(\"some-param\")")
+        assertContains(v5, "c.V5(cmd.Context(), path, name, *someParamFlag, requestBody)")
+    }
+
+    @Test
+    fun `a parameter the command line cannot spell is refused`() {
+        val error =
+            assertFailsWith<IllegalStateException> {
+                generatedFiles { fileWriter ->
+                    openApi()
+                    routing { get<TimedRoute, List<String>> { TODO() } }
+                    generateGoCli(
+                        packageName = "commands",
+                        clientImportPath = "example.com/generated/client",
+                        savePath = "",
+                        fileWriter = fileWriter,
+                        cleanDistPackage = false,
+                    )
+                }
+            }
+        assertContains(error.message!!, "List timed takes since as date-time (RFC 3339)")
     }
 
     @Test

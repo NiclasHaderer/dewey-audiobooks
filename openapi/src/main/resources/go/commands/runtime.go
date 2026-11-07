@@ -143,17 +143,6 @@ func dateKind[T ~string]() kind[T] {
 	}}
 }
 
-// Retrying quoted lets a JSON string like a date-time go without quotes on the command line
-func jsonKind[T any](name string, wants string) kind[T] {
-	return kind[T]{name, func(raw string) (T, error) {
-		var value T
-		if json.Unmarshal([]byte(raw), &value) == nil || json.Unmarshal([]byte(strconv.Quote(raw)), &value) == nil {
-			return value, nil
-		}
-		return value, errors.New(wants)
-	}}
-}
-
 type flagValue[T any] struct {
 	value *T
 	kind  kind[T]
@@ -183,6 +172,17 @@ func flag[T any](flags *pflag.FlagSet, name string, kind kind[T], usage string) 
 		flags.Lookup(name).NoOptDefVal = "true"
 	}
 	return value
+}
+
+// A flag given once per item, as --tag a --tag b
+func listFlag[T any](flags *pflag.FlagSet, name string, item kind[T], usage string) *[]T {
+	values := new([]T)
+	appendItem := func(raw string) ([]T, error) {
+		value, err := item.parse(raw)
+		return append(*values, value), err
+	}
+	flags.Var(flagValue[[]T]{values, kind[[]T]{item.name, appendItem}}, name, usage)
+	return values
 }
 
 func arg[T any](raw string, name string, kind kind[T]) (T, error) {
