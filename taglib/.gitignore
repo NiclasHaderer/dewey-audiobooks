@@ -1,2 +1,2 @@
-# Natives are produced by the CMake build (locally) or by CI (all five targets).
+# Natives are produced by the CMake build (locally) or by CI (every target).
 src/main/resources/native/

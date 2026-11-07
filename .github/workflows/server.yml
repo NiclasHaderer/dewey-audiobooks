@@ -11,24 +11,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the PR merged into its base
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           path: head
 
       - name: Check out the base branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.base_ref }}
           path: base
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 25
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Generate the merged spec
         working-directory: head
@@ -51,7 +51,7 @@ jobs:
           fi
 
       - name: Check old clients work with new servers
-        uses: oasdiff/oasdiff-action/breaking@v0.1.17
+        uses: oasdiff/oasdiff-action/breaking@v0.1.22
         with:
           base: base/gen/openapi.yaml
           revision: head/gen/openapi.yaml
@@ -61,7 +61,7 @@ jobs:
 
       - name: Check new clients work with old servers
         if: ${{ !cancelled() && steps.gate.outcome == 'success' }}
-        uses: oasdiff/oasdiff-action/breaking@v0.1.17
+        uses: oasdiff/oasdiff-action/breaking@v0.1.22
         env:
           OASDIFF_CONFIG: head/.github/oasdiff/config.yaml
         with:
@@ -79,14 +79,14 @@ jobs:
 
   build:
     name: Build ${{ matrix.target }}
-    runs-on: ${{ fromJSON('{"linux-x64":"ubuntu-latest","linux-arm64":"ubuntu-24.04-arm","macos-x64":"macos-15-intel","macos-arm64":"macos-14","windows-x64":"windows-latest"}')[matrix.target] }}
+    runs-on: ${{ fromJSON('{"linux-x64":"ubuntu-latest","linux-arm64":"ubuntu-24.04-arm","macos-arm64":"macos-latest","windows-x64":"windows-latest"}')[matrix.target] }}
     strategy:
       fail-fast: false
       matrix:
-        target: ${{ fromJSON((github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci-all-platforms')) && '["linux-x64","linux-arm64","macos-x64","macos-arm64","windows-x64"]' || '["linux-arm64"]') }}
+        target: ${{ fromJSON((github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci-all-platforms')) && '["linux-x64","linux-arm64","macos-arm64","windows-x64"]' || '["linux-arm64"]') }}
     steps:
       - name: Check out
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # The library only changes with the TagLib fork or its CMake setup. Keying on the submodule
       # commit instead of its files lets a cache hit skip the submodule checkout as well as the
@@ -108,16 +108,16 @@ jobs:
         run: git submodule update --init --recursive
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 25
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Set up just
-        uses: extractions/setup-just@v3
+        uses: extractions/setup-just@v4
 
       - name: Build TagLib
         if: steps.native-cache.outputs.cache-hit != 'true'
