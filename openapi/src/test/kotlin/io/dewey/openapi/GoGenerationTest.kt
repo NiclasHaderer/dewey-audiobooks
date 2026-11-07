@@ -39,7 +39,6 @@ class GoGenerationTest {
                 "models/pair.go",
                 "models/set_route.go",
                 "models/types.go",
-                "models/types_test.go",
                 "runtime.go",
             ),
             generated.keys.sorted(),
