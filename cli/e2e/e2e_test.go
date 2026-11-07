@@ -1,7 +1,6 @@
 //go:build e2e
 
-// Expects a server seeded by just test-cli-e2e with the user below and a library called "Test". Each test removes the
-// libraries it adds and the run revokes its token, so the tests can also run against a dev server.
+// Expects a server seeded by just test-cli-e2e with the user below and a library called "Test"
 package e2e
 
 import (
@@ -12,11 +11,12 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/NiclasHaderer/dewey-audiobooks/cli/internal/apptest"
 )
 
 const (
@@ -44,7 +44,7 @@ func run(m *testing.M) int {
 		return 1
 	}
 	defer s.revokeToken()
-	if err := s.findSeed(cli{s.binary, dir}); err != nil {
+	if err := s.findSeed(newCLI(dir)); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
@@ -53,7 +53,6 @@ func run(m *testing.M) int {
 }
 
 type server struct {
-	binary    string
 	url       string
 	session   string
 	token     string
@@ -63,21 +62,18 @@ type server struct {
 }
 
 func connect(dir string) (*server, error) {
-	s := &server{binary: os.Getenv("DEWEY_E2E_BINARY"), url: "http://localhost:8080"}
-	if s.binary == "" {
-		return nil, fmt.Errorf("DEWEY_E2E_BINARY is not set, run the tests with just test-cli-e2e")
-	}
+	s := &server{url: "http://localhost:8080"}
 	if url := os.Getenv("DEWEY_E2E_URL"); url != "" {
 		s.url = url
 	}
 
-	c := cli{s.binary, dir}
+	c := newCLI(dir)
 	credentials := fmt.Sprintf(`{"username": %q, "password": %q}`, username, password)
-	login := c.pipe(credentials, "--url", s.url, "sessions", "login", "--jq", ".accessToken", "--body", "-")
-	if login.err != nil {
-		return nil, fmt.Errorf("no seeded server at %s, run the tests with just test-cli-e2e\n%v %s", s.url, login.err, login.stderr)
+	login := c.Pipe(credentials, "--url", s.url, "sessions", "login", "--jq", ".accessToken", "--body", "-")
+	if login.Code != 0 {
+		return nil, fmt.Errorf("no seeded server at %s, run the tests with just test-cli-e2e\n%s", s.url, login.Stderr)
 	}
-	s.session = strings.TrimSpace(login.stdout)
+	s.session = strings.TrimSpace(login.Stdout)
 	return s, s.createToken()
 }
 
@@ -133,7 +129,7 @@ func (s *server) asSession(method string, path string, body string) ([]byte, err
 // book can appear well after that
 func (s *server) findSeed(c cli) error {
 	query := func(args ...string) string {
-		return strings.TrimSpace(c.run(append([]string{"--url", s.url, "--token", s.token}, args...)...).stdout)
+		return strings.TrimSpace(c.Run(append([]string{"--url", s.url, "--token", s.token}, args...)...).Stdout)
 	}
 	s.libraryID = query("libraries", "list", "--jq", `.[] | select(.name == "Test") | .id`)
 	if s.libraryID == "" {
@@ -148,7 +144,7 @@ func (s *server) findSeed(c cli) error {
 }
 
 func (s *server) loggedOut(t *testing.T) cli {
-	return cli{s.binary, t.TempDir()}
+	return newCLI(t.TempDir())
 }
 
 func (s *server) loggedIn(t *testing.T) cli {
@@ -160,50 +156,31 @@ func (s *server) loggedIn(t *testing.T) cli {
 	return c
 }
 
-// A home of its own keeps the binary away from the login of whoever runs the tests
 type cli struct {
-	binary string
-	home   string
+	apptest.CLI
 }
 
-type result struct {
-	stdout string
-	stderr string
-	err    error
-}
-
-func (c cli) pipe(stdin string, args ...string) result {
-	cmd := exec.Command(c.binary, args...)
-	cmd.Env = []string{"HOME=" + c.home, "XDG_CONFIG_HOME=" + filepath.Join(c.home, ".config"), "PATH=" + os.Getenv("PATH")}
-	cmd.Stdin = strings.NewReader(stdin)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	return result{stdout.String(), stderr.String(), err}
-}
-
-func (c cli) run(args ...string) result {
-	return c.pipe("", args...)
+func newCLI(dir string) cli {
+	return cli{apptest.CLI{Config: filepath.Join(dir, "config.json")}}
 }
 
 func (c cli) must(t *testing.T, args ...string) string {
 	t.Helper()
-	r := c.run(args...)
-	if r.err != nil {
-		t.Fatalf("dewey %s: %v\nstdout: %s\nstderr: %s", strings.Join(args, " "), r.err, r.stdout, r.stderr)
+	r := c.Run(args...)
+	if r.Code != 0 {
+		t.Fatalf("dewey %s exited with %d\nstdout: %s\nstderr: %s", strings.Join(args, " "), r.Code, r.Stdout, r.Stderr)
 	}
-	return strings.TrimSpace(r.stdout)
+	return strings.TrimSpace(r.Stdout)
 }
 
-func fails(t *testing.T, r result, messages ...string) {
+func fails(t *testing.T, r apptest.Result, messages ...string) {
 	t.Helper()
-	if r.err == nil {
-		t.Fatalf("expected an error saying %q, got %q", messages, r.stdout)
+	if r.Code == 0 {
+		t.Fatalf("expected an error saying %q, got %q", messages, r.Stdout)
 	}
 	for _, message := range messages {
-		if !strings.Contains(r.stderr, message) {
-			t.Fatalf("expected an error saying %q, got %q", message, r.stderr)
+		if !strings.Contains(r.Stderr, message) {
+			t.Fatalf("expected an error saying %q, got %q", message, r.Stderr)
 		}
 	}
 }
@@ -215,6 +192,17 @@ func libraryBody(t *testing.T, name string) string {
 		"fileScanners": [{"name": "AudioFolderScanner"}], "combineFileScannerFields": false, "language": "English",
 		"region": "US"
 	}`, name, t.TempDir())
+}
+
+func createLibrary(t *testing.T, c cli, name string) string {
+	t.Helper()
+	r := c.Pipe(libraryBody(t, name), "libraries", "create", "--jq", ".id", "--body", "-")
+	if r.Code != 0 {
+		t.Fatalf("exited with %d: %s", r.Code, r.Stderr)
+	}
+	id := strings.TrimSpace(r.Stdout)
+	t.Cleanup(func() { c.Run("libraries", "delete", id) })
+	return id
 }
 
 func TestLoginRemembersTheServerAndTheToken(t *testing.T) {
@@ -230,11 +218,22 @@ func TestLogoutForgetsTheLogin(t *testing.T) {
 
 	c.must(t, "auth", "logout")
 
-	fails(t, c.run("me", "view"), "--url")
+	fails(t, c.Run("me", "view"), "--url")
+}
+
+func TestLoginTakesTheServerFromTheEnvironment(t *testing.T) {
+	c := dewey.loggedOut(t)
+	c.Env = map[string]string{"DEWEY_URL": dewey.url}
+	c.must(t, "auth", "login", "--token", dewey.token)
+	c.Env = nil
+
+	if user := c.must(t, "me", "view", "--jq", ".username"); user != username {
+		t.Fatalf("logged in as %q", user)
+	}
 }
 
 func TestWithoutATokenTheErrorSaysHowToGetOne(t *testing.T) {
-	fails(t, dewey.loggedOut(t).run("--url", dewey.url, "me", "view"), "Access tokens")
+	fails(t, dewey.loggedOut(t).Run("--url", dewey.url, "me", "view"), "Access tokens")
 }
 
 func TestALibraryIsCreatedRenamedAndDeleted(t *testing.T) {
@@ -245,9 +244,9 @@ func TestALibraryIsCreatedRenamedAndDeleted(t *testing.T) {
 	}
 
 	id := c.must(t, "libraries", "create", "--jq", ".id", "--body", "@"+file)
-	t.Cleanup(func() { c.run("libraries", "delete", id) })
-	if r := c.pipe(`{"name": "E2E renamed"}`, "libraries", "edit", id, "--body", "-"); r.err != nil {
-		t.Fatalf("%v %s", r.err, r.stderr)
+	t.Cleanup(func() { c.Run("libraries", "delete", id) })
+	if r := c.Pipe(`{"name": "E2E renamed"}`, "libraries", "edit", id, "--body", "-"); r.Code != 0 {
+		t.Fatalf("exited with %d: %s", r.Code, r.Stderr)
 	}
 	renamed := c.must(t, "libraries", "view", id, "--jq", ".name")
 	c.must(t, "libraries", "delete", id)
@@ -259,6 +258,56 @@ func TestALibraryIsCreatedRenamedAndDeleted(t *testing.T) {
 	if strings.Contains(remaining, id) {
 		t.Fatal("the deleted library is still listed")
 	}
+}
+
+func TestAnEditChangesOnlyTheFieldsItSets(t *testing.T) {
+	c := dewey.loggedIn(t)
+	id := createLibrary(t, c, "E2E patch")
+	edit := func(body string) string {
+		t.Helper()
+		if r := c.Pipe(body, "libraries", "edit", id, "--body", "-"); r.Code != 0 {
+			t.Fatalf("exited with %d: %s", r.Code, r.Stderr)
+		}
+		return c.must(t, "libraries", "view", id, "--jq", `"\(.name) \(.icon)"`)
+	}
+
+	set := edit(`{"icon": "book"}`)
+	absent := edit(`{"name": "E2E patched"}`)
+	nulled := edit(`{"icon": null}`)
+
+	if set != "E2E patch book" {
+		t.Fatalf("setting the icon left %q", set)
+	}
+	if absent != "E2E patched book" {
+		t.Fatalf("leaving the icon out left %q", absent)
+	}
+	if nulled != "E2E patched null" {
+		t.Fatalf("nulling the icon left %q", nulled)
+	}
+}
+
+func TestATabOrLineBreakInAValueKeepsTheTableRowWhole(t *testing.T) {
+	c := dewey.loggedIn(t)
+	id := createLibrary(t, c, "E2E\tTab\nBreak")
+
+	out := c.must(t, "libraries", "list")
+
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, id) && !strings.Contains(line, "E2E Tab Break") {
+			t.Fatalf("expected the library on one row, got %q", out)
+		}
+	}
+	if strings.Contains(out, "\nBreak") {
+		t.Fatalf("the line break split the row: %q", out)
+	}
+}
+
+func TestAMisspelledFieldInsideAnOptionalBodyFieldFails(t *testing.T) {
+	c := dewey.loggedIn(t)
+
+	r := c.Run("books", "edit", dewey.libraryID, dewey.bookID, "--body", `{"chapters": [{"titel": "x"}]}`)
+
+	fails(t, r, `unknown field "titel"`)
 }
 
 func TestATrackDownloadsAsTheFileItWasScannedFrom(t *testing.T) {
