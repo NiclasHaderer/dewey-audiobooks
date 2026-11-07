@@ -3,8 +3,6 @@ package io.dewey.openapi
 import io.dewey.openapi.ktor.Secured
 import io.dewey.openapi.ktor.Summary
 import io.dewey.openapi.ktor.get
-import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
-import io.dewey.openapi.ktor.plugins.OpenAPIRouting
 import io.dewey.openapi.ktor.post
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
@@ -16,12 +14,8 @@ import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.bearer
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.dataconversion.DataConversion
-import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
-import io.swagger.v3.oas.models.OpenAPI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -38,9 +32,6 @@ class Shelf {
 }
 
 private fun Application.shelfRoutes() {
-    install(Resources)
-    install(DataConversion)
-    install(ContentNegotiation)
     install(Authentication) {
         bearer("reader") { authenticate { UserIdPrincipal(it.token) } }
         bearer("writer") {
@@ -49,7 +40,7 @@ private fun Application.shelfRoutes() {
             }
         }
     }
-    install(OpenAPIRouting) {
+    openApi {
         components {
             securitySchemes {
                 for (guard in listOf("reader", "writer")) http(guard) { scheme = "bearer" }
@@ -75,17 +66,7 @@ class SecuredTest {
 
     @Test
     fun `the spec documents the guard of each method`() {
-        lateinit var api: OpenAPI
-        testApplication {
-            application {
-                shelfRoutes()
-                val config = attributes[OpenAPIConfigurationKey]
-                config.addRoutesToSpec()
-                api = config.schemaHolder.api
-            }
-            startApplication()
-        }
-        val books = api.paths.getValue("/shelf/books")
+        val books = openApiSpec { shelfRoutes() }.paths.getValue("/shelf/books")
 
         assertEquals(listOf("reader"), books.get.security.flatMap { it.keys })
         assertEquals(listOf("writer"), books.post.security.flatMap { it.keys })

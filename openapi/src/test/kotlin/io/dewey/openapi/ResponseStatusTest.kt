@@ -1,7 +1,6 @@
 package io.dewey.openapi
 
 import io.dewey.openapi.ktor.Summary
-import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
 import io.dewey.openapi.ktor.plugins.OpenAPIRouting
 import io.dewey.openapi.ktor.post
 import io.dewey.openapi.serializion.kotlin.OpenApiJson
@@ -89,24 +88,16 @@ class ResponseStatusTest {
         }
 
     @Test
-    fun `the schema advertises the same status the handler answers`() =
-        testApplication {
-            lateinit var codes: Map<String, Set<String>>
-            application {
-                statusRoutes()
-                val config = attributes[OpenAPIConfigurationKey]
-                config.addRoutesToSpec()
-                codes =
-                    config.schemaHolder.api.paths.mapValues { (_, item) ->
-                        item.post.responses.keys
-                            .filterNot { it == "default" }
-                            .toSet()
-                    }
+    fun `the schema advertises the same status the handler answers`() {
+        val codes =
+            openApiSpec { statusRoutes() }.paths.mapValues { (_, item) ->
+                item.post.responses.keys
+                    .filterNot { it == "default" }
+                    .toSet()
             }
-            client.post("/no-content")
 
-            assertEquals(setOf("204"), codes["/no-content"])
-            assertEquals(setOf("200"), codes["/echo"])
-            assertEquals(setOf("201"), codes["/create"])
-        }
+        assertEquals(setOf("204"), codes["/no-content"])
+        assertEquals(setOf("200"), codes["/echo"])
+        assertEquals(setOf("201"), codes["/create"])
+    }
 }

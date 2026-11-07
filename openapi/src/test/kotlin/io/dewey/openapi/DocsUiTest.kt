@@ -1,14 +1,10 @@
 package io.dewey.openapi
 
-import io.dewey.openapi.ktor.plugins.OpenAPIRouting
 import io.dewey.openapi.ktor.plugins.OpenAPIWebUI
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.install
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.dataconversion.DataConversion
-import io.ktor.server.resources.Resources
 import io.ktor.server.testing.testApplication
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,10 +15,7 @@ class DocsUiTest {
     fun `serves swagger ui assets`() =
         testApplication {
             application {
-                install(ContentNegotiation)
-                install(DataConversion)
-                install(Resources)
-                install(OpenAPIRouting)
+                openApi()
                 install(OpenAPIWebUI)
             }
 
