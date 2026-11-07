@@ -5,6 +5,7 @@ import io.dewey.models.AccessTokenPermissions
 import io.dewey.models.CreateAccessToken
 import io.dewey.models.UpdateAccessToken
 import io.dewey.openapi.ktor.errors.ErrorResponse
+import io.dewey.server.database.extensions.rejectDuplicate
 import io.dewey.server.database.tables.AccessTokenTable
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -49,20 +50,25 @@ interface AccessTokenRepository {
 
 private val LAST_USED_RESOLUTION = 1.minutes
 
+private fun duplicateName(name: String) = "You already have an access token named $name"
+
 class AccessTokenRepositoryImpl : AccessTokenRepository {
     override fun create(
         userId: Uuid,
         create: CreateAccessToken,
     ): AccessToken {
         val now = Clock.System.now()
+        val tokenName = create.name.trim()
         return transaction {
             val id =
-                AccessTokenTable.insertAndGetId {
-                    it[user] = userId
-                    it[name] = create.name.trim()
-                    it[permissions] = create.permissions
-                    it[createdAt] = now
-                    it[expiresAt] = create.expiresAt
+                rejectDuplicate(duplicateName(tokenName)) {
+                    AccessTokenTable.insertAndGetId {
+                        it[user] = userId
+                        it[name] = tokenName
+                        it[permissions] = create.permissions
+                        it[createdAt] = now
+                        it[expiresAt] = create.expiresAt
+                    }
                 }
             AccessTokenTable
                 .selectAll()
@@ -99,10 +105,15 @@ class AccessTokenRepositoryImpl : AccessTokenRepository {
         update: UpdateAccessToken,
     ): AccessToken =
         transaction {
+            val tokenName = update.name.trim()
             val updated =
-                AccessTokenTable.update({ (AccessTokenTable.id eq tokenId) and (AccessTokenTable.user eq userId) }) {
-                    it[name] = update.name.trim()
-                    it[permissions] = update.permissions
+                rejectDuplicate(duplicateName(tokenName)) {
+                    AccessTokenTable.update(
+                        { (AccessTokenTable.id eq tokenId) and (AccessTokenTable.user eq userId) },
+                    ) {
+                        it[name] = tokenName
+                        it[permissions] = update.permissions
+                    }
                 }
             if (updated == 0) throw ErrorResponse.notFound("Access token", tokenId)
             get(userId, tokenId)

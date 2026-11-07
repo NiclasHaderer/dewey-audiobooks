@@ -8,6 +8,7 @@ import io.dewey.models.UpdateUserPermissions
 import io.dewey.models.UserPermissions
 import io.dewey.openapi.ktor.errors.ErrorResponse
 import io.dewey.server.config.DeweyConfig
+import io.dewey.server.database.extensions.rejectDuplicate
 import io.dewey.server.database.tables.AccessTokenTable
 import io.dewey.server.database.tables.LibraryTable
 import io.dewey.server.database.tables.LibraryUserTable
@@ -20,7 +21,6 @@ import io.dewey.server.repositories.AccessTokenRepository
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import org.jetbrains.exposed.v1.core.*
-import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
@@ -30,18 +30,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import org.koin.ktor.ext.inject
 import kotlin.uuid.Uuid
 
-private fun <T> rejectDuplicateUsername(
-    username: String,
-    block: () -> T,
-): T =
-    try {
-        block()
-    } catch (e: ExposedSQLException) {
-        if (e.message?.contains("username", ignoreCase = true) == true) {
-            throw ErrorResponse.userError("User with name $username already exists")
-        }
-        throw e
-    }
+private fun duplicateUsername(username: String) = "User with name $username already exists"
 
 context(_: Transaction)
 internal fun userRow(id: Uuid): UserRow? =
@@ -99,7 +88,7 @@ fun Application.configureAuthentication() {
 
         createUser { newUser ->
             transaction {
-                rejectDuplicateUsername(newUser.username) {
+                rejectDuplicate(duplicateUsername(newUser.username)) {
                     val row =
                         UserRow(
                             id = Uuid.random(),
@@ -127,7 +116,7 @@ fun Application.configureAuthentication() {
 
         renameUser { user, newName ->
             transaction {
-                rejectDuplicateUsername(newName) {
+                rejectDuplicate(duplicateUsername(newName)) {
                     UserTable.update({ UserTable.id eq user.id }) { it[username] = newName }
                     userRow(user.id)!!.toExternalUser()
                 }

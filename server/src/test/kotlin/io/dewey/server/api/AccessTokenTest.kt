@@ -46,11 +46,12 @@ class AccessTokenTest : DeweyTest() {
         session: Headers,
         isAdmin: Boolean = true,
         libraries: List<AccessTokenLibrary>? = null,
+        name: String = "cli",
     ): Token {
         val response =
             api.createAccessToken(
                 CreateAccessToken(
-                    name = "cli",
+                    name = name,
                     permissions = AccessTokenPermissions(isAdmin, libraries),
                     password = TEST_PASSWORD,
                 ),
@@ -371,6 +372,34 @@ class AccessTokenTest : DeweyTest() {
         }
 
     @Test
+    fun `a user cannot have two tokens of the same name`() =
+        deweyServer {
+            val session = bearer(login("admin"))
+            val other = token(session, name = "other")
+            token(session)
+
+            fun create(name: String) =
+                CreateAccessToken(
+                    name = name,
+                    permissions = AccessTokenPermissions(true, null),
+                    password = TEST_PASSWORD,
+                )
+            assertEquals(HttpStatusCode.Conflict, api.createAccessToken(create(" cli "), session).status)
+
+            val rename =
+                UpdateAccessToken(
+                    name = "cli",
+                    permissions = AccessTokenPermissions(true, null),
+                    password = TEST_PASSWORD,
+                )
+            assertEquals(HttpStatusCode.Conflict, api.updateAccessToken(other.id, rename, session).status)
+
+            register("listener")
+            val listener = bearer(login("listener"))
+            assertEquals(HttpStatusCode.Created, api.createAccessToken(create("cli"), listener).status)
+        }
+
+    @Test
     fun `a token is shown again for the password`() =
         deweyServer {
             val session = bearer(login("admin"))
@@ -405,7 +434,7 @@ class AccessTokenTest : DeweyTest() {
         deweyServer {
             val session = bearer(login("admin"))
             val first = token(session)
-            val second = token(session)
+            val second = token(session, name = "second")
 
             val listed = api.listAccessTokens(first.headers).body()
             assertEquals(listOf(first.id, second.id), listed.map { it.id })

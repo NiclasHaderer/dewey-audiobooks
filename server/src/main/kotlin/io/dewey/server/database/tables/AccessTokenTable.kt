@@ -16,4 +16,8 @@ object AccessTokenTable : UuidTable("access_token") {
 
     // Also the expiry of the JWT, which is what enforces it
     val expiresAt = timestampMillis("expires_at").nullable()
+
+    init {
+        uniqueIndex(user, name)
+    }
 }

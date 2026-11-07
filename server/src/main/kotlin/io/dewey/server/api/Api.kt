@@ -535,7 +535,6 @@ class Api {
                 }
             }
 
-            @Secured(Guards.Normal)
             @Resource("metadata")
             @Tagged("Metadata")
             data class Metadata(

@@ -124,7 +124,6 @@ class DeweyAuthConfig<PERMISSIONS, UPDATE_PERMISSIONS, TOKEN_PERMISSIONS>(
                         val tokenId = accessTokenId(payload)
                         val type = if (tokenId == null) DeweyJwtTypes.SessionAccess else DeweyJwtTypes.AccessToken
                         val user = userForToken(payload, type) ?: return@validate invalid()
-                        // Looked up here rather than by each guard, so no guard can let a revoked token through
                         val accessToken =
                             tokenId?.let { id ->
                                 DeweyAccessToken(id, getAccessToken(id) ?: return@validate invalid())

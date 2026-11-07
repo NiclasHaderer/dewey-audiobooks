@@ -32,6 +32,11 @@ class ErrorResponse private constructor(
             details: JsonElement? = null,
         ): ErrorResponse = ErrorResponse(HttpStatusCode.BadRequest, error, details)
 
+        fun conflict(
+            error: String,
+            details: JsonElement? = null,
+        ): ErrorResponse = ErrorResponse(HttpStatusCode.Conflict, error, details)
+
         fun unauthorized(
             error: String,
             details: JsonElement? = null,
