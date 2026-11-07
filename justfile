@@ -57,11 +57,8 @@ test-taglib *gradle_args:
 test-cli:
     cd cli && go test ./...
 
-# Builds and starts the server, runs the CLI against it and stops it again
-test-cli-e2e: build-server run-cli-e2e
-
-# Runs the end-to-end tests against the server as built, like CI does with the one the server workflow uploads
-run-cli-e2e: (_with-server "server/build/install/server/bin/server" ("cd cli && DEWEY_E2E_URL=http://localhost:" + port + " go test -tags e2e -count=1 ./e2e/..."))
+# Runs the CLI end-to-end tests against the installed server, so run build-server first unless CI provides it
+test-cli-e2e: build-cli (_with-server "server/build/install/server/bin/server" ("cd cli && DEWEY_E2E_BINARY=" + justfile_directory() + "/build/dewey DEWEY_E2E_URL=http://localhost:" + port + " go test -tags e2e -count=1 ./e2e/..."))
 
 # Starts the server and the web dev server, seeding a user and a library on the first start
 dev: (_with-server "./gradlew :server:run" "cd web && npm run dev")

@@ -63,14 +63,12 @@ type server struct {
 }
 
 func connect(dir string) (*server, error) {
-	s := &server{binary: filepath.Join(dir, "dewey"), url: "http://localhost:8080"}
+	s := &server{binary: os.Getenv("DEWEY_E2E_BINARY"), url: "http://localhost:8080"}
+	if s.binary == "" {
+		return nil, fmt.Errorf("DEWEY_E2E_BINARY is not set, run the tests with just test-cli-e2e")
+	}
 	if url := os.Getenv("DEWEY_E2E_URL"); url != "" {
 		s.url = url
-	}
-	build := exec.Command("go", "build", "-o", s.binary, "..")
-	build.Stdout, build.Stderr = os.Stderr, os.Stderr
-	if err := build.Run(); err != nil {
-		return nil, fmt.Errorf("could not build dewey: %w", err)
 	}
 
 	c := cli{s.binary, dir}
