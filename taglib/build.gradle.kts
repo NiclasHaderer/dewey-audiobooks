@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-// CI drops all five targets into src/main/resources/native/<target>/; locally only the host is built.
+// CI drops every target it builds into src/main/resources/native/<target>/; locally only the host is built.
 val hostTarget =
     run {
         val os = System.getProperty("os.name").lowercase()
