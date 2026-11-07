@@ -27,14 +27,14 @@ fun Routing.progressRouting() {
 
     // Cross-library on purpose
     get<Api.Me.ContinueListening, List<Book>> { route ->
-        progressRepository.continueListening(deweyPrincipal().userId, route.limit)
+        progressRepository.continueListening(deweyPrincipal(), route.limit)
     }
 
     get<Api.Me.History, PaginatedResponse<ListeningHistoryEntry>> { route ->
-        val userId = deweyPrincipal().userId
+        val principal = deweyPrincipal()
         PaginatedResponse(
-            items = progressRepository.history(userId, route.limit, route.offset),
-            total = progressRepository.historyTotal(userId),
+            items = progressRepository.history(principal, route.limit, route.offset),
+            total = progressRepository.historyTotal(principal),
             limit = route.limit,
             offset = route.offset,
         )

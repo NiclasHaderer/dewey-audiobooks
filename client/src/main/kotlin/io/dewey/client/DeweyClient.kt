@@ -39,6 +39,13 @@ interface DeweyClient {
         onAfterRequest: OnAfterRequest<Unit, Series> = { _, _ -> },
     ): OpenApiHttpResponse<Series>
 
+    suspend fun createAccessToken(
+        body: CreateAccessToken,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<CreateAccessToken> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<CreateAccessToken, CreatedAccessToken> = { _, _ -> },
+    ): OpenApiHttpResponse<CreatedAccessToken>
+
     suspend fun createAuthor(
         libraryId: Uuid,
         body: AuthorCreate,
@@ -231,6 +238,12 @@ interface DeweyClient {
         onAfterRequest: OnAfterRequest<Unit, DeweyUser> = { _, _ -> },
     ): OpenApiHttpResponse<DeweyUser>
 
+    suspend fun listAccessTokens(
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<Unit> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<Unit, List<AccessToken>> = { _, _ -> },
+    ): OpenApiHttpResponse<List<AccessToken>>
+
     suspend fun listAuthors(
         libraryId: Uuid,
         limit: Int? = null,
@@ -372,6 +385,22 @@ interface DeweyClient {
         onAfterRequest: OnAfterRequest<Unit, DeweyJWKs> = { _, _ -> },
     ): OpenApiHttpResponse<DeweyJWKs>
 
+    suspend fun revealAccessToken(
+        id: Uuid,
+        body: PasswordConfirmation,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, RevealedAccessToken> = { _, _ -> },
+    ): OpenApiHttpResponse<RevealedAccessToken>
+
+    suspend fun revokeAccessToken(
+        id: Uuid,
+        body: PasswordConfirmation,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<PasswordConfirmation> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<PasswordConfirmation, Unit> = { _, _ -> },
+    ): OpenApiHttpResponse<Unit>
+
     suspend fun searchAuthorMetadata(
         query: String,
         libraryId: Uuid,
@@ -438,6 +467,14 @@ interface DeweyClient {
         onBeforeRequest: OnBeforeRequest<ProgressUpdate> = { _, _ -> },
         onAfterRequest: OnAfterRequest<ProgressUpdate, Unit> = { _, _ -> },
     ): OpenApiHttpResponse<Unit>
+
+    suspend fun updateAccessToken(
+        id: Uuid,
+        body: UpdateAccessToken,
+        headers: Headers = Headers.Empty,
+        onBeforeRequest: OnBeforeRequest<UpdateAccessToken> = { _, _ -> },
+        onAfterRequest: OnAfterRequest<UpdateAccessToken, AccessToken> = { _, _ -> },
+    ): OpenApiHttpResponse<AccessToken>
 
     suspend fun updateAuthor(
         id: Uuid,

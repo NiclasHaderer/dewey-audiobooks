@@ -2,6 +2,7 @@ package io.dewey.server
 
 import io.dewey.metadata.MetadataProviderUnavailableException
 import io.dewey.openapi.ktor.errors.configureStatusPages
+import io.dewey.server.api.accessTokenRouting
 import io.dewey.server.api.audioRouting
 import io.dewey.server.api.authRoutes
 import io.dewey.server.api.authorRouting
@@ -91,6 +92,7 @@ fun Application.routing() {
     routing {
         // Authentication
         authRoutes()
+        accessTokenRouting()
 
         // List directories
         fileSystemRouting()

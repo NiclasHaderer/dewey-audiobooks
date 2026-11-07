@@ -35,9 +35,7 @@ export function SelectLine<T, MULTIPLE extends boolean = false>({
             placeholderClassName="w-full"
             outerClassName="w-full"
             onChange={v => {
-              const extract = (val: unknown): unknown =>
-                typeof val === "object" && val !== null && "value" in val ? val.value : val
-              setValue(Array.isArray(v) ? v.map(extract) : extract(v))
+              setValue(v)
               setTouched(true)
             }}
           />

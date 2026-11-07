@@ -67,10 +67,9 @@ fun Routing.audioRouting() {
 
 fun Routing.imageRouting() {
     get<Api.Files.Images.Id, BinaryResponse> { (id) ->
-        val permissions = deweyPrincipal().permissions
+        val allowed = deweyPrincipal().readableLibraries
         call.sandbox()
         transaction {
-            val allowed = permissions.libraries.mapTo(mutableSetOf()) { it.id }
             val covers =
                 listOf(
                     cover(BookTable, BookTable.coverId, id, allowed),

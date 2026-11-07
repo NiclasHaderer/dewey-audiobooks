@@ -14,7 +14,7 @@ private fun ApplicationCall.appendAuthCookie(
     name: String,
     value: String,
     lifetimeMillis: Long,
-    config: DeweyAuthConfig<*, *>,
+    config: DeweyAuthConfig<*, *, *>,
 ) = response.cookies.append(
     Cookie(
         name = name,
@@ -29,13 +29,13 @@ private fun ApplicationCall.appendAuthCookie(
 
 internal fun ApplicationCall.appendAuthCookies(
     pair: DeweyJwtPair,
-    config: DeweyAuthConfig<*, *>,
+    config: DeweyAuthConfig<*, *, *>,
 ) {
     appendAuthCookie(ACCESS_COOKIE, pair.accessToken, config.accessTokenExpiryTime, config)
     appendAuthCookie(REFRESH_COOKIE, pair.refreshToken, config.refreshTokenExpiryTime, config)
 }
 
-internal fun ApplicationCall.clearAuthCookies(config: DeweyAuthConfig<*, *>) {
+internal fun ApplicationCall.clearAuthCookies(config: DeweyAuthConfig<*, *, *>) {
     appendAuthCookie(ACCESS_COOKIE, "", 0, config)
     appendAuthCookie(REFRESH_COOKIE, "", 0, config)
 }

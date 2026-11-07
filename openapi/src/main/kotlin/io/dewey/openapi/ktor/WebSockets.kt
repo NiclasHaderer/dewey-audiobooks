@@ -1,6 +1,5 @@
 package io.dewey.openapi.ktor
 
-import io.dewey.openapi.common.findAnnotationUp
 import io.dewey.openapi.ktor.plugins.OpenAPIConfigurationKey
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.plugin
@@ -20,16 +19,13 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.serializer
-import kotlin.reflect.full.findAnnotation
 
-inline fun <reified PARAMS : Any> Route.guarded(crossinline build: Route.() -> Unit) {
-    val ignoreSecured = PARAMS::class.findAnnotation<NotSecured>() != null
-    val secured = PARAMS::class.findAnnotationUp<Secured>()
-    if (secured != null && !ignoreSecured) {
-        authenticate(secured.name) { build() }
-    } else {
-        build()
-    }
+inline fun Route.guarded(
+    route: OpenApiRoute,
+    crossinline build: Route.() -> Unit,
+) {
+    val secured = route.secured
+    if (secured != null) authenticate(secured.name) { build() } else build()
 }
 
 class TypedWebSocketSession<IN, OUT>(
@@ -58,10 +54,9 @@ inline fun <reified PARAMS : Any, reified IN, reified OUT> Route.webSocket(
 ) {
     val format = application.plugin(Resources).resourcesFormat
     val serializer = serializer<PARAMS>()
-    application.attributes[OpenAPIConfigurationKey].routeCollector.addWebSocket(
-        OpenApiRoute.create<PARAMS, IN, OUT>(HttpMethod.Get, this),
-    )
-    guarded<PARAMS> {
+    val route = OpenApiRoute.create<PARAMS, IN, OUT>(HttpMethod.Get, this)
+    application.attributes[OpenAPIConfigurationKey].routeCollector.addWebSocket(route)
+    guarded(route) {
         resource<PARAMS> {
             webSocket {
                 TypedWebSocketSession<IN, OUT>(this, typeInfo<IN>(), typeInfo<OUT>())

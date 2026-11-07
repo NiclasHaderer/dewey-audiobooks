@@ -1,10 +1,11 @@
-import { RefreshCwIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon } from "lucide-react"
+import { RefreshCwIcon, LockIcon, UserIcon } from "lucide-react"
 import { FC, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useLocation, useSearch } from "wouter"
 import { session } from "@dewey/client"
 import { Logo } from "@dewey/components/icons/logo"
 import { ManagedInput } from "@dewey/components/input/managed-input"
+import { usePasswordToggle } from "@dewey/components/input/password-toggle"
 import { Link } from "@dewey/components/link.tsx"
 import { Button } from "@dewey/components/ui/button"
 import { Form, useForm } from "@dewey/hooks/use-form"
@@ -41,7 +42,7 @@ export const LoginRegister: FC<{ type: "register" | "login"; redirectPath?: stri
     passwordRef.current = form.fields.password
   }, [form.fields.password])
 
-  const [passwordVisible, setPasswordVisible] = useState(false)
+  const password = usePasswordToggle()
   const [submitting, setSubmitting] = useState(false)
 
   const loginOrRegister = async ({ confirmPassword: _confirmPassword, ...credentials }: (typeof form)["fields"]) => {
@@ -79,28 +80,17 @@ export const LoginRegister: FC<{ type: "register" | "login"; redirectPath?: stri
           />
           <ManagedInput
             name="password"
-            type={passwordVisible ? "text" : "password"}
+            type={password.type}
             groupClassName="bg-popover"
             placeholder={isRegister ? "At least 6 characters" : "Your password"}
             leftIcon={<LockIcon />}
             autoComplete={isRegister ? "new-password" : "current-password"}
-            rightIcon={
-              <Button
-                excludeFromTabOrder
-                variant="ghost"
-                size="icon"
-                aria-label={passwordVisible ? "Hide password" : "Show password"}
-                className="my-2 ml-2 h-full"
-                onPress={() => setPasswordVisible(prev => !prev)}
-              >
-                {passwordVisible ? <EyeOffIcon /> : <EyeIcon />}
-              </Button>
-            }
+            rightIcon={password.toggle}
           />
           {isRegister ? (
             <ManagedInput
               name="confirmPassword"
-              type={passwordVisible ? "text" : "password"}
+              type={password.type}
               groupClassName="bg-popover"
               placeholder="Re-enter your password"
               leftIcon={<LockIcon />}

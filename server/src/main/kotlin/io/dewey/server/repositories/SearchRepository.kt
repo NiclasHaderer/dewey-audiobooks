@@ -18,6 +18,7 @@ import io.dewey.server.database.rows.toSeriesRow
 import io.dewey.server.database.tables.AuthorTable
 import io.dewey.server.database.tables.BookTable
 import io.dewey.server.database.tables.SeriesTable
+import io.dewey.server.plugins.auth.DeweyPrincipalImpl
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -27,11 +28,11 @@ import kotlin.uuid.Uuid
 object SearchRepository {
     fun everywhere(
         query: String,
-        libsToSearch: List<Uuid>,
-        userId: Uuid,
+        principal: DeweyPrincipalImpl,
         limit: Int = 5,
     ): LibrarySearchResult =
         transaction {
+            val libsToSearch = principal.readableLibraries
             val books =
                 BookTable
                     .selectAll()
@@ -58,7 +59,7 @@ object SearchRepository {
 
             val index = SearchIndex(books, authors, series, authorsByBook, seriesByBook)
             LibrarySearchResult(
-                books = everywhereBook(query, index, userId, limit),
+                books = everywhereBook(query, index, principal.userId, limit),
                 series = everywhereSeries(query, index, limit),
                 authors = everywhereAuthor(query, index, limit),
             )

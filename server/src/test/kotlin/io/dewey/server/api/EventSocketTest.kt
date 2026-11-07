@@ -1,14 +1,17 @@
 package io.dewey.server.api
 
 import io.dewey.client.ApiSocket
+import io.dewey.client.models.AccessTokenPermissions
 import io.dewey.client.models.ChangeEvent
 import io.dewey.client.models.ChangeEventBatch
 import io.dewey.client.models.ChangeType
 import io.dewey.client.models.ChangedEntity
+import io.dewey.client.models.CreateAccessToken
 import io.dewey.client.models.LibraryPermissionLevel
 import io.dewey.models.FileScanner
 import io.dewey.openapi.serializion.kotlin.OpenApiJson
 import io.dewey.server.DeweyTest
+import io.dewey.server.TEST_PASSWORD
 import io.dewey.server.TestDeweyClient
 import io.dewey.server.api
 import io.dewey.server.bearer
@@ -134,6 +137,19 @@ class EventSocketTest : DeweyTest() {
 
                 assertEquals(newBookIn(readable, bookId), nextBatch())
             }
+        }
+
+    @Test
+    fun `an access token is turned away`() =
+        deweyServer {
+            val all = AccessTokenPermissions(isAdmin = true, libraries = null)
+            val created =
+                api.createAccessToken(
+                    CreateAccessToken(name = "events", permissions = all, password = TEST_PASSWORD),
+                    bearer(login("admin")),
+                )
+
+            assertFails { events(created.body().token) { nextBatch() } }
         }
 
     private suspend fun ApiSocket<Nothing, ChangeEventBatch>.awaitEvents(vararg expected: ChangeEvent) {

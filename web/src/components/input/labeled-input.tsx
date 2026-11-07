@@ -55,7 +55,7 @@ export const LabeledInput: FC<LabeledInputProps> = memo(
     return (
       <div className={hideError ? undefined : "pb-4"}>
         <label className={`flex items-center ${wrapperClassName ?? ""}`}>
-          {label ? <div className={`shrink-0 px-2 whitespace-nowrap ${labelClassName ?? ""}`}>{label}</div> : null}
+          {label ? <div className={cn("shrink-0 px-2 whitespace-nowrap", labelClassName)}>{label}</div> : null}
           <div className="grow">
             <InputGroup className={groupClassName}>
               {leftIcon ? <InputGroupAddon>{leftIcon}</InputGroupAddon> : null}

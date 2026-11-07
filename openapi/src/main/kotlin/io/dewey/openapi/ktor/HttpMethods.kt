@@ -78,7 +78,7 @@ inline fun <reified PARAMS : Any, reified BODY : Any, reified RESPONSE> Route.wr
     routeCollector.addRoute(openApiRoute)
     val status = openApiRoute.responseStatusCode
 
-    guarded<PARAMS> {
+    guarded(openApiRoute) {
         if (PARAMS::class == Unit::class) {
             method(method) { handle { wrapHandler(callback, Unit as PARAMS, status) } }
         } else {

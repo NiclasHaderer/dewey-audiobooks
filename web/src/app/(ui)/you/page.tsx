@@ -2,7 +2,7 @@ import { cn } from "cn"
 import { ChevronRightIcon, LogOutIcon, UserIcon } from "lucide-react"
 import { Link } from "@dewey/components/link.tsx"
 import { MobileTopBar } from "@dewey/components/menu/mobile-top-bar"
-import { accountItem, adminItems, licensesItem } from "@dewey/components/menu/settings-nav"
+import { adminItems, licensesItem, userItems } from "@dewey/components/menu/settings-nav"
 import { Avatar, AvatarFallback } from "@dewey/components/ui/avatar"
 import { rowInteraction } from "@dewey/lib/interaction-styles"
 import { useCurrentUser } from "@dewey/queries/current-user-queries"
@@ -11,7 +11,7 @@ export const YouOutlet = () => {
   const { data: user } = useCurrentUser()
 
   const isAdmin = user?.permissions?.isAdmin ?? false
-  const entries = [accountItem, ...(isAdmin ? adminItems : [])]
+  const entries = [...userItems, ...(isAdmin ? adminItems : [])]
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 pb-4 md:pt-4">

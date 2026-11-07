@@ -37,18 +37,18 @@ export type OptionSelectProps<T, MULTIPLE extends boolean = false> = {
   onBlur?: () => void
 }
 
+function getValue<T>(value: SelectValue<T> | T): T {
+  if (typeof value === "object" && value !== null && "value" in value) {
+    return value.value
+  }
+  return value
+}
+
 function getSelectedValue<T>(
   options: readonly (SelectValue<T> | T)[],
   value: SelectValue<T> | T | undefined | (SelectValue<T> | T)[],
   multiple: boolean | undefined
 ) {
-  const getValue = (value: SelectValue<T> | T) => {
-    if (typeof value === "object" && value !== null && "value" in value) {
-      return value.value
-    }
-    return value
-  }
-
   const areEqual = (a: SelectValue<T> | T, b: SelectValue<T> | T) => {
     return deepEquals(getValue(a), getValue(b), { allowAdditionalKeysInB: true })
   }
@@ -108,7 +108,7 @@ export function OptionSelect<T, MULTIPLE extends boolean = false>({
   const placement = `${vDir === "top" ? "top" : "bottom"} ${hDir === "right" ? "end" : "start"}` as const
 
   const emit = (indices: number[]) => {
-    const selectedOptions = indices.map(i => opts[i])
+    const selectedOptions = indices.map(i => getValue(opts[i]))
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-explicit-any
     onChange?.((multiple ? selectedOptions : selectedOptions[0]) as any)
   }

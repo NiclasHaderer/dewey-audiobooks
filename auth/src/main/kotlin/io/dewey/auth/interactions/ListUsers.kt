@@ -15,7 +15,7 @@ fun <PERMISSIONS : Any> RoutingContext.listUsers(
     val config = deweyAuthConfig<PERMISSIONS, Any>()
 
     val principal = deweyPrincipal<DeweyPrincipal>()
-    if (!config.isAdmin(principal)) {
+    if (!principal.permissions.isAdmin) {
         throw ErrorResponse.forbidden("Only admins can list users")
     }
 

@@ -22,7 +22,7 @@ export const UserManager = () => {
         username: user.username,
         permissions: {
           isAdmin: user.admin,
-          libraries: user.libraries.map(l => ({ id: l, permissions: "READONLY" })),
+          libraries: user.libraries,
         },
       },
       {
@@ -34,19 +34,22 @@ export const UserManager = () => {
     )
   }
 
-  const form = useForm<UserFormValues>({
-    username: "",
-    admin: false,
-    libraries: [],
-    id: undefined,
-  })
+  const form = useForm<UserFormValues>(
+    {
+      username: "",
+      admin: false,
+      libraries: [],
+      id: undefined,
+    },
+    { validate: { username: (username: string) => username.length >= 3 || "Username must be at least 3 characters" } }
+  )
 
   const openEdit = (user: UserRow) => {
     form.setAllFields({
       id: user.id,
       username: user.username,
       admin: user.permissions.isAdmin,
-      libraries: user.permissions.libraries.map(l => l.id),
+      libraries: user.permissions.libraries.map(({ id, permissions }) => ({ id, permissions })),
     })
     setIsOpen(true)
   }
@@ -61,7 +64,7 @@ export const UserManager = () => {
 
   return (
     <>
-      <div className="mt-4 flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <DataTable
           columns={columns}
           data={users ?? []}

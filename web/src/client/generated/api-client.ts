@@ -11,6 +11,7 @@ import {
   _socket,
 } from "./client"
 import type {
+  AccessToken,
   ApiVersion,
   Author,
   AuthorCreate,
@@ -20,6 +21,8 @@ import type {
   BookDetailed,
   BookUpdate,
   ChangeEventBatch,
+  CreateAccessToken,
+  CreatedAccessToken,
   DeweyAccessToken,
   DeweyChangePassword,
   DeweyJWKs,
@@ -50,7 +53,9 @@ import type {
   Order,
   PaginatedResponse,
   PartialUpdateLibrary,
+  PasswordConfirmation,
   ProgressUpdate,
+  RevealedAccessToken,
   Series,
   SeriesCreate,
   SeriesDetailed,
@@ -60,6 +65,7 @@ import type {
   ThirdPartyLicense,
   TitledId,
   UUID,
+  UpdateAccessToken,
   UpdateLibrary,
   UpdateUserPermissions,
   UserPermissions,
@@ -123,6 +129,22 @@ export const createApi = (
         "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    createAccessToken: (
+      body: CreateAccessToken,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<CreatedAccessToken>> => {
+      return _request(
+        `/api/auth/user/tokens`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
         [...defaultInterceptors, ...interceptors],
         executor,
         true
@@ -528,6 +550,21 @@ export const createApi = (
         true
       )
     },
+    listAccessTokens: (
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Array<AccessToken>>> => {
+      return _request(
+        `/api/auth/user/tokens`,
+        "GET",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        undefined,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
     listAuthors: (
       {
         limit,
@@ -819,6 +856,40 @@ export const createApi = (
         false
       )
     },
+    revealAccessToken: (
+      { id }: { id: UUID },
+      body: PasswordConfirmation,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<RevealedAccessToken>> => {
+      return _request(
+        `/api/auth/user/tokens/${id}/reveal`,
+        "POST",
+        "json",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    revokeAccessToken: (
+      { id }: { id: UUID },
+      body: PasswordConfirmation,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<Empty>> => {
+      return _request(
+        `/api/auth/user/tokens/${id}`,
+        "DELETE",
+        "text",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
     searchAuthorMetadata: (
       { query, libraryId }: { query: string; libraryId: UUID },
       headers: HeadersInit = {},
@@ -955,6 +1026,23 @@ export const createApi = (
         `/api/libraries/${libraryId}/books/${id}/progress`,
         "PUT",
         "text",
+        _mergeHeaders(defaultHeadersImpl, headers),
+        body,
+        [...defaultInterceptors, ...interceptors],
+        executor,
+        true
+      )
+    },
+    updateAccessToken: (
+      { id }: { id: UUID },
+      body: UpdateAccessToken,
+      headers: HeadersInit = {},
+      interceptors: ApiInterceptor[] = []
+    ): Promise<ApiResponse<AccessToken>> => {
+      return _request(
+        `/api/auth/user/tokens/${id}`,
+        "PATCH",
+        "json",
         _mergeHeaders(defaultHeadersImpl, headers),
         body,
         [...defaultInterceptors, ...interceptors],
