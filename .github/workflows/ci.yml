@@ -13,6 +13,7 @@ jobs:
     outputs:
       server: ${{ steps.filter.outputs.server }}
       web: ${{ steps.filter.outputs.web }}
+      cli: ${{ steps.filter.outputs.cli }}
     steps:
       - name: Check out
         uses: actions/checkout@v7
@@ -27,6 +28,7 @@ jobs:
           files=$(git diff --name-only "$BASE" HEAD)
           echo "server=$(echo "$files" | grep -qv '^web/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "web=$(echo "$files" | grep -qE '^(web|\.github)/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "cli=$(echo "$files" | grep -qE '^(cli|\.github)/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   server:
     name: Server
@@ -40,9 +42,16 @@ jobs:
     if: needs.changes.outputs.web == 'true'
     uses: ./.github/workflows/web.yml
 
+  # Runs on the server workflow's build, which every change to cli/ triggers as well
+  cli:
+    name: CLI
+    needs: [changes, server]
+    if: needs.changes.outputs.cli == 'true'
+    uses: ./.github/workflows/cli.yml
+
   ci:
     name: CI
-    needs: [changes, server, web]
+    needs: [changes, server, web, cli]
     if: always()
     runs-on: ubuntu-latest
     steps:

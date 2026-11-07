@@ -134,3 +134,16 @@ jobs:
       - name: Test everything
         if: matrix.target == 'linux-arm64'
         run: just test-server -x :taglib:buildNativeHost -PskipLiveTests
+
+      - name: Build the server
+        if: matrix.target == 'linux-arm64'
+        run: just build-server -x :taglib:buildNativeHost
+
+      # Jobs that need a running server, like the CLI's end-to-end tests, download this instead of building their own
+      - name: Upload the server
+        if: matrix.target == 'linux-arm64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: server
+          path: server/build/install/server
+          if-no-files-found: error
