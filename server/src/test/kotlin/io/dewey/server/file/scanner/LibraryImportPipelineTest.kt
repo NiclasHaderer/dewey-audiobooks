@@ -27,6 +27,7 @@ import org.koin.mp.KoinPlatform.getKoin
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.sql.DriverManager
 import java.util.concurrent.atomic.AtomicBoolean
@@ -43,6 +44,7 @@ import kotlin.io.path.writeText
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration
@@ -416,6 +418,82 @@ class LibraryImportPipelineTest : DeweyTest() {
         }
 
         assertEquals(2L, tracks(), "a scan that could not write must not conclude the tracks are gone")
+    }
+
+    @Test
+    fun `a scan whose index bump fails sweeps nothing and hands back to the watcher`() {
+        val root = dataDir.resolve("library").also { it.createDirectories() }
+        val folder = book(root, "An Author", "A Book")
+        val libId = library(root)
+        scan(libId)
+        assertEquals(1L, tracks(), "sanity: the book imports first")
+        Files.delete(folder.resolve("A Book 0.mp3"))
+
+        DriverManager.getConnection(sqliteUrl(config.sqliteFile)).use { blocker ->
+            blocker.createStatement().use { it.execute("BEGIN EXCLUSIVE") }
+            try {
+                assertFails { scan(libId) }
+            } finally {
+                blocker.createStatement().use { it.execute("ROLLBACK") }
+            }
+        }
+
+        assertFalse(pipeline.scanning)
+        assertEquals(1L, tracks(), "a scan that never walked must not sweep")
+        val late = book(root, "An Author", "Late Book")
+        pipeline.enqueue(late.canonical())
+        eventually(describe = { "the watcher to import the late book, saw ${titles()}" }) {
+            titles().contains("Late Book")
+        }
+    }
+
+    @Test
+    fun `a watch import still being written when a scan starts is swept by that scan`() {
+        val root = dataDir.resolve("library").also { it.createDirectories() }
+        book(root, "An Author", "A Book")
+        val libId = library(root)
+        scan(libId)
+        val late = book(root, "Late Author", "Late Book").resolve("Late Book 0.mp3")
+        // Settled already, so the watcher reads it at once
+        Files.setLastModifiedTime(late, FileTime.fromMillis(System.currentTimeMillis() - 60_000))
+
+        val snapshot = getKoin().get<LibraryRoots>().of(libId)!!
+        var writtenBeforeBump = false
+
+        // Holds the write of the watch import back until the scan has started. The hold stays well under the
+        // busy timeout, so the import is written, just late.
+        DriverManager.getConnection(sqliteUrl(config.sqliteFile)).use { blocker ->
+            blocker.createStatement().use { it.execute("BEGIN EXCLUSIVE") }
+            val scanning =
+                try {
+                    pipeline.enqueue(late.canonical())
+                    Thread.sleep(150)
+                    Thread {
+                        // The bump of scanLibrary, with a look at the watch import first
+                        pipeline.walkLibrary(snapshot) {
+                            writtenBeforeBump = tracks() == 2L
+                            transaction {
+                                val current =
+                                    LibraryTable
+                                        .select(LibraryTable.scanIndex)
+                                        .where { LibraryTable.id eq libId }
+                                        .single()[LibraryTable.scanIndex]
+                                LibraryTable.update({ LibraryTable.id eq libId }) { it[scanIndex] = current + 1uL }
+                            }
+                        }
+                    }.also {
+                        it.start()
+                        while (!pipeline.scanning && it.isAlive) Thread.sleep(1)
+                        Files.delete(late)
+                    }
+                } finally {
+                    blocker.createStatement().use { it.execute("ROLLBACK") }
+                }
+            scanning.join()
+        }
+
+        assertTrue(writtenBeforeBump, "the watch import is written before the scan index moves on")
+        assertEquals(1L, tracks(), "the scan that did not find the file swept the track the watcher wrote")
     }
 
     @Test
