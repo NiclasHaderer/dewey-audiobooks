@@ -363,6 +363,49 @@ class LibraryImportPipelineTest : DeweyTest() {
     }
 
     @Test
+    fun `a burst of events for a file that keeps changing imports it once it went quiet`() {
+        val root = dataDir.resolve("library").also { it.createDirectories() }
+        val folder = root.resolve("An Author").resolve("A Book").also { it.createDirectories() }
+        library(root)
+        val target = folder.resolve("A Book.mp3")
+        sourceMp3.copyTo(target)
+        val resolved = target.canonical()
+
+        // A complete file, so only its moving mtime can keep it from being read
+        val until = System.nanoTime() + 500_000_000
+        while (System.nanoTime() < until) {
+            Files.setLastModifiedTime(target, FileTime.fromMillis(System.currentTimeMillis()))
+            pipeline.enqueue(resolved)
+            Thread.sleep(5)
+        }
+        val importedDuringBurst = titles()
+
+        assertEquals(emptyList(), importedDuringBurst, "a file must not be read while it keeps changing")
+        eventually(describe = { "the file once it went quiet, saw ${titles()}" }) { titles() == listOf("A Book") }
+    }
+
+    @Test
+    fun `a burst of events for a file that does not change does not hold it back`() {
+        val root = dataDir.resolve("library").also { it.createDirectories() }
+        val folder = root.resolve("An Author").resolve("A Book").also { it.createDirectories() }
+        library(root)
+        val target = folder.resolve("A Book.mp3")
+        sourceMp3.copyTo(target)
+        Files.setLastModifiedTime(target, FileTime.fromMillis(System.currentTimeMillis() - 60_000))
+        val resolved = target.canonical()
+
+        var importedDuringBurst = false
+        val until = System.nanoTime() + 2_000_000_000
+        while (System.nanoTime() < until && !importedDuringBurst) {
+            pipeline.enqueue(resolved)
+            Thread.sleep(5)
+            importedDuringBurst = titles() == listOf("A Book")
+        }
+
+        assertTrue(importedDuringBurst, "events alone must not postpone a file whose mtime is old")
+    }
+
+    @Test
     fun `a file whose size keeps growing is not read until it stops`() {
         val root = dataDir.resolve("library").also { it.createDirectories() }
         val folder = root.resolve("An Author").resolve("A Book").also { it.createDirectories() }
@@ -645,5 +688,60 @@ class LibraryImportPipelineTest : DeweyTest() {
         pipeline.enqueue(resolved)
 
         eventually(describe = { "the track to be removed, saw ${tracks()}" }) { tracks() == 0L }
+    }
+}
+
+// Its own class for the settle interval: a worker that sleeps through it would hold every assertion past its timeout
+class LibraryImportPipelineSettleTest : DeweyTest() {
+    private val pipeline by lazy { getKoin().get<LibraryImportPipeline>() }
+
+    override fun configure(dataDir: Path) = DeweyConfig(dataDir = dataDir, settleMillis = 60_000)
+
+    private val sourceMp3: Path =
+        generateSequence(Path.of("").toAbsolutePath()) { it.parent }
+            .map { it.resolve("test-resources") }
+            .first { it.isDirectory() }
+            .resolve("Terry Pratchett/Good Omens/Good Omens.mp3")
+
+    private fun titles() =
+        transaction {
+            BookTable
+                .selectAll()
+                .where { BookTable.visible }
+                .mapNotNull { it[BookTable.title] }
+                .sorted()
+        }
+
+    @Test
+    fun `files that are still settling do not hold up a settled one`() {
+        val root = dataDir.resolve("library").also { it.createDirectories() }
+        newLibrary(
+            "lib",
+            folders = listOf(root.absolutePathString()),
+            fileScanners = listOf(FileScanner("AudioTagScanner"), FileScanner("AudioFolderScanner")),
+        )
+        // More fresh files than workers, so a worker that waits on one of them leaves none for the settled file
+        val fresh =
+            List(config.importThreads + 1) { index ->
+                root.resolve("Fresh Author").resolve("Fresh $index").also { it.createDirectories() }.also {
+                    sourceMp3.copyTo(it.resolve("Fresh $index.mp3"))
+                }
+            }
+        val settled = root.resolve("Old Author").resolve("Old Book").also { it.createDirectories() }
+        sourceMp3.copyTo(settled.resolve("Old Book.mp3"))
+        Files.setLastModifiedTime(
+            settled.resolve("Old Book.mp3"),
+            FileTime.fromMillis(System.currentTimeMillis() - 120_000),
+        )
+
+        // Folders are due at once and their walk queues the files, so only the mtime check decides
+        fresh.forEach { pipeline.enqueue(it.canonical()) }
+        pipeline.enqueue(settled.canonical())
+
+        runBlocking {
+            val deadline = System.nanoTime() + 15.seconds.inWholeNanoseconds
+            while (titles().isEmpty() && System.nanoTime() < deadline) delay(50)
+        }
+        assertEquals(listOf("Old Book"), titles(), "only the settled file is read, and it is read without waiting")
     }
 }

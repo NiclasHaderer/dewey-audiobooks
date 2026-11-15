@@ -27,6 +27,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.withLock
 import kotlin.io.path.name
 import kotlin.io.path.readAttributes
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
 private sealed interface WriteCommand {
@@ -127,7 +128,14 @@ class LibraryImportPipeline : KoinComponent {
     val scanning: Boolean
         get() = scanState != null
 
-    fun enqueue(path: Path) = watchQueue.add(path)
+    // A file is first looked at a settle interval after its first event, and from then on its mtime decides
+    // whether it is still changing. Folders and ignore markers are not read, so they are due at once.
+    fun enqueue(path: Path) =
+        if (path.hasAudioExtension()) {
+            watchQueue.add(path, watchQueue.now() + config.settleMillis.milliseconds)
+        } else {
+            watchQueue.add(path)
+        }
 
     fun scanLibrary(
         libraryId: Uuid,
@@ -323,10 +331,7 @@ class LibraryImportPipeline : KoinComponent {
         // A future mtime is a file server whose clock runs ahead, which must not mean "never import this".
         val age = System.currentTimeMillis() - attributes.lastModifiedTime().toMillis()
         if (age in 0..<config.settleMillis) {
-            watchQueue.add(path)
-            // Without this the path is popped again immediately, and the worker spins on stat for the whole copy
-            // TODO not great, but leave it for now...
-            Thread.sleep(config.settleMillis)
+            watchQueue.add(path, watchQueue.now() + (config.settleMillis - age).milliseconds)
             return
         }
 
