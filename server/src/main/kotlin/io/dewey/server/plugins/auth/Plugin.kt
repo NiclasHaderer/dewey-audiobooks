@@ -62,7 +62,7 @@ fun Application.configureAuthentication() {
                 if (guard !in Guards.AdminOnly || principal.permissions.isAdmin) return@configureGuard principal
                 val reason =
                     if (principal.isAccessToken) "The access token has no admin rights" else "User is not an admin"
-                setError(ErrorResponse.unauthorized(reason))
+                setError(ErrorResponse.forbidden(reason))
                 null
             }
         }

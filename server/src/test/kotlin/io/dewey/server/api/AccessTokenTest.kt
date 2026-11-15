@@ -133,7 +133,7 @@ class AccessTokenTest : DeweyTest() {
             val listenerId = userId("listener")
             val token = token(bearer(login("admin")), isAdmin = false)
 
-            assertEquals(HttpStatusCode.Unauthorized, api.listUsers(token.headers).status)
+            assertEquals(HttpStatusCode.Forbidden, api.listUsers(token.headers).status)
             assertEquals(HttpStatusCode.Forbidden, api.getUser(listenerId, token.headers).status)
         }
 
@@ -271,7 +271,7 @@ class AccessTokenTest : DeweyTest() {
                     libraries = listOf(AccessTokenLibrary(libId, LibraryPermissionLevel.READ_WRITE)),
                 )
 
-            assertEquals(HttpStatusCode.Unauthorized, api.listUsers(token.headers).status)
+            assertEquals(HttpStatusCode.Forbidden, api.listUsers(token.headers).status)
             assertEquals(
                 HttpStatusCode.Forbidden,
                 api.updateBook(bookId, libId, BookUpdate(title = Patch.Set("Renamed")), token.headers).status,
