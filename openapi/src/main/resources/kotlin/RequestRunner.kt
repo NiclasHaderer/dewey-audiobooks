@@ -114,7 +114,11 @@ abstract class RequestRunner(
             .appendEncodedPathSegments(metadata.path)
             .apply {
                 metadata.queryParameters.forEach { (name, value) ->
-                    if (value != null) parameters.append(name, value.toString())
+                    when (value) {
+                        null -> {}
+                        is Iterable<*> -> value.forEach { parameters.append(name, it.toString()) }
+                        else -> parameters.append(name, value.toString())
+                    }
                 }
             }.build()
 }
