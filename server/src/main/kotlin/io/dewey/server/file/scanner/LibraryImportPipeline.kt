@@ -129,11 +129,13 @@ class LibraryImportPipeline : KoinComponent {
         get() = scanState != null
 
     // A file is first looked at a settle interval after its first event, and from then on its mtime decides
-    // whether it is still changing. Folders and ignore markers are not read, so they are due at once.
+    // whether it is still changing.
     fun enqueue(path: Path) =
         if (path.hasAudioExtension()) {
             watchQueue.add(path, watchQueue.now() + config.settleMillis.milliseconds)
         } else {
+            // The watcher also sends folders and ignore markers besides audio files.
+            // Those are checked seperately and don't need a settle time
             watchQueue.add(path)
         }
 
