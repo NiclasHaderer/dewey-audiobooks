@@ -472,14 +472,7 @@ class LibraryImportPipelineTest : DeweyTest() {
                         // The bump of scanLibrary, with a look at the watch import first
                         pipeline.walkLibrary(snapshot) {
                             writtenBeforeBump = tracks() == 2L
-                            transaction {
-                                val current =
-                                    LibraryTable
-                                        .select(LibraryTable.scanIndex)
-                                        .where { LibraryTable.id eq libId }
-                                        .single()[LibraryTable.scanIndex]
-                                LibraryTable.update({ LibraryTable.id eq libId }) { it[scanIndex] = current + 1uL }
-                            }
+                            pipeline.bumpScanIndex(libId)
                         }
                     }.also {
                         it.start()
@@ -506,14 +499,7 @@ class LibraryImportPipelineTest : DeweyTest() {
 
         // Bumped here rather than through scanLibrary, so the locked window below contains nothing but the
         // scan's own writes. An unchanged rescan is all batched touches, which is where coalescing happens.
-        transaction {
-            val current =
-                LibraryTable
-                    .select(LibraryTable.scanIndex)
-                    .where { LibraryTable.id eq libId }
-                    .single()[LibraryTable.scanIndex]
-            LibraryTable.update({ LibraryTable.id eq libId }) { it[scanIndex] = current + 1uL }
-        }
+        pipeline.bumpScanIndex(libId)
         val snapshot = getKoin().get<LibraryRoots>().of(libId)!!
 
         // Held from the start so the first batch fails, and released well inside the retry budget so a later

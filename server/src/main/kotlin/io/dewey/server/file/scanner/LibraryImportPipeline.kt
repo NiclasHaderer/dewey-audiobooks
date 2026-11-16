@@ -142,18 +142,19 @@ class LibraryImportPipeline : KoinComponent {
         // The bump and the walk are one operation: everything the walk does not stamp is what the sweep collects.
         // Only once the watch events are written: one applied after the bump would carry the new index for a file
         // the walk may not find any more, and the sweep would keep its track.
-        walkLibrary(library, reanalyze) {
-            transaction {
-                val current =
-                    LibraryTable
-                        .select(LibraryTable.scanIndex)
-                        .where { LibraryTable.id eq libraryId }
-                        .single()[LibraryTable.scanIndex]
-                LibraryTable.update({ LibraryTable.id eq libraryId }) { it[scanIndex] = current + 1uL }
-            }
-        }
+        walkLibrary(library, reanalyze) { bumpScanIndex(libraryId) }
         return true
     }
+
+    internal fun bumpScanIndex(libraryId: Uuid) =
+        transaction {
+            val current =
+                LibraryTable
+                    .select(LibraryTable.scanIndex)
+                    .where { LibraryTable.id eq libraryId }
+                    .single()[LibraryTable.scanIndex]
+            LibraryTable.update({ LibraryTable.id eq libraryId }) { it[scanIndex] = current + 1uL }
+        }
 
     internal fun walkLibrary(
         library: LibraryEntityModel,
