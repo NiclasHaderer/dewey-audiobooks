@@ -10,7 +10,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 class ConcurrentUniqQueueTest {
     private fun p(of: String): Path = Path.of(of)
@@ -253,6 +256,101 @@ class ConcurrentUniqQueueTest {
         queue.add(p("/lib/A"))
 
         assertEquals(listOf(p("/lib/A/one.mp3"), p("/lib/A")), queue.drain())
+    }
+
+    @Test
+    fun `an entry is not handed out before its time`() {
+        val clock = TestTimeSource()
+        val queue = ConcurrentUniqQueue<Path>(clock)
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+
+        assertEquals(null, queue.pop())
+        assertEquals(1, queue.size, "a waiting entry is still queued")
+
+        clock += 1.seconds
+        assertEquals(p("/lib/A/one.mp3"), queue.pop())
+    }
+
+    @Test
+    fun `a due entry is handed out past one that is still waiting`() {
+        val queue = ConcurrentUniqQueue<Path>(TestTimeSource())
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+        queue.add(p("/lib/B/two.mp3"))
+
+        assertEquals(p("/lib/B/two.mp3"), queue.pop())
+        assertEquals(null, queue.pop())
+    }
+
+    @Test
+    fun `re-adding a waiting entry keeps its earlier time and one entry`() {
+        val clock = TestTimeSource()
+        val queue = ConcurrentUniqQueue<Path>(clock)
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+        clock += 500.milliseconds
+
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+
+        assertEquals(1, queue.size)
+        assertEquals(null, queue.pop())
+        clock += 500.milliseconds
+        assertEquals(p("/lib/A/one.mp3"), queue.pop(), "a later add must not postpone the entry")
+    }
+
+    @Test
+    fun `re-adding a waiting entry with an earlier time makes it due sooner`() {
+        val queue = ConcurrentUniqQueue<Path>(TestTimeSource())
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+
+        queue.add(p("/lib/A/one.mp3"))
+
+        assertEquals(p("/lib/A/one.mp3"), queue.pop())
+    }
+
+    @Test
+    fun `a covering folder absorbs waiting files and takes the earliest time`() {
+        val clock = TestTimeSource()
+        val queue =
+            ConcurrentUniqQueue<Path>(clock) { wider, narrower -> narrower != wider && narrower.startsWith(wider) }
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+        queue.add(p("/lib/A/two.mp3"), queue.now() + 2.seconds)
+
+        queue.add(p("/lib/A"), queue.now() + 3.seconds)
+
+        assertEquals(1, queue.size)
+        assertEquals(null, queue.pop())
+        clock += 1.seconds
+        assertEquals(p("/lib/A"), queue.pop())
+    }
+
+    @Test
+    fun `a waiting file under a queued folder does not postpone it`() {
+        val queue =
+            ConcurrentUniqQueue<Path>(TestTimeSource()) { wider, narrower ->
+                narrower != wider && narrower.startsWith(wider)
+            }
+        queue.add(p("/lib/A"))
+
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.seconds)
+
+        assertEquals(p("/lib/A"), queue.pop())
+    }
+
+    @Test
+    fun `poll waits instead of handing out an entry that is not due`() {
+        val queue = pathQueue()
+        queue.add(p("/lib/A/one.mp3"), queue.now() + 1.hours)
+        val taken = AtomicReference<Path?>()
+        val consumer = Thread { while (taken.get() == null) taken.set(queue.poll()) }.also { it.start() }
+
+        val deadline = System.nanoTime() + 5.seconds.inWholeNanoseconds
+        while (consumer.state != Thread.State.TIMED_WAITING && System.nanoTime() < deadline) Thread.sleep(5)
+        assertEquals(Thread.State.TIMED_WAITING, consumer.state)
+        assertEquals(null, taken.get())
+
+        queue.add(p("/lib/B/two.mp3"))
+        consumer.join(5_000)
+
+        assertEquals(p("/lib/B/two.mp3"), taken.get())
     }
 
     @Test
