@@ -139,7 +139,14 @@ class LibraryImportPipeline : KoinComponent {
             return false
         }
         log.info { "Scanning library '${library.name}'" }
-        // The bump and the walk are one operation: everything the walk does not stamp is what the sweep collects
+        // The bump and the walk are one operation: everything the walk does not stamp is what the sweep collects.
+        // Only once the watch events are written: one applied after the bump would carry the new index for a file
+        // the walk may not find any more, and the sweep would keep its track.
+        walkLibrary(library, reanalyze) { bumpScanIndex(libraryId) }
+        return true
+    }
+
+    internal fun bumpScanIndex(libraryId: Uuid) =
         transaction {
             val current =
                 LibraryTable
@@ -148,34 +155,35 @@ class LibraryImportPipeline : KoinComponent {
                     .single()[LibraryTable.scanIndex]
             LibraryTable.update({ LibraryTable.id eq libraryId }) { it[scanIndex] = current + 1uL }
         }
-        walkLibrary(library, reanalyze)
-        return true
-    }
 
     internal fun walkLibrary(
         library: LibraryEntityModel,
         reanalyze: Boolean = false,
+        onWatchEventsWritten: () -> Unit = {},
     ) = onlyOneScanAtATimeLock.withLock {
         val state = ScanState(library, reanalyze)
         scanState = state
-        // A joined thread is done, so this is the whole proof that no watch event is still being processed
-        watchWorkers.forEach { it.join() }
-        watchWorkers = emptyList()
-        awaitWritesApplied()
+        try {
+            // A joined thread is done, so this is the whole proof that no watch event is still being processed
+            watchWorkers.forEach { it.join() }
+            watchWorkers = emptyList()
+            awaitWritesApplied()
+            onWatchEventsWritten()
 
-        val scanWorkers = startWorkers("scan") { scanWorkerLoop(state) }
-        walk(library, state)
-        state.noNewFilesWillBeAdded = true
-        scanWorkers.forEach { it.join() }
+            val scanWorkers = startWorkers("scan") { scanWorkerLoop(state) }
+            walk(library, state)
+            state.noNewFilesWillBeAdded = true
+            scanWorkers.forEach { it.join() }
 
-        // Unconditional: whatever could not be read was stamped as seen, so nothing left unstamped is
-        // anything but gone
-        dbWriterQueue.put(WriteCommand.ReapStaleTracks(library.id))
-        dbWriterQueue.put(WriteCommand.PruneOrphans(library.id))
-        awaitWritesApplied()
-
-        scanState = null
-        this@LibraryImportPipeline.watchWorkers = startWorkers("watch", ::watchWorkerLoop)
+            // Unconditional: whatever could not be read was stamped as seen, so nothing left unstamped is
+            // anything but gone
+            dbWriterQueue.put(WriteCommand.ReapStaleTracks(library.id))
+            dbWriterQueue.put(WriteCommand.PruneOrphans(library.id))
+            awaitWritesApplied()
+        } finally {
+            scanState = null
+            if (running.load()) watchWorkers = startWorkers("watch", ::watchWorkerLoop)
+        }
     }
 
     private fun walk(
