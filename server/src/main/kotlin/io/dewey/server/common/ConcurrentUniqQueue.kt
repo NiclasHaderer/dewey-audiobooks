@@ -2,46 +2,72 @@ package io.dewey.server.common
 
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 class ConcurrentUniqQueue<T>(
+    private val timeSource: TimeSource.WithComparableMarks = TimeSource.Monotonic,
     private val covers: (wider: T, narrower: T) -> Boolean = { _, _ -> false },
 ) {
+    private class Entry<T>(
+        val item: T,
+        val notBefore: ComparableTimeMark,
+    )
+
     private val lock = ReentrantLock()
     private val notEmpty = lock.newCondition()
-    private val entries = ArrayDeque<T>()
+    private val entries = ArrayDeque<Entry<T>>()
 
     val size: Int
         get() = lock.withLock { entries.size }
 
     fun isEmpty(): Boolean = lock.withLock { entries.isEmpty() }
 
-    fun add(item: T) {
+    fun now(): ComparableTimeMark = timeSource.markNow()
+
+    fun add(
+        item: T,
+        notBefore: ComparableTimeMark = now(),
+    ) {
         lock.withLock {
             // Only the wider entry may evict the narrower one: it covers every descendant, while a
             // descendant would drop the rest of the wider entry's subtree.
-            val covering = entries.firstOrNull { covers(it, item) }
+            // The merged entry keeps the earliest time, so an item that keeps being added is not postponed forever.
+            val covering = entries.firstOrNull { covers(it.item, item) }
             if (covering != null) {
                 entries.remove(covering)
-                entries.addLast(covering)
+                entries.addLast(Entry(covering.item, minOf(covering.notBefore, notBefore)))
             } else {
-                entries.removeAll { it == item || covers(item, it) }
-                entries.addLast(item)
+                val absorbed = entries.filter { it.item == item || covers(item, it.item) }
+                entries.removeAll(absorbed)
+                entries.addLast(Entry(item, absorbed.fold(notBefore) { earliest, it -> minOf(earliest, it.notBefore) }))
             }
             notEmpty.signalAll()
         }
     }
 
-    fun pop(): T? = lock.withLock { entries.removeFirstOrNull() }
+    fun pop(): T? = lock.withLock { takeDue() }
 
     fun poll(): T? =
         lock.withLock {
             var remaining = 10.milliseconds.inWholeNanoseconds
-            while (entries.isEmpty() && remaining > 0) remaining = notEmpty.awaitNanos(remaining)
-            entries.removeFirstOrNull()
+            while (remaining > 0) {
+                takeDue()?.let { return@withLock it }
+                val untilDue = entries.minOfOrNull { -it.notBefore.elapsedNow() }
+                val wait = (untilDue?.inWholeNanoseconds ?: remaining).coerceIn(1, remaining)
+                remaining -= wait - notEmpty.awaitNanos(wait)
+            }
+            takeDue()
         }
 
-    fun removeAll(predicate: (T) -> Boolean) = lock.withLock { entries.removeAll(predicate) }
+    fun removeAll(predicate: (T) -> Boolean) = lock.withLock { entries.removeAll { predicate(it.item) } }
 
-    fun drain(): List<T> = lock.withLock { entries.toList().also { entries.clear() } }
+    fun drain(): List<T> = lock.withLock { entries.map { it.item }.also { entries.clear() } }
+
+    private fun takeDue(): T? {
+        val due = entries.firstOrNull { it.notBefore.hasPassedNow() } ?: return null
+        entries.remove(due)
+        return due.item
+    }
 }
